@@ -4,6 +4,8 @@ set(pwmc_SOURCES
 	args/Argument.hpp
 	args/Command.cpp
 	args/Command.hpp
+	args/parseAndExecuteCommand.cpp
+	args/parseAndExecuteCommand.hpp
 	args/Option.cpp
 	args/Option.hpp
 
