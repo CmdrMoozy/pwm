@@ -29,13 +29,22 @@ namespace pwm
 {
 namespace git
 {
+enum class RepositoryCreateMode
+{
+	NO_CREATE,
+	CREATE_NORMAL,
+	CREATE_BARE
+};
+
 class Repository : public Wrapper<git_repository, git_repository_free>
 {
 private:
 	typedef Wrapper<git_repository, git_repository_free> base_type;
 
 public:
-	Repository(const std::string& p);
+	Repository(const std::string& p,
+		RepositoryCreateMode c = RepositoryCreateMode::CREATE_NORMAL,
+		bool ab = false);
 };
 }
 }

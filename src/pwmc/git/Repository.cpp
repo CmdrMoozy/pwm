@@ -18,14 +18,41 @@
 
 #include "Repository.hpp"
 
+#include "pwmc/git/checkReturn.hpp"
+
 namespace
 {
-std::string discover(const std::string &path)
+std::string discover(const std::string &p)
 {
 	git_buf buffer = {nullptr, 0, 0};
 	pwm::git::checkReturn(
-	        git_repository_discover(&buffer, path.c_str(), 0, nullptr));
+	        git_repository_discover(&buffer, p.c_str(), 0, nullptr));
 	return std::string(buffer.ptr);
+}
+
+std::string getRepositoryConstructPath(const std::string &p,
+                                       pwm::git::RepositoryCreateMode c,
+                                       bool ab)
+{
+	try
+	{
+		return discover(p);
+	}
+	catch(...)
+	{
+		if(c == pwm::git::RepositoryCreateMode::NO_CREATE) throw;
+		if(!ab && (c == pwm::git::RepositoryCreateMode::CREATE_BARE))
+			throw;
+
+		git_repository *repo;
+		pwm::git::checkReturn(git_repository_init(
+		        &repo, p.c_str(),
+		        c == pwm::git::RepositoryCreateMode::CREATE_NORMAL
+		                ? 0
+		                : 1));
+		git_repository_free(repo);
+		return p;
+	}
 }
 }
 
@@ -33,8 +60,9 @@ namespace pwm
 {
 namespace git
 {
-Repository::Repository(const std::string &p)
-        : base_type(git_repository_open, discover(p).c_str())
+Repository::Repository(const std::string &p, RepositoryCreateMode c, bool ab)
+        : base_type(git_repository_open,
+                    getRepositoryConstructPath(p, c, ab).c_str())
 {
 }
 }
