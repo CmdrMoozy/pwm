@@ -16,15 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cstdlib>
+#ifndef pwmc_git_checkReturn_HPP
+#define pwmc_git_checkReturn_HPP
 
-#include "pwmc/git/Library.hpp"
-
-int main(int, char**)
+namespace pwm
 {
-	pwm::git::LibraryInstance gitLibrary;
-
-
-
-	return EXIT_SUCCESS;
+namespace git
+{
+void checkReturn(int r);
 }
+}
+
+#endif

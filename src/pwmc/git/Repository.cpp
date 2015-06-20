@@ -16,14 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "pwmc.hpp"
+#include "Repository.hpp"
 
-#include <iostream>
+namespace
+{
+std::string discover(const std::string& path)
+{
+	git_buf buffer = {nullptr, 0, 0};
+	pwm::git::checkReturn(git_repository_discover(
+		&buffer, path.c_str(), 0, nullptr));
+	return std::string(buffer.ptr);
+}
+}
 
-namespace pwmc
+namespace pwm
 {
-void helloWorld()
+namespace git
 {
-	std::cout << "Hello, world!\n";
+Repository::Repository(const std::string& p)
+	: base_type(git_repository_open, discover(p).c_str())
+{
+}
 }
 }

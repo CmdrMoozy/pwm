@@ -16,15 +16,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cstdlib>
+#ifndef pwmc_git_Library_HPP
+#define pwmc_git_Library_HPP
 
-#include "pwmc/git/Library.hpp"
+#include <memory>
+#include <mutex>
 
-int main(int, char**)
+namespace pwm
 {
-	pwm::git::LibraryInstance gitLibrary;
+namespace git
+{
+class LibraryInstance
+{
+public:
+	LibraryInstance();
 
+	LibraryInstance(const LibraryInstance &) = delete;
 
+	~LibraryInstance();
 
-	return EXIT_SUCCESS;
+	LibraryInstance &operator=(const LibraryInstance &) = delete;
+};
+
+class Library
+{
+public:
+	static bool isInitialized();
+
+	~Library();
+
+private:
+	friend class LibraryInstance;
+
+	static std::mutex mutex;
+	static std::unique_ptr<Library> instance;
+
+	Library();
+};
 }
+}
+
+#endif

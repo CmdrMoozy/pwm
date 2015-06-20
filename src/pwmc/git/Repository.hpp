@@ -16,15 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cstdlib>
+#ifndef pwmc_git_Repository_HPP
+#define pwmc_git_Repository_HPP
 
-#include "pwmc/git/Library.hpp"
+#include "pwmc/git/Wrapper.hpp"
 
-int main(int, char**)
+#include <string>
+
+#include <git2.h>
+
+namespace pwm
 {
-	pwm::git::LibraryInstance gitLibrary;
+namespace git
+{
+class Repository : public Wrapper<git_repository, git_repository_free>
+{
+private:
+	typedef Wrapper<git_repository, git_repository_free> base_type;
 
-
-
-	return EXIT_SUCCESS;
+public:
+	Repository(const std::string& p);
+};
 }
+}
+
+#endif

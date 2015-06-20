@@ -16,12 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef pwmc_pwmc_HPP
-#define pwmc_pwmc_HPP
+#include "checkReturn.hpp"
 
-namespace pwmc
+#include <stdexcept>
+#include <string>
+
+#include <git2.h>
+
+namespace pwm
 {
-void helloWorld();
+namespace git
+{
+void checkReturn(int r)
+{
+	if(r == 0) return;
+	const git_error *err = giterr_last();
+	if(err == nullptr)
+		return;
+	std::string errMsg(err->message);
+	giterr_clear();
+	throw std::runtime_error(errMsg);
 }
-
-#endif
+}
+}
