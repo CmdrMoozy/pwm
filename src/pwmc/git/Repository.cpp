@@ -20,11 +20,11 @@
 
 namespace
 {
-std::string discover(const std::string& path)
+std::string discover(const std::string &path)
 {
 	git_buf buffer = {nullptr, 0, 0};
-	pwm::git::checkReturn(git_repository_discover(
-		&buffer, path.c_str(), 0, nullptr));
+	pwm::git::checkReturn(
+	        git_repository_discover(&buffer, path.c_str(), 0, nullptr));
 	return std::string(buffer.ptr);
 }
 }
@@ -33,8 +33,8 @@ namespace pwm
 {
 namespace git
 {
-Repository::Repository(const std::string& p)
-	: base_type(git_repository_open, discover(p).c_str())
+Repository::Repository(const std::string &p)
+        : base_type(git_repository_open, discover(p).c_str())
 {
 }
 }

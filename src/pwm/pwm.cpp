@@ -20,11 +20,9 @@
 
 #include "pwmc/git/Library.hpp"
 
-int main(int, char**)
+int main(int, char **)
 {
 	pwm::git::LibraryInstance gitLibrary;
-
-
 
 	return EXIT_SUCCESS;
 }
