@@ -31,8 +31,7 @@ void checkReturn(int r)
 {
 	if(r == 0) return;
 	const git_error *err = giterr_last();
-	if(err == nullptr)
-		return;
+	if(err == nullptr) return;
 	std::string errMsg(err->message);
 	giterr_clear();
 	throw std::runtime_error(errMsg);
