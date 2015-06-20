@@ -19,7 +19,7 @@ string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
 
 set(CMAKE_AUTOMOC ON)
 
-
+find_package(Libgit2 REQUIRED)
 
 # Setup our compile flags.
 
@@ -36,7 +36,7 @@ include_directories(3rdparty/include src)
 
 set(pwm_LIBRARIES
 
-
+	${LIBGIT2_LIBRARIES}
 
 )
 
