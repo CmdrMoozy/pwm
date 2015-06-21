@@ -9,6 +9,12 @@ set(pwmc_SOURCES
 	args/Option.cpp
 	args/Option.hpp
 
+	config/Configuration.cpp
+	config/Configuration.hpp
+
+	fs/Util.cpp
+	fs/Util.hpp
+
 	git/checkReturn.cpp
 	git/checkReturn.hpp
 	git/Library.cpp
