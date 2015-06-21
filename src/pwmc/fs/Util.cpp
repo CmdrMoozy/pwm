@@ -36,12 +36,10 @@ std::string combinePaths(const std::string &a, const std::string &b)
 	auto bStart = b.find_first_not_of("\\/");
 
 	std::ostringstream oss;
-	if(aEnd != std::string::npos)
-		oss << a.substr(0, aEnd + 1);
+	if(aEnd != std::string::npos) oss << a.substr(0, aEnd + 1);
 	if((aEnd != std::string::npos) && (bStart != std::string::npos))
 		oss << "/";
-	if(bStart != std::string::npos)
-		oss << b.substr(bStart);
+	if(bStart != std::string::npos) oss << b.substr(bStart);
 
 	return oss.str();
 }
@@ -72,7 +70,8 @@ std::string getConfigurationFilePath()
 		home = getenv("HOME");
 		if(home == nullptr)
 		{
-			throw std::runtime_error("Couldn't find home directory.");
+			throw std::runtime_error(
+			        "Couldn't find home directory.");
 		}
 		suffix.assign(".config");
 	}
@@ -84,13 +83,15 @@ std::string getConfigurationFilePath()
 		int ret = mkdir(path.c_str(), 0777);
 		if(ret != 0)
 		{
-			throw std::runtime_error("Creating configuration directory failed.");
+			throw std::runtime_error(
+			        "Creating configuration directory failed.");
 		}
 	}
 
 	if(!isDirectory(path))
 	{
-		throw std::runtime_error("Configuration directory is not a directory.");
+		throw std::runtime_error(
+		        "Configuration directory is not a directory.");
 	}
 
 	return combinePaths(path, "pwm.conf");
