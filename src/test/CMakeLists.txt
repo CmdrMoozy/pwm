@@ -2,6 +2,8 @@ set(pwm-test_SOURCES
 
 	pwm-test.cpp
 
+	util/StringTest.cpp
+
 )
 
 add_executable(pwm-test ${pwm-test_SOURCES})
