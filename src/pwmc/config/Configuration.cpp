@@ -28,6 +28,10 @@ namespace pwm
 {
 namespace config
 {
+ConfigurationData::ConfigurationData() : data()
+{
+}
+
 ConfigurationInstance::ConfigurationInstance()
 {
 	std::lock_guard<std::mutex> lock(Configuration::mutex);
