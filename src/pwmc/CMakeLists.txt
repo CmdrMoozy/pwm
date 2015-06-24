@@ -11,6 +11,8 @@ set(pwmc_SOURCES
 
 	config/Configuration.cpp
 	config/Configuration.hpp
+	config/ConfigurationRadixTree.cpp
+	config/ConfigurationRadixTree.hpp
 	config/Key.cpp
 	config/Key.hpp
 
