@@ -23,6 +23,9 @@ set(pwmc_SOURCES
 	git/Repository.hpp
 	git/Wrapper.hpp
 
+	util/ScopeExit.cpp
+	util/ScopeExit.hpp
+
 )
 
 add_library(pwmc STATIC ${pwmc_SOURCES})
