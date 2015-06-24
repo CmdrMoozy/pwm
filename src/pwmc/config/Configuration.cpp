@@ -57,5 +57,12 @@ ConfigurationInstance::~ConfigurationInstance()
 Configuration::Configuration()
 {
 }
+
+std::ostream &operator<<(std::ostream &os, const ConfigurationData &d)
+{
+	for(const auto &kv : d.data)
+		os << kv.first << " = " << kv.second << "\n";
+	return os;
+}
 }
 }
