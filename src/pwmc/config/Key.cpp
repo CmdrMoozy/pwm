@@ -55,5 +55,16 @@ bool operator<(const Key &a, const Key &b)
 {
 	return a.components < b.components;
 }
+
+bool operator==(const Key &a, const Key &b)
+{
+	return a.components == b.components;
+}
+
+std::ostream &operator<<(std::ostream &os, const Key &k)
+{
+	os << pwm::util::join(k.components.begin(), k.components.end(), ".");
+	return os;
+}
 }
 }

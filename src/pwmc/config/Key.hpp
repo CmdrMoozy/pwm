@@ -19,6 +19,7 @@
 #ifndef pwmc_config_Key_HPP
 #define pwmc_config_Key_HPP
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,9 @@ struct Key
 };
 
 bool operator<(const Key& a, const Key &b);
+bool operator==(const Key& a, const Key &b);
+
+std::ostream& operator<<(std::ostream &os, const Key& k);
 }
 }
 
