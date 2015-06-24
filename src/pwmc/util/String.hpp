@@ -26,6 +26,8 @@ namespace pwm
 {
 namespace util
 {
+std::string toLower(const std::string &s);
+
 std::vector<std::string> split(const std::string &s, char d);
 }
 }

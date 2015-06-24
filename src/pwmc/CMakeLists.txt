@@ -25,6 +25,8 @@ set(pwmc_SOURCES
 
 	util/ScopeExit.cpp
 	util/ScopeExit.hpp
+	util/String.cpp
+	util/String.hpp
 
 )
 
