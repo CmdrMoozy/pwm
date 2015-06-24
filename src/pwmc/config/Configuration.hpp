@@ -19,13 +19,28 @@
 #ifndef pwmc_config_Configuration_HPP
 #define pwmc_config_Configuration_HPP
 
+#include <map>
 #include <memory>
 #include <mutex>
+#include <string>
+
+#include "pwmc/config/Key.hpp"
 
 namespace pwm
 {
 namespace config
 {
+struct ConfigurationData
+{
+	std::map<Key, std::string> data;
+
+	ConfigurationData();
+
+	ConfigurationData(const ConfigurationData&) = default;
+	~ConfigurationData() = default;
+	ConfigurationData &operator=(const ConfigurationData &) = default;
+};
+
 class ConfigurationInstance
 {
 public:
