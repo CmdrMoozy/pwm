@@ -19,6 +19,7 @@
 #ifndef pwmc_config_Configuration_HPP
 #define pwmc_config_Configuration_HPP
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -66,6 +67,8 @@ private:
 
 	Configuration();
 };
+
+std::ostream &operator<<(std::ostream &os, const ConfigurationData &d);
 }
 }
 
