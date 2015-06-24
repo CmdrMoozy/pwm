@@ -13,6 +13,8 @@ set(pwmc_SOURCES
 	config/Configuration.hpp
 	config/ConfigurationRadixTree.cpp
 	config/ConfigurationRadixTree.hpp
+	config/deserializeConfiguration.cpp
+	config/deserializeConfiguration.hpp
 	config/Key.cpp
 	config/Key.hpp
 	config/serializeConfiguration.cpp
