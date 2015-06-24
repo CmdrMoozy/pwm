@@ -19,11 +19,23 @@
 #include "String.hpp"
 
 #include <algorithm>
+#include <locale>
 
 namespace pwm
 {
 namespace util
 {
+std::string toLower(const std::string &s)
+{
+	std::string ret(s);
+	std::locale locale;
+	std::transform(ret.begin(), ret.end(), ret.begin(), [&locale](char c)
+	               {
+		               return std::tolower(c, locale);
+		       });
+	return ret;
+}
+
 std::vector<std::string> split(const std::string &s, char d)
 {
 	std::vector<std::string> components;
