@@ -11,6 +11,8 @@ set(pwmc_SOURCES
 
 	config/Configuration.cpp
 	config/Configuration.hpp
+	config/Key.cpp
+	config/Key.hpp
 
 	fs/Util.cpp
 	fs/Util.hpp
