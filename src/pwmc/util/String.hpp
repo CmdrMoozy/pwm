@@ -19,6 +19,7 @@
 #ifndef pwmc_util_String_HPP
 #define pwmc_util_String_HPP
 
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,22 @@ namespace util
 std::string toLower(const std::string &s);
 
 std::vector<std::string> split(const std::string &s, char d);
+
+template <typename Iterator>
+std::string join(Iterator begin, Iterator end, const std::string &delimiter)
+{
+	std::ostringstream oss;
+	for(auto it = begin; it != end; ++it)
+	{
+		oss << *it;
+
+		auto next = it;
+		++next;
+		if(next != end)
+			oss << delimiter;
+	}
+	return oss.str();
+}
 }
 }
 
