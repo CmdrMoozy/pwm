@@ -20,6 +20,8 @@ set(pwmc_SOURCES
 	config/serializeConfiguration.cpp
 	config/serializeConfiguration.hpp
 
+	crypto/checkReturn.cpp
+	crypto/checkReturn.hpp
 	crypto/Util.cpp
 	crypto/Util.hpp
 
