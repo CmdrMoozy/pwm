@@ -20,6 +20,9 @@ set(pwmc_SOURCES
 	config/serializeConfiguration.cpp
 	config/serializeConfiguration.hpp
 
+	crypto/Util.cpp
+	crypto/Util.hpp
+
 	fs/Util.cpp
 	fs/Util.hpp
 
