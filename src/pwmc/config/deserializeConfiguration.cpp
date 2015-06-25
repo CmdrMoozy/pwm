@@ -28,6 +28,7 @@
 
 #include <yajl/yajl_parse.h>
 
+#include "pwmc/fs/Util.hpp"
 #include "pwmc/util/ScopeExit.hpp"
 #include "pwmc/util/String.hpp"
 
@@ -176,6 +177,8 @@ ConfigurationData deserializeConfiguration(std::istream &in)
 
 ConfigurationData deserializeConfiguration(const std::string &p)
 {
+	if(!fs::exists(p)) return ConfigurationData();
+
 	std::ifstream in(p, std::ios_base::in | std::ios_base::binary);
 	if(!in.is_open())
 	{
