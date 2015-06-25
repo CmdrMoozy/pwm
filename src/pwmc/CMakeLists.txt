@@ -22,6 +22,8 @@ set(pwmc_SOURCES
 
 	crypto/checkReturn.cpp
 	crypto/checkReturn.hpp
+	crypto/Passphrase.cpp
+	crypto/Passphrase.hpp
 	crypto/Util.cpp
 	crypto/Util.hpp
 
