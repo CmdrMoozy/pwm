@@ -34,7 +34,7 @@ typedef std::map<std::string, std::string> OptionsMap;
 typedef std::map<std::string, bool> FlagsMap;
 typedef std::map<std::string, std::vector<std::string>> ArgumentsMap;
 
-typedef int (*CommandFunction)(const OptionsMap&, const FlagsMap&, const ArgumentsMap&);
+typedef void (*CommandFunction)(const OptionsMap&, const FlagsMap&, const ArgumentsMap&);
 
 struct Command
 {
