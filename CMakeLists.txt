@@ -21,6 +21,7 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Libgit2 REQUIRED)
 find_package(Yajl REQUIRED)
+find_package(Libgcrypt REQUIRED)
 
 # Setup our compile flags.
 
@@ -39,6 +40,7 @@ set(pwm_LIBRARIES
 
 	${LIBGIT2_LIBRARIES}
 	${YAJL_LIBRARIES}
+	${LIBGCRYPT_LIBRARIES}
 
 )
 
