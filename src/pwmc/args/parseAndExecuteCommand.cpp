@@ -245,8 +245,9 @@ int parseAndExecuteCommand(int argc, char *const *argv,
 	// Try parsing the parameters for this command and executing it.
 	try
 	{
-		return commandIt->function(parameters.options, parameters.flags,
-		                           parameters.arguments);
+		commandIt->function(parameters.options, parameters.flags,
+		                    parameters.arguments);
+		return EXIT_SUCCESS;
 	}
 	catch(const std::exception &e)
 	{
