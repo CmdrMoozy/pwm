@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <fstream>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -141,6 +142,22 @@ std::string serializeConfiguration(const ConfigurationData &data,
 	const char *strBuf = reinterpret_cast<const char *>(buf);
 
 	return std::string(strBuf, length);
+}
+
+void serializeConfiguration(const std::string &p, const ConfigurationData &data,
+                            bool formatted)
+{
+	std::string serialized = serializeConfiguration(data, formatted);
+
+	std::ofstream out(p, std::ios_base::out | std::ios_base::trunc |
+	                             std::ios_base::binary);
+	if(!out.is_open())
+		throw std::runtime_error("Writing serialized JSON failed.");
+	out.exceptions(std::ofstream::badbit | std::ofstream::failbit);
+	out.write(serialized.data(),
+	          static_cast<std::streamsize>(serialized.length()));
+	out.flush();
+	out.close();
 }
 }
 }

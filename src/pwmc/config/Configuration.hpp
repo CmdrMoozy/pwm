@@ -31,15 +31,20 @@ namespace pwm
 {
 namespace config
 {
+extern const std::string USE_CONFIG_DEFAULT_VALUE;
+
 struct ConfigurationData
 {
 	std::map<Key, std::string> data;
 
 	ConfigurationData();
+	explicit ConfigurationData(const std::map<Key, std::string>& d);
 
 	ConfigurationData(const ConfigurationData&) = default;
 	~ConfigurationData() = default;
 	ConfigurationData &operator=(const ConfigurationData &) = default;
+
+	void apply(const ConfigurationData &o, bool overwrite = false);
 };
 
 class ConfigurationInstance
@@ -57,13 +62,15 @@ public:
 class Configuration
 {
 public:
-	~Configuration() = default;
+	~Configuration();
 
 private:
 	friend class ConfigurationInstance;
 
 	static std::mutex mutex;
 	static std::unique_ptr<Configuration> instance;
+
+	ConfigurationData data;
 
 	Configuration();
 };

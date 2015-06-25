@@ -20,18 +20,53 @@
 
 #include <stdexcept>
 
-std::mutex pwm::config::Configuration::mutex;
-std::unique_ptr<pwm::config::Configuration>
-        pwm::config::Configuration::instance;
+#include "pwmc/config/deserializeConfiguration.hpp"
+#include "pwmc/config/serializeConfiguration.hpp"
+#include "pwmc/fs/Util.hpp"
 
 namespace pwm
 {
 namespace config
 {
+const std::string USE_CONFIG_DEFAULT_VALUE("USE_CONFIGURATION");
+
+std::mutex Configuration::mutex;
+std::unique_ptr<Configuration> Configuration::instance;
+
 ConfigurationData::ConfigurationData() : data()
 {
 }
 
+ConfigurationData::ConfigurationData(const std::map<Key, std::string> &d)
+        : data(d)
+{
+}
+
+void ConfigurationData::apply(const ConfigurationData &o, bool overwrite)
+{
+	for(const auto &kv : o.data)
+	{
+		auto it = data.find(kv.first);
+		if(!overwrite && (it != data.end())) continue;
+		if(it == data.end())
+			it = data.insert(kv).first;
+		else
+			it->second = kv.second;
+	}
+}
+}
+}
+
+namespace
+{
+const pwm::config::ConfigurationData
+        DEFAULT_CONFIG(std::map<pwm::config::Key, std::string>({}));
+}
+
+namespace pwm
+{
+namespace config
+{
 ConfigurationInstance::ConfigurationInstance()
 {
 	std::lock_guard<std::mutex> lock(Configuration::mutex);
@@ -54,8 +89,21 @@ ConfigurationInstance::~ConfigurationInstance()
 	Configuration::instance.reset();
 }
 
-Configuration::Configuration()
+Configuration::~Configuration()
 {
+	try
+	{
+		serializeConfiguration(fs::getConfigurationFilePath(), data);
+	}
+	catch(...)
+	{
+	}
+}
+
+Configuration::Configuration()
+        : data(deserializeConfiguration(fs::getConfigurationFilePath()))
+{
+	data.apply(DEFAULT_CONFIG);
 }
 
 std::ostream &operator<<(std::ostream &os, const ConfigurationData &d)
