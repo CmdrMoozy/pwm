@@ -21,7 +21,7 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Libgit2 REQUIRED)
 find_package(Yajl REQUIRED)
-find_package(Libgcrypt REQUIRED)
+find_package(Libgcrypt REQUIRED) # Must be 1.6.0 or newer.
 
 # Setup our compile flags.
 
