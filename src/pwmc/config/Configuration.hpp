@@ -31,7 +31,7 @@ namespace pwm
 {
 namespace config
 {
-extern const std::string USE_CONFIG_DEFAULT_VALUE;
+std::string getUseConfigDefaultArgument();
 
 struct ConfigurationData
 {
@@ -62,7 +62,14 @@ public:
 class Configuration
 {
 public:
+	static Configuration &getInstance();
+
 	~Configuration();
+
+	std::string get(const Key &key) const;
+	std::string getOr(const Key &key, const std::string &defaultVal) const;
+	void set(const Key &key, const std::string &value);
+	void reset(const Key &key);
 
 private:
 	friend class ConfigurationInstance;
