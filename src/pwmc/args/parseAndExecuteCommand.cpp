@@ -157,6 +157,7 @@ parseCommandParameters(int argc, char *const *argv,
 	// Verify that we have values for all non-optional parameters.
 	for(const auto &option : command.options)
 	{
+		if(option.optional) continue;
 		if(!option.defaultVal.empty()) continue;
 		if(option.flag) continue;
 		if(parsed.options.find(option.name) == parsed.options.end())
@@ -176,8 +177,11 @@ void printCommandHelp(char *const *argv, const pwm::args::Command &command)
 		std::cout << "\nOptions:\n";
 		for(const auto &option : command.options)
 		{
-			std::cout << "\t" << option.name << " - "
-			          << option.help;
+			std::cout << "\t--" << option.name;
+			if(option.shortName != '\0')
+				std::cout << ", -" << option.shortName;
+			std::cout << " - " << option.help;
+
 			if(option.flag)
 			{
 				std::cout << " [Flag, default: off]";
