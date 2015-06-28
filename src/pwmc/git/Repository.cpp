@@ -18,6 +18,7 @@
 
 #include "Repository.hpp"
 
+#include "pwmc/fs/Util.hpp"
 #include "pwmc/git/checkReturn.hpp"
 
 namespace
@@ -40,16 +41,16 @@ std::string getRepositoryConstructPath(const std::string &p,
 	}
 	catch(...)
 	{
-		if(c == pwm::git::RepositoryCreateMode::NO_CREATE) throw;
-		if(!ab && (c == pwm::git::RepositoryCreateMode::CREATE_BARE))
+		if(c == pwm::git::RepositoryCreateMode::NoCreate) throw;
+		if(!ab && (c == pwm::git::RepositoryCreateMode::CreateBare))
 			throw;
 
+		pwm::fs::createPath(p);
 		git_repository *repo;
 		pwm::git::checkReturn(git_repository_init(
 		        &repo, p.c_str(),
-		        c == pwm::git::RepositoryCreateMode::CREATE_NORMAL
-		                ? 0
-		                : 1));
+		        c == pwm::git::RepositoryCreateMode::CreateNormal ? 0
+		                                                          : 1));
 		git_repository_free(repo);
 		return p;
 	}

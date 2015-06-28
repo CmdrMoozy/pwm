@@ -31,9 +31,9 @@ namespace git
 {
 enum class RepositoryCreateMode
 {
-	NO_CREATE,
-	CREATE_NORMAL,
-	CREATE_BARE
+	NoCreate,
+	CreateNormal,
+	CreateBare
 };
 
 class Repository : public Wrapper<git_repository, git_repository_free>
@@ -43,7 +43,7 @@ private:
 
 public:
 	Repository(const std::string& p,
-		RepositoryCreateMode c = RepositoryCreateMode::CREATE_NORMAL,
+		RepositoryCreateMode c = RepositoryCreateMode::CreateNormal,
 		bool ab = false);
 };
 }
