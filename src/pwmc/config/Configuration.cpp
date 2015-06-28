@@ -28,10 +28,15 @@ namespace pwm
 {
 namespace config
 {
-const std::string USE_CONFIG_DEFAULT_VALUE("USE_CONFIGURATION");
-
 std::mutex Configuration::mutex;
 std::unique_ptr<Configuration> Configuration::instance;
+
+std::string getUseConfigDefaultArgument()
+{
+	static const std::string USE_CONFIG_DEFAULT_ARGUMENT(
+	        "USE_CONFIGURATION");
+	return USE_CONFIG_DEFAULT_ARGUMENT;
+}
 
 ConfigurationData::ConfigurationData() : data()
 {
@@ -89,6 +94,12 @@ ConfigurationInstance::~ConfigurationInstance()
 	Configuration::instance.reset();
 }
 
+Configuration &Configuration::getInstance()
+{
+	std::lock_guard<std::mutex> lock(Configuration::mutex);
+	return *instance;
+}
+
 Configuration::~Configuration()
 {
 	try
@@ -98,6 +109,35 @@ Configuration::~Configuration()
 	catch(...)
 	{
 	}
+}
+
+std::string Configuration::get(const Key &key) const
+{
+	auto it = data.data.find(key);
+	if(it == data.data.end()) throw std::runtime_error("Key not found.");
+	return it->second;
+}
+
+std::string Configuration::getOr(const Key &key,
+                                 const std::string &defaultVal) const
+{
+	auto it = data.data.find(key);
+	if(it == data.data.end()) return defaultVal;
+	return it->second;
+}
+
+void Configuration::set(const Key &key, const std::string &value)
+{
+	data.data[key] = value;
+}
+
+void Configuration::reset(const Key &key)
+{
+	auto defaultIt = DEFAULT_CONFIG.data.find(key);
+	if(defaultIt == DEFAULT_CONFIG.data.end())
+		throw std::runtime_error("No default value for that key.");
+
+	data.data[key] = defaultIt->second;
 }
 
 Configuration::Configuration()
