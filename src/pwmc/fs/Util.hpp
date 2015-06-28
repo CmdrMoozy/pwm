@@ -25,11 +25,17 @@ namespace pwm
 {
 namespace fs
 {
+std::string normalizePath(const std::string &p);
+
 std::string combinePaths(const std::string &a, const std::string &b);
 
 bool exists(const std::string &p);
 
 bool isDirectory(const std::string &p);
+
+void createDirectory(const std::string &p);
+
+void createPath(const std::string &p);
 
 std::string getConfigurationFilePath();
 }

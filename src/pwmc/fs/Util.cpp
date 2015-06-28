@@ -18,6 +18,7 @@
 
 #include "Util.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <sstream>
 #include <stdexcept>
@@ -26,17 +27,40 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "pwmc/util/String.hpp"
+
 namespace pwm
 {
 namespace fs
 {
+std::string normalizePath(const std::string &p)
+{
+	std::string ret = p;
+	std::transform(ret.begin(), ret.end(), ret.begin(),
+	               [](const char &c) -> char
+	               {
+		               if(c == '\\') return '/';
+		               return c;
+		       });
+	return ret;
+}
+
 std::string combinePaths(const std::string &a, const std::string &b)
 {
 	auto aEnd = a.find_last_not_of("\\/");
 	auto bStart = b.find_first_not_of("\\/");
 
 	std::ostringstream oss;
-	if(aEnd != std::string::npos) oss << a.substr(0, aEnd + 1);
+	if(aEnd != std::string::npos)
+	{
+		oss << a.substr(0, aEnd + 1);
+	}
+	else
+	{
+		// a must have been "/" (or an empty string). Prepend the root
+		// directory to b to make a valid final path.
+		oss << "/";
+	}
 	if((aEnd != std::string::npos) && (bStart != std::string::npos))
 		oss << "/";
 	if(bStart != std::string::npos) oss << b.substr(bStart);
@@ -59,6 +83,26 @@ bool isDirectory(const std::string &p)
 	return S_ISDIR(stats.st_mode);
 }
 
+void createDirectory(const std::string &p)
+{
+	int ret = mkdir(p.c_str(), 0777);
+	if(ret != 0) throw std::runtime_error("Creating directory failed.");
+}
+
+void createPath(const std::string &p)
+{
+	std::vector<std::string> components =
+	        pwm::util::split(normalizePath(p), '/');
+	std::string currentPath = "";
+
+	for(const auto &component : components)
+	{
+		currentPath = combinePaths(currentPath, component);
+		if(isDirectory(currentPath)) continue;
+		if(!exists(currentPath)) createDirectory(currentPath);
+	}
+}
+
 std::string getConfigurationFilePath()
 {
 	std::string path;
@@ -78,15 +122,7 @@ std::string getConfigurationFilePath()
 	path.assign(home);
 	path = combinePaths(path, suffix);
 
-	if(!exists(path))
-	{
-		int ret = mkdir(path.c_str(), 0777);
-		if(ret != 0)
-		{
-			throw std::runtime_error(
-			        "Creating configuration directory failed.");
-		}
-	}
+	if(!exists(path)) createDirectory(path);
 
 	if(!isDirectory(path))
 	{
