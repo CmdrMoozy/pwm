@@ -22,9 +22,9 @@ namespace pwm
 {
 namespace args
 {
-Option::Option(const std::string &n, const std::string &h, char sn,
+Option::Option(const std::string &n, const std::string &h, char sn, bool o,
                const std::string &dv, bool f)
-        : name(n), help(h), shortName(sn), defaultVal(dv), flag(f)
+        : name(n), help(h), shortName(sn), optional(o), defaultVal(dv), flag(f)
 {
 }
 }

@@ -30,11 +30,14 @@ struct Option
 	std::string name;
 	std::string help;
 	char shortName;
+	bool optional;
 	std::string defaultVal;
 	bool flag;
 
 	Option(const std::string &n, const std::string& h,
-		char sn = '\0', const std::string& dv = "", bool f = false);
+		char sn = '\0',
+		bool o = false, const std::string& dv = "",
+		bool f = false);
 
 	Option(const Option &) = default;
 	~Option() = default;
