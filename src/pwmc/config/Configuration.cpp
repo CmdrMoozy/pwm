@@ -38,6 +38,21 @@ std::string getUseConfigDefaultArgument()
 	return USE_CONFIG_DEFAULT_ARGUMENT;
 }
 
+Key getConfigurationKey(ConfigurationValue value)
+{
+	static std::map<ConfigurationValue, std::string> CONFIGURATION_KEYS = {
+	        {ConfigurationValue::RepositoryDefaultPath,
+	         "repository.defaultpath"}};
+
+	auto it = CONFIGURATION_KEYS.find(value);
+	if(it == CONFIGURATION_KEYS.end())
+	{
+		throw std::runtime_error(
+		        "No configuration key known for the given value.");
+	}
+	return it->second;
+}
+
 ConfigurationData::ConfigurationData() : data()
 {
 }

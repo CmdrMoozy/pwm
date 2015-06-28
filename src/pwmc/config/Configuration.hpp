@@ -33,6 +33,13 @@ namespace config
 {
 std::string getUseConfigDefaultArgument();
 
+enum class ConfigurationValue
+{
+	RepositoryDefaultPath
+};
+
+Key getConfigurationKey(ConfigurationValue value);
+
 struct ConfigurationData
 {
 	std::map<Key, std::string> data;
