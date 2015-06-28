@@ -17,12 +17,88 @@
  */
 
 #include <cstdlib>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
+#include "pwmc/args/Argument.hpp"
+#include "pwmc/args/Command.hpp"
+#include "pwmc/args/Option.hpp"
+#include "pwmc/args/parseAndExecuteCommand.hpp"
+#include "pwmc/config/Configuration.hpp"
 #include "pwmc/git/Library.hpp"
+#include "pwmc/git/Repository.hpp"
 
-int main(int, char **)
+namespace
+{
+void configCommand(const pwm::args::OptionsMap &options,
+                   const pwm::args::FlagsMap &,
+                   const pwm::args::ArgumentsMap &arguments)
+{
+	pwm::config::Key key(*arguments.find("key")->second.begin());
+	auto valIt = options.find("set");
+	if(valIt != options.end())
+	{
+		pwm::config::Configuration::getInstance().set(key,
+		                                              valIt->second);
+	}
+
+	std::cout << pwm::config::Key(key) << " = "
+	          << pwm::config::Configuration::getInstance().get(key) << "\n";
+}
+
+void initCommand(const pwm::args::OptionsMap &options,
+                 const pwm::args::FlagsMap &, const pwm::args::ArgumentsMap &)
+{
+	std::string repoPath = options.find("repository")->second;
+	if(repoPath == pwm::config::getUseConfigDefaultArgument())
+	{
+		repoPath = pwm::config::Configuration::getInstance().getOr(
+		        pwm::config::getConfigurationKey(
+		                pwm::config::ConfigurationValue::
+		                        RepositoryDefaultPath),
+		        "");
+	}
+
+	if(repoPath.empty())
+	{
+		std::ostringstream oss;
+		oss << "No repository path specified. Try the 'repository' "
+		       "command option, or setting the '"
+		    << pwm::config::getConfigurationKey(
+		               pwm::config::ConfigurationValue::
+		                       RepositoryDefaultPath)
+		    << "' configuration key.";
+		throw std::runtime_error(oss.str());
+	}
+
+	pwm::git::Repository repo(
+	        repoPath, pwm::git::RepositoryCreateMode::CreateNormal, false);
+}
+
+const std::vector<pwm::args::Option> CONFIG_COMMAND_OPTIONS = {
+        pwm::args::Option("set", "Set the key to this new value.", 's', true)};
+
+const std::vector<pwm::args::Argument> CONFIG_COMMAND_ARGUMENTS = {
+        pwm::args::Argument("key", "The configuration key to get or set."),
+};
+
+const std::vector<pwm::args::Option> INIT_COMMAND_OPTIONS = {pwm::args::Option(
+        "repository", "The path to the repository to initialize.", 'r', false,
+        pwm::config::getUseConfigDefaultArgument())};
+
+const std::vector<pwm::args::Command> PWM_COMMANDS = {
+        pwm::args::Command("config", "Get or set a configuration value",
+                           configCommand, CONFIG_COMMAND_OPTIONS,
+                           CONFIG_COMMAND_ARGUMENTS),
+        pwm::args::Command("init", "Initialize a new pwm repository",
+                           initCommand, INIT_COMMAND_OPTIONS, {})};
+}
+
+int main(int argc, char *const *argv)
 {
 	pwm::git::LibraryInstance gitLibrary;
-
-	return EXIT_SUCCESS;
+	pwm::config::ConfigurationInstance configInstance;
+	return pwm::args::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
 }
