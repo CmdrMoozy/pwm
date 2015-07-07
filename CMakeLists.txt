@@ -15,6 +15,10 @@ endif()
 
 string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
 
+# Define various CMake options.
+
+option(USE_CLIPBOARD "Enable clipboard support" ON)
+
 # Find our dependencies.
 
 set(CMAKE_AUTOMOC ON)
@@ -23,6 +27,10 @@ find_package(Libgit2 REQUIRED)
 find_package(Yajl REQUIRED)
 find_package(Libgcrypt REQUIRED) # Must be 1.6.0 or newer.
 
+if(USE_CLIPBOARD)
+	find_package(GTK3 REQUIRED)
+endif()
+
 # Setup our compile flags.
 
 include(${PROJECT_SOURCE_DIR}/cmake/SetFlags.cmake)
@@ -30,6 +38,10 @@ pwmSetCompileFlags()
 
 if(CMAKE_BUILD_TYPE_LOWER MATCHES debug)
 	add_definitions(-DPWM_DEBUG)
+endif()
+
+if(USE_CLIPBOARD)
+	add_definitions(-DPWM_USE_CLIPBOARD)
 endif()
 
 include_directories(3rdparty/include src)
@@ -43,6 +55,17 @@ set(pwm_LIBRARIES
 	${LIBGCRYPT_LIBRARIES}
 
 )
+
+if(USE_CLIPBOARD)
+	include_directories(${GTK3_INCLUDE_DIRS})
+
+	set(pwm_LIBRARIES
+
+		${pwm_LIBRARIES}
+		${GTK3_LIBRARIES}
+
+	)
+endif()
 
 # Add our targets.
 

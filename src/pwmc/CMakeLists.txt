@@ -38,6 +38,8 @@ set(pwmc_SOURCES
 	git/Repository.hpp
 	git/Wrapper.hpp
 
+	util/Clipboard.cpp
+	util/Clipboard.hpp
 	util/ScopeExit.cpp
 	util/ScopeExit.hpp
 	util/String.cpp
