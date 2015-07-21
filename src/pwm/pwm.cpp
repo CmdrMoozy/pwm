@@ -22,6 +22,10 @@
 #include <string>
 #include <vector>
 
+#ifdef PWM_USE_CLIPBOARD
+#include <gtk/gtk.h>
+#endif
+
 #include "pwmc/args/Argument.hpp"
 #include "pwmc/args/Command.hpp"
 #include "pwmc/args/Option.hpp"
@@ -29,6 +33,10 @@
 #include "pwmc/config/Configuration.hpp"
 #include "pwmc/git/Library.hpp"
 #include "pwmc/git/Repository.hpp"
+
+#ifdef PWM_DEBUG
+#include "pwmc/util/Clipboard.hpp"
+#endif
 
 namespace
 {
@@ -77,6 +85,25 @@ void initCommand(const pwm::args::OptionsMap &options,
 	        repoPath, pwm::git::RepositoryCreateMode::CreateNormal, false);
 }
 
+#ifdef PWM_DEBUG
+void clipboardCommand(const pwm::args::OptionsMap &options,
+                      const pwm::args::FlagsMap &,
+                      const pwm::args::ArgumentsMap &)
+{
+	auto setIt = options.find("set");
+	if(setIt != options.end())
+	{
+		std::cout << "Set: '" << setIt->second << "'\n";
+		pwm::util::clipboard::setClipboardContents(
+		        pwm::util::clipboard::ClipboardType::Clipboard,
+		        setIt->second);
+	}
+	std::cout << pwm::util::clipboard::getClipboardContents(
+	                     pwm::util::clipboard::ClipboardType::Clipboard)
+	          << "\n";
+}
+#endif
+
 const std::vector<pwm::args::Option> CONFIG_COMMAND_OPTIONS = {
         pwm::args::Option("set", "Set the key to this new value.", 's', true)};
 
@@ -88,17 +115,34 @@ const std::vector<pwm::args::Option> INIT_COMMAND_OPTIONS = {pwm::args::Option(
         "repository", "The path to the repository to initialize.", 'r', false,
         pwm::config::getUseConfigDefaultArgument())};
 
+#ifdef PWM_DEBUG
+const std::vector<pwm::args::Option> CLIPBOARD_COMMAND_OPTIONS = {
+        pwm::args::Option("set", "Set the clipboard contents to this value.",
+                          's', true)};
+#endif
+
 const std::vector<pwm::args::Command> PWM_COMMANDS = {
         pwm::args::Command("config", "Get or set a configuration value",
                            configCommand, CONFIG_COMMAND_OPTIONS,
                            CONFIG_COMMAND_ARGUMENTS),
         pwm::args::Command("init", "Initialize a new pwm repository",
-                           initCommand, INIT_COMMAND_OPTIONS, {})};
+                           initCommand, INIT_COMMAND_OPTIONS, {})
+#ifdef PWM_DEBUG
+                ,
+        pwm::args::Command("clipboard", "Access clipboard data",
+                           clipboardCommand, CLIPBOARD_COMMAND_OPTIONS, {})
+#endif
+};
 }
 
 int main(int argc, char *const *argv)
 {
+#ifdef PWM_USE_CLIPBOARD
+	gtk_init(nullptr, nullptr);
+#endif
+
 	pwm::git::LibraryInstance gitLibrary;
 	pwm::config::ConfigurationInstance configInstance;
-	return pwm::args::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
+	int ret = pwm::args::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
+	return ret;
 }

@@ -19,6 +19,11 @@
 #include "Clipboard.hpp"
 
 #ifdef PWM_USE_CLIPBOARD
+#include <cassert>
+#include <cstring>
+#include <memory>
+#include <stdexcept>
+
 #include <gtk/gtk.h>
 #endif
 
@@ -60,10 +65,12 @@ std::string getClipboardContents(ClipboardType
 #ifdef PWM_USE_CLIPBOARD
 	GtkClipboard *clipboard = gtk_clipboard_get(clipboardTypeToAtom(type));
 	gchar *text = gtk_clipboard_wait_for_text(clipboard);
+	if(text == nullptr) return "";
 	std::string ret(text);
 	g_free(text);
 	return ret;
 #endif
+	return "";
 }
 
 void setClipboardContents(ClipboardType
@@ -78,8 +85,29 @@ void setClipboardContents(ClipboardType
                           )
 {
 #ifdef PWM_USE_CLIPBOARD
-	GtkClipboard *clipboard = gtk_clipboard_get(clipboardTypeToAtom(type));
+	GtkWidget *w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	if(w == nullptr) return;
+	std::unique_ptr<GtkWidget, void (*)(GtkWidget *)> widget(
+	        w, gtk_widget_destroy);
+	gtk_widget_realize(widget.get());
+
+	GdkWindow *window = gtk_widget_get_window(widget.get());
+	assert(window != nullptr);
+	GdkDisplay *display = gdk_window_get_display(window);
+	assert(display != nullptr);
+
+	if(!gdk_display_supports_clipboard_persistence(display))
+	{
+		throw std::runtime_error("Current display does not support "
+		                         "clipboard persistence.");
+	}
+
+	GtkClipboard *clipboard = gtk_clipboard_get_for_display(
+	        display, clipboardTypeToAtom(type));
+	assert(clipboard != nullptr);
 	gtk_clipboard_set_text(clipboard, text.c_str(), text.length());
+	gdk_display_store_clipboard(display, window, GDK_CURRENT_TIME, nullptr,
+	                            0);
 #endif
 }
 }
