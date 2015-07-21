@@ -20,6 +20,7 @@
 #define pwmc_args_Argument_HPP
 
 #include <string>
+#include <experimental/optional>
 
 namespace pwm
 {
@@ -29,12 +30,14 @@ struct Argument
 {
 	std::string name;
 	std::string help;
+	std::experimental::optional<std::string> defaultVal;
 
-	Argument(const std::string& n, const std::string& h);
+	Argument(std::string const& n, std::string const& h,
+		std::experimental::optional<std::string> const& dv = std::experimental::nullopt);
 
-	Argument(const Argument &) = default;
+	Argument(Argument const&) = default;
 	~Argument() = default;
-	Argument &operator=(const Argument &) = default;
+	Argument &operator=(Argument const&) = default;
 };
 }
 }
