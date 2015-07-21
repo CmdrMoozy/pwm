@@ -16,5 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_RUNNER
 #include <catch/catch.hpp>
+
+#ifdef PWM_USE_CLIPBOARD
+#include <gtk/gtk.h>
+#endif
+
+int main(int argc, char *const argv[])
+{
+#ifdef PWM_USE_CLIPBOARD
+	gtk_init(nullptr, nullptr);
+#endif
+
+	return Catch::Session().run(argc, argv);
+}
