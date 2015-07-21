@@ -40,6 +40,8 @@ set(pwmc_SOURCES
 
 	util/Clipboard.cpp
 	util/Clipboard.hpp
+	util/OutputSuppressor.cpp
+	util/OutputSuppressor.hpp
 	util/ScopeExit.cpp
 	util/ScopeExit.hpp
 	util/String.cpp
