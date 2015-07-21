@@ -18,6 +18,8 @@
 
 #include "Command.hpp"
 
+#include <stdexcept>
+
 namespace pwm
 {
 namespace args
@@ -32,6 +34,20 @@ Command::Command(const std::string &n, const std::string &h, CommandFunction f,
           arguments(a),
           lastArgumentVariadic(lav)
 {
+	// Only the last argument can have a default value.
+	if(!arguments.empty())
+	{
+		for(auto const &argument : arguments)
+		{
+			if(&argument == &arguments.back()) continue;
+			if(!!argument.defaultVal)
+			{
+				throw std::runtime_error(
+				        "Only the last command argument can "
+				        "have a default value.");
+			}
+		}
+	}
 }
 }
 }

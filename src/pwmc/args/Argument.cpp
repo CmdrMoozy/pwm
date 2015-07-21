@@ -22,8 +22,9 @@ namespace pwm
 {
 namespace args
 {
-Argument::Argument(const std::string &n, const std::string &h)
-        : name(n), help(h)
+Argument::Argument(std::string const &n, std::string const &h,
+                   std::experimental::optional<std::string> const &dv)
+        : name(n), help(h), defaultVal(dv)
 {
 }
 }
