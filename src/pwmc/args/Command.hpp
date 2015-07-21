@@ -19,6 +19,7 @@
 #ifndef pwmc_args_Command_HPP
 #define pwmc_args_Command_HPP
 
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -34,7 +35,7 @@ typedef std::map<std::string, std::string> OptionsMap;
 typedef std::map<std::string, bool> FlagsMap;
 typedef std::map<std::string, std::vector<std::string>> ArgumentsMap;
 
-typedef void (*CommandFunction)(const OptionsMap&, const FlagsMap&, const ArgumentsMap&);
+typedef std::function<void(OptionsMap const&, FlagsMap const&, ArgumentsMap const&)> CommandFunction;
 
 struct Command
 {
