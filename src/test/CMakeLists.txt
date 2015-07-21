@@ -2,6 +2,8 @@ set(pwm-test_SOURCES
 
 	pwm-test.cpp
 
+	args/ArgsTest.cpp
+
 	config/ConfigurationTest.cpp
 
 	util/ClipboardTest.cpp
