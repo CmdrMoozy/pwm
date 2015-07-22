@@ -8,6 +8,8 @@ set(pwm-test_SOURCES
 
 	params/OptionTest.cpp
 
+	params/detail/ParseCommandTest.cpp
+
 	util/ClipboardTest.cpp
 	util/StringTest.cpp
 

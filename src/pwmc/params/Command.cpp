@@ -32,5 +32,10 @@ Command::Command(std::string const &n, std::string const &h,
           lastArgumentIsVariadic(laiv)
 {
 }
+
+bool operator<(Command const &a, Command const &b)
+{
+	return a.name < b.name;
+}
 }
 }

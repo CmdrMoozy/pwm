@@ -47,6 +47,9 @@ set(pwmc_SOURCES
 	params/ProgramParameters.cpp
 	params/ProgramParameters.hpp
 
+	params/detail/parseCommand.cpp
+	params/detail/parseCommand.hpp
+
 	util/Clipboard.cpp
 	util/Clipboard.hpp
 	util/OutputSuppressor.cpp

@@ -19,8 +19,9 @@
 #ifndef pwmc_params_ProgramParameters_HPP
 #define pwmc_params_ProgramParameters_HPP
 
+#include <initializer_list>
+#include <list>
 #include <string>
-#include <vector>
 
 namespace pwm
 {
@@ -28,9 +29,10 @@ namespace params
 {
 struct ProgramParameters
 {
-	std::vector<std::string> parameters;
+	std::list<std::string> parameters;
 
-	ProgramParameters(std::vector<std::string> const& p);
+	explicit ProgramParameters(std::list<std::string> const& p);
+	explicit ProgramParameters(std::initializer_list<std::string> const& p);
 	ProgramParameters(int argc, char const* const* argv);
 };
 }

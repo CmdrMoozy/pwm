@@ -29,7 +29,6 @@ namespace pwm
 {
 namespace params
 {
-
 struct Command
 {
 	std::string name;
@@ -43,6 +42,8 @@ struct Command
 		std::vector<Argument> const& a = {},
 		bool laiv = false);
 };
+
+bool operator<(Command const& a, Command const& b);
 }
 }
 

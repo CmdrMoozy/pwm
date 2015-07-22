@@ -16,28 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ProgramParameters.hpp"
+#include "parseCommand.hpp"
+
+#include "pwmc/params/ProgramParameters.hpp"
 
 namespace pwm
 {
 namespace params
 {
-ProgramParameters::ProgramParameters(std::list<std::string> const &p)
-        : parameters(p)
+namespace detail
 {
+std::set<Command>::const_iterator
+parseCommand(ProgramParameters &parameters, std::set<Command> const &commands)
+{
+	if(parameters.parameters.empty()) return commands.cend();
+	Command search(parameters.parameters.front(), "");
+	auto ret = commands.find(search);
+	if(ret != commands.cend()) parameters.parameters.pop_front();
+	return ret;
 }
-
-ProgramParameters::ProgramParameters(
-        std::initializer_list<std::string> const &p)
-        : parameters(p)
-{
-}
-
-ProgramParameters::ProgramParameters(int argc, char const *const *argv)
-        : parameters()
-{
-	for(int i = 1; i < argc; ++i)
-		parameters.emplace_back(argv[i]);
 }
 }
 }
