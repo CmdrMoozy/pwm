@@ -38,6 +38,9 @@ set(pwmc_SOURCES
 	git/Repository.hpp
 	git/Wrapper.hpp
 
+	params/Option.cpp
+	params/Option.hpp
+
 	util/Clipboard.cpp
 	util/Clipboard.hpp
 	util/OutputSuppressor.cpp

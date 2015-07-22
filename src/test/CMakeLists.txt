@@ -6,6 +6,8 @@ set(pwm-test_SOURCES
 
 	config/ConfigurationTest.cpp
 
+	params/OptionTest.cpp
+
 	util/ClipboardTest.cpp
 	util/StringTest.cpp
 
