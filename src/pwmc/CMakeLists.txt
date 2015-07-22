@@ -38,6 +38,8 @@ set(pwmc_SOURCES
 	git/Repository.hpp
 	git/Wrapper.hpp
 
+	params/Argument.cpp
+	params/Argument.hpp
 	params/Option.cpp
 	params/Option.hpp
 
