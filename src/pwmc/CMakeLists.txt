@@ -44,6 +44,8 @@ set(pwmc_SOURCES
 	params/Command.hpp
 	params/Option.cpp
 	params/Option.hpp
+	params/ProgramParameters.cpp
+	params/ProgramParameters.hpp
 
 	util/Clipboard.cpp
 	util/Clipboard.hpp
