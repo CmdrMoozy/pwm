@@ -40,6 +40,8 @@ set(pwmc_SOURCES
 
 	params/Argument.cpp
 	params/Argument.hpp
+	params/Command.cpp
+	params/Command.hpp
 	params/Option.cpp
 	params/Option.hpp
 
