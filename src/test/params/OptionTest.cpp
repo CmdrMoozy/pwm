@@ -35,3 +35,42 @@ TEST_CASE("Test flag option default value construction", "[Parameters]")
 	CHECK_THROWS(option.emplace("foobar", "A test option.", 'f',
 	                            std::string("barbaz"), true));
 }
+
+TEST_CASE("Test default constructed option set iterator equality",
+          "[Parameters]")
+{
+	pwm::params::OptionSetConstIterator a;
+	pwm::params::OptionSetConstIterator b;
+	CHECK(a == b);
+	++a;
+	CHECK(a == b);
+	++b;
+	CHECK(a == b);
+}
+
+TEST_CASE("Test option set iterating", "[Parameters]")
+{
+	const std::initializer_list<pwm::params::Option> optionsList{
+	        pwm::params::Option("foo", "foo"),
+	        pwm::params::Option("bar", "bar"),
+	        pwm::params::Option("baz", "baz"),
+	        pwm::params::Option("zab", "zab"),
+	        pwm::params::Option("rab", "rab"),
+	        pwm::params::Option("oof", "oof"),
+	        pwm::params::Option("foobar", "foobar"),
+	        pwm::params::Option("barbaz", "barbaz"),
+	        pwm::params::Option("zabrab", "zabrab"),
+	        pwm::params::Option("raboof", "raboof")};
+	pwm::params::OptionSet options(optionsList);
+	CHECK(optionsList.size() == options.size());
+	CHECK(optionsList.size() ==
+	      std::distance(options.begin(), options.end()));
+
+	auto expIt = optionsList.begin();
+	for(auto it = options.begin(); it != options.end(); ++it)
+	{
+		REQUIRE(expIt != optionsList.end());
+		CHECK((*expIt).name == (*it).name);
+		++expIt;
+	}
+}
