@@ -18,7 +18,30 @@
 
 #include "Option.hpp"
 
+#include <algorithm>
+#include <set>
 #include <stdexcept>
+
+namespace
+{
+struct OptionNameComparator
+{
+	bool operator()(std::shared_ptr<pwm::params::Option> a,
+	                std::shared_ptr<pwm::params::Option> b)
+	{
+		return a->name < b->name;
+	}
+};
+
+struct OptionShortNameComparator
+{
+	bool operator()(std::shared_ptr<pwm::params::Option> a,
+	                std::shared_ptr<pwm::params::Option> b)
+	{
+		return a->shortName < b->shortName;
+	}
+};
+}
 
 namespace pwm
 {
@@ -41,6 +64,107 @@ Option::Option(std::string const &n, std::string const &h,
                std::string const &dv)
         : Option(n, h, sn, dv, false)
 {
+}
+
+OptionSetConstIterator::OptionSetConstIterator()
+        : data(nullptr), length(0), current(0)
+{
+}
+
+Option const &OptionSetConstIterator::operator*() const
+{
+	return *data[current];
+}
+
+OptionSetConstIterator &OptionSetConstIterator::operator++()
+{
+	current = std::min(current + 1, length);
+	if(current == length)
+	{
+		data = nullptr;
+		length = 0;
+		current = 0;
+	}
+	return *this;
+}
+
+bool OptionSetConstIterator::operator==(OptionSetConstIterator const &o)
+{
+	return (data == o.data) && (length == o.length) &&
+	       (current == o.current);
+}
+
+bool OptionSetConstIterator::operator!=(OptionSetConstIterator const &o)
+{
+	return !(*this == o);
+}
+
+OptionSetConstIterator::OptionSetConstIterator(
+        std::vector<std::shared_ptr<Option>> const &v)
+        : data(v.data()), length(v.size()), current(0)
+{
+}
+
+struct OptionSet::OptionSetImpl
+{
+	std::vector<std::shared_ptr<Option>> unorderedOptions;
+	std::set<std::shared_ptr<Option>, OptionNameComparator> nameOptions;
+	std::set<std::shared_ptr<Option>, OptionShortNameComparator>
+	        shortNameOptions;
+
+	OptionSetImpl(std::initializer_list<Option> const &options)
+	{
+		for(auto const &option : options)
+		{
+			auto optionPtr = std::make_shared<Option>(option);
+			unorderedOptions.push_back(optionPtr);
+			nameOptions.insert(optionPtr);
+			if(!!option.shortName)
+				shortNameOptions.insert(optionPtr);
+		}
+	}
+};
+
+OptionSet::OptionSet(std::initializer_list<Option> const &o)
+        : impl(new OptionSetImpl(o))
+{
+}
+
+OptionSet::~OptionSet()
+{
+}
+
+std::size_t OptionSet::size() const
+{
+	return impl->unorderedOptions.size();
+}
+
+OptionSetConstIterator OptionSet::begin() const
+{
+	return OptionSetConstIterator(impl->unorderedOptions);
+}
+
+OptionSetConstIterator OptionSet::end() const
+{
+	return OptionSetConstIterator();
+}
+
+Option const *OptionSet::find(std::string const &parameter) const
+{
+	auto search = std::make_shared<Option>(parameter, parameter);
+	if(parameter.length() == 1) search->shortName = parameter[0];
+
+	auto nameIt = impl->nameOptions.find(search);
+	if(nameIt != impl->nameOptions.end()) return &(**nameIt);
+
+	if(!!search->shortName)
+	{
+		auto shortNameIt = impl->shortNameOptions.find(search);
+		if(shortNameIt != impl->shortNameOptions.end())
+			return &(**shortNameIt);
+	}
+
+	return nullptr;
 }
 }
 }
