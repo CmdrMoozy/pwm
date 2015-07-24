@@ -6,6 +6,7 @@ set(pwm-test_SOURCES
 
 	config/ConfigurationTest.cpp
 
+	params/CommandTest.cpp
 	params/OptionTest.cpp
 
 	params/detail/ParseCommandTest.cpp
