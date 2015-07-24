@@ -51,16 +51,16 @@ TEST_CASE("Test default constructed option set iterator equality",
 TEST_CASE("Test option set iterating", "[Parameters]")
 {
 	const std::initializer_list<pwm::params::Option> optionsList{
-	        pwm::params::Option("foo", "foo"),
-	        pwm::params::Option("bar", "bar"),
-	        pwm::params::Option("baz", "baz"),
-	        pwm::params::Option("zab", "zab"),
-	        pwm::params::Option("rab", "rab"),
-	        pwm::params::Option("oof", "oof"),
-	        pwm::params::Option("foobar", "foobar"),
-	        pwm::params::Option("barbaz", "barbaz"),
-	        pwm::params::Option("zabrab", "zabrab"),
-	        pwm::params::Option("raboof", "raboof")};
+	        pwm::params::Option("foo", ""),
+	        pwm::params::Option("bar", ""),
+	        pwm::params::Option("baz", ""),
+	        pwm::params::Option("zab", ""),
+	        pwm::params::Option("rab", ""),
+	        pwm::params::Option("oof", ""),
+	        pwm::params::Option("foobar", ""),
+	        pwm::params::Option("barbaz", ""),
+	        pwm::params::Option("zabrab", ""),
+	        pwm::params::Option("raboof", "")};
 	pwm::params::OptionSet options(optionsList);
 	CHECK(optionsList.size() == options.size());
 	CHECK(optionsList.size() ==
@@ -73,4 +73,65 @@ TEST_CASE("Test option set iterating", "[Parameters]")
 		CHECK((*expIt).name == (*it).name);
 		++expIt;
 	}
+}
+
+namespace
+{
+bool findSuccessful(pwm::params::OptionSet const &options,
+                    std::string const &parameter,
+                    std::string const &expectedName)
+{
+	pwm::params::Option const *option = options.find(parameter);
+	if(option == nullptr) return false;
+	return option->name == expectedName;
+}
+}
+
+TEST_CASE("Test option set finding", "[Parameters]")
+{
+	pwm::params::OptionSet options{
+	        pwm::params::Option("foo", "", 'o', std::experimental::nullopt),
+	        pwm::params::Option("bar", "", 'r', std::experimental::nullopt),
+	        pwm::params::Option("baz", "", 'z', std::experimental::nullopt,
+	                            true),
+	        pwm::params::Option("zab", "", 'Z', std::experimental::nullopt,
+	                            true),
+	        pwm::params::Option("rab", "", 'R', std::experimental::nullopt),
+	        pwm::params::Option("oof", "", 'O', std::experimental::nullopt),
+	        pwm::params::Option("foobar", "", 'f',
+	                            std::experimental::nullopt),
+	        pwm::params::Option("barbaz", "", 'b',
+	                            std::experimental::nullopt, true),
+	        pwm::params::Option("zabrab", "", 'B',
+	                            std::experimental::nullopt, true),
+	        pwm::params::Option("raboof", "", 'F',
+	                            std::experimental::nullopt)};
+
+	CHECK(findSuccessful(options, "foo", "foo"));
+	CHECK(findSuccessful(options, "o", "foo"));
+	CHECK(findSuccessful(options, "bar", "bar"));
+	CHECK(findSuccessful(options, "r", "bar"));
+	CHECK(findSuccessful(options, "baz", "baz"));
+	CHECK(findSuccessful(options, "z", "baz"));
+	CHECK(findSuccessful(options, "zab", "zab"));
+	CHECK(findSuccessful(options, "Z", "zab"));
+	CHECK(findSuccessful(options, "rab", "rab"));
+	CHECK(findSuccessful(options, "R", "rab"));
+	CHECK(findSuccessful(options, "oof", "oof"));
+	CHECK(findSuccessful(options, "O", "oof"));
+	CHECK(findSuccessful(options, "foobar", "foobar"));
+	CHECK(findSuccessful(options, "f", "foobar"));
+	CHECK(findSuccessful(options, "barbaz", "barbaz"));
+	CHECK(findSuccessful(options, "b", "barbaz"));
+	CHECK(findSuccessful(options, "zabrab", "zabrab"));
+	CHECK(findSuccessful(options, "B", "zabrab"));
+	CHECK(findSuccessful(options, "raboof", "raboof"));
+	CHECK(findSuccessful(options, "F", "raboof"));
+
+	CHECK(!findSuccessful(options, "foo", "bar"));
+	CHECK(!findSuccessful(options, "syn", "syn"));
+	CHECK(!findSuccessful(options, "s", "syn"));
+	CHECK(!findSuccessful(options, "ack", "ack"));
+	CHECK(!findSuccessful(options, "a", "ack"));
+	CHECK(!findSuccessful(options, "-", "foobar"));
 }
