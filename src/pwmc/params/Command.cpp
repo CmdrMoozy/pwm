@@ -23,8 +23,8 @@ namespace pwm
 namespace params
 {
 Command::Command(std::string const &n, std::string const &h,
-                 std::vector<Option> const &o, std::vector<Argument> const &a,
-                 bool laiv)
+                 std::initializer_list<Option> const &o,
+                 std::vector<Argument> const &a, bool laiv)
         : name(n),
           help(h),
           options(o),
