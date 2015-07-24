@@ -93,8 +93,10 @@ private:
 public:
 	OptionSet(std::initializer_list<Option> const& o);
 
-	OptionSet(OptionSet const&) = delete;
-	OptionSet &operator=(OptionSet const&) = delete;
+	OptionSet(OptionSet const& o);
+	OptionSet(OptionSet &&o);
+	OptionSet &operator=(OptionSet const& o);
+	OptionSet &operator=(OptionSet &&o);
 
 	~OptionSet();
 
