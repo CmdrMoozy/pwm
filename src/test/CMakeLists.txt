@@ -9,6 +9,7 @@ set(pwm-test_SOURCES
 	params/CommandTest.cpp
 	params/OptionTest.cpp
 
+	params/detail/ParseArgumentsTest.cpp
 	params/detail/ParseCommandTest.cpp
 	params/detail/ParseOptionsTest.cpp
 

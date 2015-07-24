@@ -47,6 +47,8 @@ set(pwmc_SOURCES
 	params/ProgramParameters.cpp
 	params/ProgramParameters.hpp
 
+	params/detail/parseArguments.cpp
+	params/detail/parseArguments.hpp
 	params/detail/parseCommand.cpp
 	params/detail/parseCommand.hpp
 	params/detail/parseOptions.cpp
