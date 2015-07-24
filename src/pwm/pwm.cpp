@@ -17,7 +17,9 @@
  */
 
 #include <cstdlib>
+#include <initializer_list>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -26,13 +28,13 @@
 #include <gtk/gtk.h>
 #endif
 
-#include "pwmc/args/Argument.hpp"
-#include "pwmc/args/Command.hpp"
-#include "pwmc/args/Option.hpp"
-#include "pwmc/args/parseAndExecuteCommand.hpp"
 #include "pwmc/config/Configuration.hpp"
 #include "pwmc/git/Library.hpp"
 #include "pwmc/git/Repository.hpp"
+#include "pwmc/params/Argument.hpp"
+#include "pwmc/params/Command.hpp"
+#include "pwmc/params/Option.hpp"
+#include "pwmc/params/parseAndExecuteCommand.hpp"
 
 #ifdef PWM_DEBUG
 #include "pwmc/util/Clipboard.hpp"
@@ -40,26 +42,24 @@
 
 namespace
 {
-void configCommand(const pwm::args::OptionsMap &options,
-                   const pwm::args::FlagsMap &,
-                   const pwm::args::ArgumentsMap &arguments)
+void configCommand(pwm::params::OptionsMap const &options,
+                   pwm::params::FlagsMap const &,
+                   pwm::params::ArgumentsMap const &arguments)
 {
 	pwm::config::Key key(*arguments.find("key")->second.begin());
-	auto valIt = options.find("set");
-	if(valIt != options.end())
-	{
-		pwm::config::Configuration::getInstance().set(key,
-		                                              valIt->second);
-	}
+
+	std::string set(options.find("set")->second);
+	if(set != pwm::config::getUseConfigDefaultArgument())
+		pwm::config::Configuration::getInstance().set(key, set);
 
 	std::cout << pwm::config::Key(key) << " = "
 	          << pwm::config::Configuration::getInstance().get(key) << "\n";
 }
 
-void initCommand(const pwm::args::OptionsMap &options,
-                 const pwm::args::FlagsMap &, const pwm::args::ArgumentsMap &)
+void initCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
+                 pwm::params::ArgumentsMap const &arguments)
 {
-	std::string repoPath = options.find("repository")->second;
+	std::string repoPath = *arguments.find("repository")->second.begin();
 	if(repoPath == pwm::config::getUseConfigDefaultArgument())
 	{
 		repoPath = pwm::config::Configuration::getInstance().getOr(
@@ -86,17 +86,16 @@ void initCommand(const pwm::args::OptionsMap &options,
 }
 
 #ifdef PWM_DEBUG
-void clipboardCommand(const pwm::args::OptionsMap &options,
-                      const pwm::args::FlagsMap &,
-                      const pwm::args::ArgumentsMap &)
+void clipboardCommand(pwm::params::OptionsMap const &options,
+                      pwm::params::FlagsMap const &,
+                      pwm::params::ArgumentsMap const &)
 {
-	auto setIt = options.find("set");
-	if(setIt != options.end())
+	std::string set = options.find("set")->second;
+	if(set != pwm::config::getUseConfigDefaultArgument())
 	{
-		std::cout << "Set: '" << setIt->second << "'\n";
+		std::cout << "Set: '" << set << "'\n";
 		pwm::util::clipboard::setClipboardContents(
-		        pwm::util::clipboard::ClipboardType::Clipboard,
-		        setIt->second);
+		        pwm::util::clipboard::ClipboardType::Clipboard, set);
 	}
 	std::cout << pwm::util::clipboard::getClipboardContents(
 	                     pwm::util::clipboard::ClipboardType::Clipboard)
@@ -104,38 +103,39 @@ void clipboardCommand(const pwm::args::OptionsMap &options,
 }
 #endif
 
-const std::vector<pwm::args::Option> CONFIG_COMMAND_OPTIONS = {
-        pwm::args::Option("set", "Set the key to this new value.", 's', true)};
+const std::initializer_list<pwm::params::Option> CONFIG_COMMAND_OPTIONS{
+        pwm::params::Option("set", "Set the key to this new value.", 's',
+                            pwm::config::getUseConfigDefaultArgument())};
 
-const std::vector<pwm::args::Argument> CONFIG_COMMAND_ARGUMENTS = {
-        pwm::args::Argument("key", "The configuration key to get or set."),
-};
+const std::vector<pwm::params::Argument> CONFIG_COMMAND_ARGUMENTS{
+        pwm::params::Argument("key", "The configuration key to get or set.")};
 
-const std::vector<pwm::args::Option> INIT_COMMAND_OPTIONS = {pwm::args::Option(
-        "repository", "The path to the repository to initialize.", 'r', false,
-        pwm::config::getUseConfigDefaultArgument())};
+const std::vector<pwm::params::Argument> INIT_COMMAND_ARGUMENTS{
+        pwm::params::Argument("repository",
+                              "The path to the repository to initialize.",
+                              pwm::config::getUseConfigDefaultArgument())};
 
 #ifdef PWM_DEBUG
-const std::vector<pwm::args::Option> CLIPBOARD_COMMAND_OPTIONS = {
-        pwm::args::Option("set", "Set the clipboard contents to this value.",
-                          's', true)};
+const std::initializer_list<pwm::params::Option> CLIPBOARD_COMMAND_OPTIONS{
+        pwm::params::Option("set", "Set the clipboard contents to this value.",
+                            's', "")};
 #endif
 
-const std::vector<pwm::args::Command> PWM_COMMANDS = {
-        pwm::args::Command("config", "Get or set a configuration value",
-                           configCommand, CONFIG_COMMAND_OPTIONS,
-                           CONFIG_COMMAND_ARGUMENTS),
-        pwm::args::Command("init", "Initialize a new pwm repository",
-                           initCommand, INIT_COMMAND_OPTIONS, {})
+const std::set<pwm::params::Command> PWM_COMMANDS = {
+        pwm::params::Command("config", "Get or set a configuration value",
+                             configCommand, CONFIG_COMMAND_OPTIONS,
+                             CONFIG_COMMAND_ARGUMENTS),
+        pwm::params::Command("init", "Initialize a new pwm repository",
+                             initCommand, {}, INIT_COMMAND_ARGUMENTS)
 #ifdef PWM_DEBUG
                 ,
-        pwm::args::Command("clipboard", "Access clipboard data",
-                           clipboardCommand, CLIPBOARD_COMMAND_OPTIONS, {})
+        pwm::params::Command("clipboard", "Access clipboard data",
+                             clipboardCommand, CLIPBOARD_COMMAND_OPTIONS)
 #endif
 };
 }
 
-int main(int argc, char *const *argv)
+int main(int argc, char **argv)
 {
 #ifdef PWM_USE_CLIPBOARD
 	gtk_init(nullptr, nullptr);
@@ -143,6 +143,5 @@ int main(int argc, char *const *argv)
 
 	pwm::git::LibraryInstance gitLibrary;
 	pwm::config::ConfigurationInstance configInstance;
-	int ret = pwm::args::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
-	return ret;
+	return pwm::params::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
 }
