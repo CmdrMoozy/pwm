@@ -49,6 +49,8 @@ set(pwmc_SOURCES
 
 	params/detail/parseCommand.cpp
 	params/detail/parseCommand.hpp
+	params/detail/parseOptions.cpp
+	params/detail/parseOptions.hpp
 
 	util/Clipboard.cpp
 	util/Clipboard.hpp
