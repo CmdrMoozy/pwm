@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
+#include <utility>
 
 namespace
 {
@@ -123,11 +124,44 @@ struct OptionSet::OptionSetImpl
 				shortNameOptions.insert(optionPtr);
 		}
 	}
+
+	OptionSetImpl(OptionSetImpl const &) = default;
+	OptionSetImpl(OptionSetImpl &&) = default;
+	OptionSetImpl &operator=(OptionSetImpl const &) = default;
+	OptionSetImpl &operator=(OptionSetImpl &&) = default;
+
+	~OptionSetImpl() = default;
 };
 
 OptionSet::OptionSet(std::initializer_list<Option> const &o)
         : impl(new OptionSetImpl(o))
 {
+}
+
+OptionSet::OptionSet(OptionSet const &o)
+{
+	*this = o;
+}
+
+OptionSet::OptionSet(OptionSet &&o)
+{
+	impl = std::move(o.impl);
+}
+
+OptionSet &OptionSet::operator=(OptionSet const &o)
+{
+	if(this == &o) return *this;
+	if(o.impl)
+		impl.reset(new OptionSetImpl(*o.impl));
+	else
+		impl.reset();
+	return *this;
+}
+
+OptionSet &OptionSet::operator=(OptionSet &&o)
+{
+	impl = std::move(o.impl);
+	return *this;
 }
 
 OptionSet::~OptionSet()
