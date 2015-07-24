@@ -26,10 +26,12 @@ namespace pwm
 namespace params
 {
 Command::Command(std::string const &n, std::string const &h,
+                 CommandFunction const &fn,
                  std::initializer_list<Option> const &o,
                  std::vector<Argument> const &a, bool laiv)
         : name(n),
           help(h),
+          function(fn),
           options(o),
           arguments(a),
           lastArgumentIsVariadic(laiv)

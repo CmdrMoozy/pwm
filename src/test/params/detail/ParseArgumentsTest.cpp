@@ -39,7 +39,8 @@ TEST_CASE("Test normal argument parsing", "[Parameters]")
 {
 	pwm::params::ProgramParameters parameters({"oof", "rab", "zab"});
 
-	const pwm::params::Command command("test", "A command for testing.", {},
+	const pwm::params::Command command("test", "A command for testing.",
+	                                   pwm::params::CommandFunction(), {},
 	                                   {pwm::params::Argument("foo", ""),
 	                                    pwm::params::Argument("bar", ""),
 	                                    pwm::params::Argument("baz", "")},
@@ -61,7 +62,8 @@ TEST_CASE("Test multiple default values", "[Parameters]")
 	pwm::params::ProgramParameters parameters({"a", "b", "c"});
 
 	const pwm::params::Command command(
-	        "test", "A command for testing.", {},
+	        "test", "A command for testing.",
+	        pwm::params::CommandFunction(), {},
 	        {pwm::params::Argument("foo", ""),
 	         pwm::params::Argument("bar", ""),
 	         pwm::params::Argument("baz", ""),
@@ -89,7 +91,8 @@ TEST_CASE("Test variadic last argument with default value", "[Parameters]")
 	pwm::params::ProgramParameters parameters({"a"});
 
 	const pwm::params::Command command(
-	        "test", "A command for testing.", {},
+	        "test", "A command for testing.",
+	        pwm::params::CommandFunction(), {},
 	        {pwm::params::Argument("foo", ""),
 	         pwm::params::Argument("bar", "", "foobar")},
 	        true);
@@ -109,7 +112,8 @@ TEST_CASE("Test variadic last argument with single value", "[Parameters]")
 	pwm::params::ProgramParameters parameters({"a", "b"});
 
 	const pwm::params::Command command(
-	        "test", "A command for testing.", {},
+	        "test", "A command for testing.",
+	        pwm::params::CommandFunction(), {},
 	        {pwm::params::Argument("foo", ""),
 	         pwm::params::Argument("bar", "", "foobar")},
 	        true);
@@ -129,7 +133,8 @@ TEST_CASE("Test variadic last argument with multiple values", "[Parameters]")
 	pwm::params::ProgramParameters parameters({"a", "b", "c", "d"});
 
 	const pwm::params::Command command(
-	        "test", "A command for testing.", {},
+	        "test", "A command for testing.",
+	        pwm::params::CommandFunction(), {},
 	        {pwm::params::Argument("foo", ""),
 	         pwm::params::Argument("bar", "", "foobar")},
 	        true);
@@ -148,7 +153,8 @@ TEST_CASE("Test extra program parameters", "[Parameters]")
 {
 	pwm::params::ProgramParameters parameters({"bar", "baz"});
 
-	const pwm::params::Command command("test", "A command for testing.", {},
+	const pwm::params::Command command("test", "A command for testing.",
+	                                   pwm::params::CommandFunction(), {},
 	                                   {pwm::params::Argument("foo", "")},
 	                                   false);
 

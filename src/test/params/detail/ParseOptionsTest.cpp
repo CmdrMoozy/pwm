@@ -30,6 +30,7 @@ namespace
 {
 const pwm::params::Command
         TEST_COMMAND("test", "A command for testing purposes.",
+                     pwm::params::CommandFunction(),
                      {pwm::params::Option("flaga", "", 'a',
                                           std::experimental::nullopt, true),
                       pwm::params::Option("optiona", "", 'A'),
