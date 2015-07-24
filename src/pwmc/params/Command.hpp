@@ -19,6 +19,9 @@
 #ifndef pwmc_params_Command_HPP
 #define pwmc_params_Command_HPP
 
+#include <initializer_list>
+#include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -29,16 +32,20 @@ namespace pwm
 {
 namespace params
 {
+typedef std::map<std::string, std::string> OptionsMap;
+typedef std::map<std::string, bool> FlagsMap;
+typedef std::map<std::string, std::vector<std::string>> ArgumentsMap;
+
 struct Command
 {
 	std::string name;
 	std::string help;
-	std::vector<Option> options;
+	OptionSet options;
 	std::vector<Argument> arguments;
 	bool lastArgumentIsVariadic;
 
 	Command(std::string const& n, std::string const& h,
-		std::vector<Option> const& o = {},
+		std::initializer_list<Option> const& o = {},
 		std::vector<Argument> const& a = {},
 		bool laiv = false);
 };
