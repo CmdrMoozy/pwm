@@ -27,9 +27,9 @@
 TEST_CASE("Test invalid command", "[Parameters]")
 {
 	std::set<pwm::params::Command> commands;
-	commands.emplace("foo", "foo").first;
-	commands.emplace("bar", "bar").first;
-	commands.emplace("baz", "baz").first;
+	commands.emplace("foo", "foo", pwm::params::CommandFunction()).first;
+	commands.emplace("bar", "bar", pwm::params::CommandFunction()).first;
+	commands.emplace("baz", "baz", pwm::params::CommandFunction()).first;
 
 	pwm::params::ProgramParameters parameters{"biff", "foo", "bar", "baz"};
 	REQUIRE(4 == parameters.parameters.size());
@@ -41,9 +41,11 @@ TEST_CASE("Test invalid command", "[Parameters]")
 TEST_CASE("Test command with no arguments", "[Parameters]")
 {
 	std::set<pwm::params::Command> commands;
-	commands.emplace("foo", "foo").first;
-	const auto barIt = commands.emplace("bar", "bar").first;
-	commands.emplace("baz", "baz").first;
+	commands.emplace("foo", "foo", pwm::params::CommandFunction()).first;
+	const auto barIt =
+	        commands.emplace("bar", "bar", pwm::params::CommandFunction())
+	                .first;
+	commands.emplace("baz", "baz", pwm::params::CommandFunction()).first;
 
 	pwm::params::ProgramParameters parameters{"bar"};
 	REQUIRE(1 == parameters.parameters.size());
@@ -54,9 +56,11 @@ TEST_CASE("Test command with no arguments", "[Parameters]")
 TEST_CASE("Test command with arguments", "[Parameters]")
 {
 	std::set<pwm::params::Command> commands;
-	commands.emplace("foo", "foo").first;
-	commands.emplace("bar", "bar").first;
-	const auto bazIt = commands.emplace("baz", "baz").first;
+	commands.emplace("foo", "foo", pwm::params::CommandFunction()).first;
+	commands.emplace("bar", "bar", pwm::params::CommandFunction()).first;
+	const auto bazIt =
+	        commands.emplace("baz", "baz", pwm::params::CommandFunction())
+	                .first;
 
 	pwm::params::ProgramParameters parameters{"baz", "foo", "bar", "baz"};
 	REQUIRE(4 == parameters.parameters.size());

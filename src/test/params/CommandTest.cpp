@@ -28,7 +28,7 @@ TEST_CASE("Test command construction with valid defaulted arguments",
 {
 	std::experimental::optional<pwm::params::Command> command;
 	REQUIRE_NOTHROW(command.emplace(
-	        "test", "A test command.",
+	        "test", "A test command.", pwm::params::CommandFunction(),
 	        std::initializer_list<pwm::params::Option>({}),
 	        std::vector<pwm::params::Argument>(
 	                {pwm::params::Argument("foo", "foo"),
@@ -42,7 +42,7 @@ TEST_CASE("Test command construction with invalid defaulted arguments",
 {
 	std::experimental::optional<pwm::params::Command> command;
 	REQUIRE_THROWS(command.emplace(
-	        "test", "A test command.",
+	        "test", "A test command.", pwm::params::CommandFunction(),
 	        std::initializer_list<pwm::params::Option>({}),
 	        std::vector<pwm::params::Argument>(
 	                {pwm::params::Argument("foo", "foo"),

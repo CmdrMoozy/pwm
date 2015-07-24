@@ -33,7 +33,7 @@ namespace detail
 {
 std::set<Command>::const_iterator parseCommand(
 	ProgramParameters& parameters,
-	std::set<Command> const& commands);
+	std::set<Command> const& commands) noexcept;
 }
 }
 }
