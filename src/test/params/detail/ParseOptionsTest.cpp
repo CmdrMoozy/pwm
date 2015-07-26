@@ -28,19 +28,16 @@
 
 namespace
 {
-const pwm::params::Command
-        TEST_COMMAND("test", "A command for testing purposes.",
-                     pwm::params::CommandFunction(),
-                     {pwm::params::Option("flaga", "", 'a',
-                                          std::experimental::nullopt, true),
-                      pwm::params::Option("optiona", "", 'A'),
-                      pwm::params::Option("flagb", "", 'b',
-                                          std::experimental::nullopt, true),
-                      pwm::params::Option("optionb", "", 'B', "bdefault"),
-                      pwm::params::Option("flagc", "", 'c',
-                                          std::experimental::nullopt, true),
-                      pwm::params::Option("optionc", "", 'C')},
-                     {}, false);
+const pwm::params::Command TEST_COMMAND(
+        "test", "A command for testing purposes.",
+        pwm::params::CommandFunction(),
+        {pwm::params::Option::flag("flaga", "", 'a'),
+         pwm::params::Option::required("optiona", "", 'A'),
+         pwm::params::Option::flag("flagb", "", 'b'),
+         pwm::params::Option::required("optionb", "", 'B', "bdefault"),
+         pwm::params::Option::flag("flagc", "", 'c'),
+         pwm::params::Option::required("optionc", "", 'C')},
+        {}, false);
 
 bool optionValueCorrect(std::string const &name,
                         std::string const &expectedValue,

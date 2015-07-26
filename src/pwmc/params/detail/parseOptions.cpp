@@ -38,7 +38,7 @@ void insertDefaults(pwm::params::OptionsMap &options,
 			options.insert(std::make_pair(option.name,
 			                              *option.defaultValue));
 		}
-		else if(option.flag)
+		else if(option.isFlag)
 		{
 			flags.insert(std::make_pair(option.name, false));
 		}
@@ -121,7 +121,7 @@ void checkAllValuesPresent(pwm::params::OptionsMap const &options,
 {
 	for(auto const &option : command.options)
 	{
-		if(option.flag) continue;
+		if(option.isFlag) continue;
 
 		if(options.find(option.name) == options.end())
 		{
@@ -171,7 +171,7 @@ std::tuple<OptionsMap, FlagsMap> parseOptions(ProgramParameters &parameters,
 		parameters.parameters.pop_front();
 
 		// Insert this option's / flag's value into our return maps.
-		if(option->flag)
+		if(option->isFlag)
 		{
 			retFlags[option->name] = true;
 		}

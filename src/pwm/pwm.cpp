@@ -104,8 +104,9 @@ void clipboardCommand(pwm::params::OptionsMap const &options,
 #endif
 
 const std::initializer_list<pwm::params::Option> CONFIG_COMMAND_OPTIONS{
-        pwm::params::Option("set", "Set the key to this new value.", 's',
-                            pwm::config::getUseConfigDefaultArgument())};
+        pwm::params::Option::required(
+                "set", "Set the key to this new value.", 's',
+                pwm::config::getUseConfigDefaultArgument())};
 
 const std::vector<pwm::params::Argument> CONFIG_COMMAND_ARGUMENTS{
         pwm::params::Argument("key", "The configuration key to get or set.")};
@@ -117,8 +118,8 @@ const std::vector<pwm::params::Argument> INIT_COMMAND_ARGUMENTS{
 
 #ifdef PWM_DEBUG
 const std::initializer_list<pwm::params::Option> CLIPBOARD_COMMAND_OPTIONS{
-        pwm::params::Option("set", "Set the clipboard contents to this value.",
-                            's', "")};
+        pwm::params::Option::required(
+                "set", "Set the clipboard contents to this value.", 's', "")};
 #endif
 
 const std::set<pwm::params::Command> PWM_COMMANDS = {

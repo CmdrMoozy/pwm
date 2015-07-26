@@ -31,27 +31,42 @@ namespace pwm
 {
 namespace params
 {
+class OptionSet;
+
 struct Option
 {
+public:
+	static Option required(std::string const& n,
+		std::string const& h,
+		std::experimental::optional<char> const& sn = std::experimental::nullopt,
+		std::experimental::optional<std::string> const& dv = std::experimental::nullopt);
+
+	static Option required(std::string const& n,
+		std::string const& h,
+		std::experimental::optional<char> const& sn,
+		std::string const& dv);
+
+	static Option flag(std::string const& n,
+		std::string const& h,
+		std::experimental::optional<char> const& sn = std::experimental::nullopt);
+
 	std::string name;
 	std::string help;
 	std::experimental::optional<char> shortName;
 	std::experimental::optional<std::string> defaultValue;
-	bool flag;
+	bool isFlag;
 
-	Option(std::string const& n,
-		std::string const& h,
-		std::experimental::optional<char> const& sn = std::experimental::nullopt,
-		std::experimental::optional<std::string> const& dv = std::experimental::nullopt,
-		bool f = false);
+private:
+	friend class OptionSet;
 
 	Option(std::string const& n,
 		std::string const& h,
 		std::experimental::optional<char> const& sn,
-		std::string const& dv);
-};
+		std::experimental::optional<std::string> const& dv,
+		bool f);
 
-class OptionSet;
+	Option(std::string const& n);
+};
 
 class OptionSetConstIterator
 {
