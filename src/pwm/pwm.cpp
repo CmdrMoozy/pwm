@@ -58,18 +58,16 @@ void configCommand(pwm::params::OptionsMap const &options,
 	          << pwm::config::Configuration::getInstance().get(key) << "\n";
 }
 
-void initCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
-                 pwm::params::ArgumentsMap const &arguments)
+void initCommand(pwm::params::OptionsMap const &options,
+                 pwm::params::FlagsMap const &,
+                 pwm::params::ArgumentsMap const &)
 {
-	std::string repoPath = *arguments.find("repository")->second.begin();
-	if(repoPath == pwm::config::getUseConfigDefaultArgument())
-	{
-		repoPath = pwm::config::Configuration::getInstance().getOr(
-		        pwm::config::getConfigurationKey(
-		                pwm::config::ConfigurationValue::
-		                        RepositoryDefaultPath),
-		        "");
-	}
+	std::string repoPath = pwm::config::Configuration::getInstance().getOr(
+	        pwm::config::getConfigurationKey(
+	                pwm::config::ConfigurationValue::RepositoryDefaultPath),
+	        "");
+	if(options.find("repository") != options.end())
+		repoPath = options.find("repository")->second;
 
 	if(repoPath.empty())
 	{
@@ -117,10 +115,10 @@ const std::initializer_list<pwm::params::Option> CONFIG_COMMAND_OPTIONS{
 const std::vector<pwm::params::Argument> CONFIG_COMMAND_ARGUMENTS{
         pwm::params::Argument("key", "The configuration key to get or set.")};
 
-const std::vector<pwm::params::Argument> INIT_COMMAND_ARGUMENTS{
-        pwm::params::Argument("repository",
-                              "The path to the repository to initialize.",
-                              pwm::config::getUseConfigDefaultArgument())};
+const std::initializer_list<pwm::params::Option> INIT_COMMAND_OPTIONS{
+        pwm::params::Option::optional(
+                "repository", "The path to the repository to initialize.",
+                'r')};
 
 const std::initializer_list<pwm::params::Option> LIST_COMMAND_OPTIONS{
         pwm::params::Option::optional(
@@ -142,7 +140,7 @@ const std::set<pwm::params::Command> PWM_COMMANDS = {
                              configCommand, CONFIG_COMMAND_OPTIONS,
                              CONFIG_COMMAND_ARGUMENTS),
         pwm::params::Command("init", "Initialize a new pwm repository",
-                             initCommand, {}, INIT_COMMAND_ARGUMENTS),
+                             initCommand, INIT_COMMAND_OPTIONS),
         pwm::params::Command("ls", "List passwords stored in a pwm repository",
                              listCommand, LIST_COMMAND_OPTIONS,
                              LIST_COMMAND_ARGUMENTS)

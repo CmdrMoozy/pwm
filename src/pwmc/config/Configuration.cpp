@@ -31,13 +31,6 @@ namespace config
 std::mutex Configuration::mutex;
 std::unique_ptr<Configuration> Configuration::instance;
 
-std::string getUseConfigDefaultArgument()
-{
-	static const std::string USE_CONFIG_DEFAULT_ARGUMENT(
-	        "USE_CONFIGURATION");
-	return USE_CONFIG_DEFAULT_ARGUMENT;
-}
-
 Key getConfigurationKey(ConfigurationValue value)
 {
 	static std::map<ConfigurationValue, std::string> CONFIGURATION_KEYS = {
