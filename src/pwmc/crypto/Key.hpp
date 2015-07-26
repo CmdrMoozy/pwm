@@ -19,6 +19,7 @@
 #ifndef pwmc_crypto_Passphrase_HPP
 #define pwmc_crypto_Passphrase_HPP
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -27,16 +28,33 @@ namespace pwm
 {
 namespace crypto
 {
+constexpr std::size_t DEFAULT_KEY_SIZE_OCTETS = 512 / 8;
+constexpr int DEFAULT_SCRYPT_WORK_FACTOR = 20;
+constexpr int DEFAULT_SCRYPT_PARALLELIZATION_FACTOR = 1;
+constexpr std::size_t DEFAULT_SALT_SIZE = 16;
+
 class Key
 {
 public:
-	Key(std::string const&p, std::vector<uint8_t> const& s);
-	Key(std::string const& p, std::string const& s);
-	explicit Key(const std::string &p);
+	Key(std::string const&p, std::vector<uint8_t> const& s,
+		std::size_t ks = DEFAULT_KEY_SIZE_OCTETS,
+		int sw = DEFAULT_SCRYPT_WORK_FACTOR,
+		int sp = DEFAULT_SCRYPT_PARALLELIZATION_FACTOR);
+	Key(std::string const& p, std::string const& s,
+		std::size_t ks = DEFAULT_KEY_SIZE_OCTETS,
+		int sw = DEFAULT_SCRYPT_WORK_FACTOR,
+		int sp = DEFAULT_SCRYPT_PARALLELIZATION_FACTOR);
+	Key(const std::string &p,
+		std::size_t ks = DEFAULT_KEY_SIZE_OCTETS,
+		int sw = DEFAULT_SCRYPT_WORK_FACTOR,
+		int sp = DEFAULT_SCRYPT_PARALLELIZATION_FACTOR);
 
 	Key(const Key &) = default;
-	~Key() = default;
+	Key(Key&&) = default;
 	Key &operator=(const Key &) = default;
+	Key& operator=(Key&&) = default;
+
+	~Key() = default;
 
 	const std::vector<uint8_t>& getSalt() const;
 	const std::vector<uint8_t>& getKey() const;
