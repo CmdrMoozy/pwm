@@ -1,0 +1,95 @@
+/*
+ * pwm - A simple password manager for Linux.
+ * Copyright (C) 2015  Axel Rasmussen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <catch/catch.hpp>
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "pwmc/crypto/Key.hpp"
+
+namespace
+{
+struct KeyTestCase
+{
+	std::string passphrase;
+	std::string salt;
+	std::vector<uint8_t> expectedKey;
+
+	KeyTestCase(std::string const &p, std::string const &s,
+	            std::vector<uint8_t> const &ek)
+	        : passphrase(p), salt(s), expectedKey(ek)
+	{
+	}
+};
+
+bool keyTestCasePasses(KeyTestCase const &test)
+{
+	pwm::crypto::Key key(test.passphrase, test.salt);
+	if(std::vector<uint8_t>(
+	           reinterpret_cast<uint8_t const *>(test.salt.data()),
+	           reinterpret_cast<uint8_t const *>(test.salt.data()) +
+	                   test.salt.length()) != key.getSalt())
+	{
+		return false;
+	}
+	return test.expectedKey == key.getKey();
+}
+}
+
+TEST_CASE("Test cryptographic key derivation", "[Crypto]")
+{
+	const std::vector<KeyTestCase> TEST_CASES{
+	        KeyTestCase("", "test",
+	                    {0x19u, 0x7cu, 0x60u, 0xe4u, 0x38u, 0xabu, 0x4cu,
+	                     0x8eu, 0xd6u, 0xcbu, 0x90u, 0x4fu, 0xedu, 0x12u,
+	                     0x86u, 0xbau, 0xaau, 0x48u, 0xeau, 0x0bu, 0x8bu,
+	                     0x3cu, 0x0du, 0xf8u, 0x43u, 0xa4u, 0x13u, 0xd2u,
+	                     0xb9u, 0x3au, 0x65u, 0x1au, 0x69u, 0xddu, 0x18u,
+	                     0xf1u, 0x3bu, 0x19u, 0x93u, 0x8au, 0xdfu, 0x56u,
+	                     0x64u, 0x31u, 0x35u, 0x86u, 0x69u, 0x84u, 0x2eu,
+	                     0x95u, 0x06u, 0x74u, 0xc1u, 0xf7u, 0xb6u, 0x36u,
+	                     0x6bu, 0x0bu, 0x66u, 0x38u, 0x0bu, 0x53u, 0x45u,
+	                     0x66u}),
+	        KeyTestCase("password", "NaCl",
+	                    {0x33u, 0x40u, 0x4cu, 0xf8u, 0xa3u, 0x1cu, 0xf5u,
+	                     0xc5u, 0xa0u, 0x94u, 0x48u, 0xb1u, 0xbdu, 0x11u,
+	                     0xecu, 0x4du, 0x7eu, 0xe1u, 0x82u, 0x75u, 0x79u,
+	                     0x2au, 0x79u, 0x28u, 0x92u, 0xdeu, 0x99u, 0x98u,
+	                     0xf0u, 0x09u, 0x34u, 0xa6u, 0x5au, 0x78u, 0xbau,
+	                     0xd3u, 0x7au, 0xabu, 0xfau, 0x35u, 0xf6u, 0x5du,
+	                     0x25u, 0x26u, 0xacu, 0x4cu, 0x3bu, 0x51u, 0xc8u,
+	                     0x69u, 0x3cu, 0xc8u, 0x36u, 0x6fu, 0x1fu, 0x94u,
+	                     0xfeu, 0x80u, 0x7du, 0xc4u, 0xd7u, 0xacu, 0xb1u,
+	                     0xf3u}),
+	        KeyTestCase("pleaseletmein", "SodiumChloride",
+	                    {0x0cu, 0x7cu, 0x76u, 0x2du, 0x60u, 0xc3u, 0xd2u,
+	                     0x98u, 0x10u, 0xedu, 0x10u, 0x6au, 0xf2u, 0xa9u,
+	                     0x8eu, 0x2cu, 0x9cu, 0x60u, 0x3eu, 0xd8u, 0xbeu,
+	                     0xaau, 0xfeu, 0x19u, 0x2cu, 0x0fu, 0x14u, 0x7fu,
+	                     0xadu, 0xbdu, 0x87u, 0x57u, 0x55u, 0xceu, 0xf9u,
+	                     0x9bu, 0xdau, 0xbfu, 0x52u, 0xd3u, 0x03u, 0x59u,
+	                     0x37u, 0x5cu, 0x1bu, 0xb1u, 0x3eu, 0xf1u, 0x02u,
+	                     0x0bu, 0xfdu, 0x4au, 0x06u, 0x58u, 0x3du, 0x1du,
+	                     0xc9u, 0xbbu, 0x44u, 0x24u, 0x1cu, 0x77u, 0x78u,
+	                     0x35u})};
+
+	for(auto const &test : TEST_CASES)
+		CHECK(keyTestCasePasses(test));
+}

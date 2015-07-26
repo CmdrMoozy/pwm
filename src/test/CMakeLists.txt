@@ -4,6 +4,8 @@ set(pwm-test_SOURCES
 
 	config/ConfigurationTest.cpp
 
+	crypto/KeyTest.cpp
+
 	params/CommandTest.cpp
 	params/OptionTest.cpp
 

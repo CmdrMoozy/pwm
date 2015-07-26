@@ -16,34 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef pwmc_crypto_Passphrase_HPP
-#define pwmc_crypto_Passphrase_HPP
+#ifndef pwmc_util_printBytesAsHex_HPP
+#define pwmc_util_printBytesAsHex_HPP
 
-#include <cstdint>
-#include <string>
-#include <vector>
+#include <cstddef>
+#include <cstdio>
 
 namespace pwm
 {
-namespace crypto
+namespace util
 {
-class Key
-{
-public:
-	Key(const std::string &p, const std::vector<uint8_t>& s);
-	explicit Key(const std::string &p);
-
-	Key(const Key &) = default;
-	~Key() = default;
-	Key &operator=(const Key &) = default;
-
-	const std::vector<uint8_t>& getSalt() const;
-	const std::vector<uint8_t>& getKey() const;
-
-private:
-	const std::vector<uint8_t> salt;
-	std::vector<uint8_t> key;
-};
+void printBytesAsHex(void const* data, std::size_t length, FILE* out = stdout);
 }
 }
 
