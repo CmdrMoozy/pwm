@@ -90,6 +90,12 @@ void listCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
 {
 }
 
+void passwordCommand(pwm::params::OptionsMap const &,
+                     pwm::params::FlagsMap const &,
+                     pwm::params::ArgumentsMap const &)
+{
+}
+
 #ifdef PWM_DEBUG
 void clipboardCommand(pwm::params::OptionsMap const &options,
                       pwm::params::FlagsMap const &,
@@ -129,6 +135,17 @@ const std::vector<pwm::params::Argument> LIST_COMMAND_ARGUMENTS{
                 "path", "The path to list, relative to the repository's root.",
                 "/")};
 
+const std::initializer_list<pwm::params::Option> PASSWORD_COMMAND_OPTIONS{
+        pwm::params::Option::optional(
+                "repository", "The path to the repository to examine.", 'r'),
+        pwm::params::Option::optional("set", "Set this password.", 's'),
+        pwm::params::Option::optional(
+                "key", "Set this password using a key file.", 'k')};
+
+const std::vector<pwm::params::Argument> PASSWORD_COMMAND_ARGUMENTS{
+        pwm::params::Argument("path",
+                              "The path of the password to get or set.")};
+
 #ifdef PWM_DEBUG
 const std::initializer_list<pwm::params::Option> CLIPBOARD_COMMAND_OPTIONS{
         pwm::params::Option::optional(
@@ -143,7 +160,11 @@ const std::set<pwm::params::Command> PWM_COMMANDS = {
                              initCommand, INIT_COMMAND_OPTIONS),
         pwm::params::Command("ls", "List passwords stored in a pwm repository",
                              listCommand, LIST_COMMAND_OPTIONS,
-                             LIST_COMMAND_ARGUMENTS)
+                             LIST_COMMAND_ARGUMENTS),
+        pwm::params::Command("pw",
+                             "Get or set a password from a pwm repository",
+                             passwordCommand, PASSWORD_COMMAND_OPTIONS,
+                             PASSWORD_COMMAND_ARGUMENTS)
 #ifdef PWM_DEBUG
                 ,
         pwm::params::Command("clipboard", "Access clipboard data",
