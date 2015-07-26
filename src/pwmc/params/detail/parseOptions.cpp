@@ -121,6 +121,7 @@ void checkAllValuesPresent(pwm::params::OptionsMap const &options,
 {
 	for(auto const &option : command.options)
 	{
+		if(option.isOptional) continue;
 		if(option.isFlag) continue;
 
 		if(options.find(option.name) == options.end())
