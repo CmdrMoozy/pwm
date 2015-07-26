@@ -31,8 +31,6 @@ namespace pwm
 {
 namespace config
 {
-std::string getUseConfigDefaultArgument();
-
 enum class ConfigurationValue
 {
 	RepositoryDefaultPath
