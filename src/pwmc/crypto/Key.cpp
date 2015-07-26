@@ -18,41 +18,34 @@
 
 #include "Key.hpp"
 
-#include <cstddef>
-
 #include "pwmc/crypto/checkReturn.hpp"
 #include "pwmc/crypto/Util.hpp"
-
-namespace
-{
-constexpr std::size_t KEY_SIZE_OCTETS = 512 / 8;
-constexpr int SCRYPT_WORK_FACTOR = 20;
-constexpr int SCRYPT_PARALLELIZATION_FACTOR = 1;
-constexpr std::size_t DEFAULT_SALT_SIZE = 16;
-}
 
 namespace pwm
 {
 namespace crypto
 {
-Key::Key(const std::string &p, const std::vector<uint8_t> &s)
-        : salt(s), key(KEY_SIZE_OCTETS, 0)
+Key::Key(const std::string &p, const std::vector<uint8_t> &s, std::size_t ks,
+         int sw, int sp)
+        : salt(s), key(ks, 0)
 {
-	checkReturn(gcry_kdf_derive(p.data(), p.length(), GCRY_KDF_SCRYPT,
-	                            SCRYPT_WORK_FACTOR, salt.data(),
-	                            salt.size(), SCRYPT_PARALLELIZATION_FACTOR,
-	                            KEY_SIZE_OCTETS, key.data()));
+	checkReturn(gcry_kdf_derive(
+	        p.data(), p.length(), GCRY_KDF_SCRYPT, sw, salt.data(),
+	        salt.size(), static_cast<unsigned long>(sp), ks, key.data()));
 }
 
-Key::Key(std::string const &p, std::string const &s)
+Key::Key(std::string const &p, std::string const &s, std::size_t ks, int sw,
+         int sp)
         : Key(p,
               std::vector<uint8_t>(
                       reinterpret_cast<uint8_t const *>(s.data()),
-                      reinterpret_cast<uint8_t const *>(s.data() + s.length())))
+                      reinterpret_cast<uint8_t const *>(s.data() + s.length())),
+              ks, sw, sp)
 {
 }
 
-Key::Key(const std::string &p) : Key(p, util::generateSalt(DEFAULT_SALT_SIZE))
+Key::Key(const std::string &p, std::size_t ks, int sw, int sp)
+        : Key(p, util::generateSalt(DEFAULT_SALT_SIZE), ks, sw, sp)
 {
 }
 
