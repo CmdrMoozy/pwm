@@ -25,15 +25,8 @@
 TEST_CASE("Test option default value construction", "[Parameters]")
 {
 	std::experimental::optional<pwm::params::Option> option;
-	CHECK_NOTHROW(option.emplace("foobar", "A test option.", 'f',
-	                             std::string("barbaz"), false));
-}
-
-TEST_CASE("Test flag option default value construction", "[Parameters]")
-{
-	std::experimental::optional<pwm::params::Option> option;
-	CHECK_THROWS(option.emplace("foobar", "A test option.", 'f',
-	                            std::string("barbaz"), true));
+	CHECK_NOTHROW(option = pwm::params::Option::required(
+	                      "foobar", "A test option.", 'f', "barbaz"));
 }
 
 TEST_CASE("Test default constructed option set iterator equality",
@@ -51,16 +44,16 @@ TEST_CASE("Test default constructed option set iterator equality",
 TEST_CASE("Test option set iterating", "[Parameters]")
 {
 	const std::initializer_list<pwm::params::Option> optionsList{
-	        pwm::params::Option("foo", ""),
-	        pwm::params::Option("bar", ""),
-	        pwm::params::Option("baz", ""),
-	        pwm::params::Option("zab", ""),
-	        pwm::params::Option("rab", ""),
-	        pwm::params::Option("oof", ""),
-	        pwm::params::Option("foobar", ""),
-	        pwm::params::Option("barbaz", ""),
-	        pwm::params::Option("zabrab", ""),
-	        pwm::params::Option("raboof", "")};
+	        pwm::params::Option::required("foo", ""),
+	        pwm::params::Option::required("bar", ""),
+	        pwm::params::Option::required("baz", ""),
+	        pwm::params::Option::required("zab", ""),
+	        pwm::params::Option::required("rab", ""),
+	        pwm::params::Option::required("oof", ""),
+	        pwm::params::Option::required("foobar", ""),
+	        pwm::params::Option::required("barbaz", ""),
+	        pwm::params::Option::required("zabrab", ""),
+	        pwm::params::Option::required("raboof", "")};
 	pwm::params::OptionSet options(optionsList);
 	CHECK(optionsList.size() == options.size());
 	CHECK(optionsList.size() ==
@@ -90,22 +83,16 @@ bool findSuccessful(pwm::params::OptionSet const &options,
 TEST_CASE("Test option set finding", "[Parameters]")
 {
 	pwm::params::OptionSet options{
-	        pwm::params::Option("foo", "", 'o', std::experimental::nullopt),
-	        pwm::params::Option("bar", "", 'r', std::experimental::nullopt),
-	        pwm::params::Option("baz", "", 'z', std::experimental::nullopt,
-	                            true),
-	        pwm::params::Option("zab", "", 'Z', std::experimental::nullopt,
-	                            true),
-	        pwm::params::Option("rab", "", 'R', std::experimental::nullopt),
-	        pwm::params::Option("oof", "", 'O', std::experimental::nullopt),
-	        pwm::params::Option("foobar", "", 'f',
-	                            std::experimental::nullopt),
-	        pwm::params::Option("barbaz", "", 'b',
-	                            std::experimental::nullopt, true),
-	        pwm::params::Option("zabrab", "", 'B',
-	                            std::experimental::nullopt, true),
-	        pwm::params::Option("raboof", "", 'F',
-	                            std::experimental::nullopt)};
+	        pwm::params::Option::required("foo", "", 'o'),
+	        pwm::params::Option::required("bar", "", 'r'),
+	        pwm::params::Option::flag("baz", "", 'z'),
+	        pwm::params::Option::flag("zab", "", 'Z'),
+	        pwm::params::Option::required("rab", "", 'R'),
+	        pwm::params::Option::required("oof", "", 'O'),
+	        pwm::params::Option::required("foobar", "", 'f'),
+	        pwm::params::Option::flag("barbaz", "", 'b'),
+	        pwm::params::Option::flag("zabrab", "", 'B'),
+	        pwm::params::Option::required("raboof", "", 'F')};
 
 	CHECK(findSuccessful(options, "foo", "foo"));
 	CHECK(findSuccessful(options, "o", "foo"));

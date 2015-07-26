@@ -48,22 +48,36 @@ namespace pwm
 {
 namespace params
 {
-Option::Option(std::string const &n, std::string const &h,
-               std::experimental::optional<char> const &sn,
-               std::experimental::optional<std::string> const &dv, bool f)
-        : name(n), help(h), shortName(sn), defaultValue(dv), flag(f)
+Option Option::required(std::string const &n, std::string const &h,
+                        std::experimental::optional<char> const &sn,
+                        std::experimental::optional<std::string> const &dv)
 {
-	if(flag && !!defaultValue)
-	{
-		throw std::runtime_error(
-		        "Flag options cannot have default values.");
-	}
+	return Option(n, h, sn, dv, false);
+}
+
+Option Option::required(std::string const &n, std::string const &h,
+                        std::experimental::optional<char> const &sn,
+                        std::string const &dv)
+{
+	return Option(n, h, sn, dv, false);
+}
+
+Option Option::flag(std::string const &n, std::string const &h,
+                    std::experimental::optional<char> const &sn)
+{
+	return Option(n, h, sn, std::experimental::nullopt, true);
 }
 
 Option::Option(std::string const &n, std::string const &h,
                std::experimental::optional<char> const &sn,
-               std::string const &dv)
-        : Option(n, h, sn, dv, false)
+               std::experimental::optional<std::string> const &dv, bool f)
+        : name(n), help(h), shortName(sn), defaultValue(dv), isFlag(f)
+{
+}
+
+Option::Option(std::string const &n)
+        : Option(n, n, std::experimental::nullopt, std::experimental::nullopt,
+                 false)
 {
 }
 
@@ -185,7 +199,7 @@ OptionSetConstIterator OptionSet::end() const
 
 Option const *OptionSet::find(std::string const &parameter) const
 {
-	auto search = std::make_shared<Option>(parameter, parameter);
+	std::shared_ptr<Option> search(new Option(parameter));
 	if(parameter.length() == 1) search->shortName = parameter[0];
 
 	auto nameIt = impl->nameOptions.find(search);

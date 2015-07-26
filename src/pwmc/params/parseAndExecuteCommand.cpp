@@ -60,7 +60,7 @@ void printCommandHelp(std::string const &program,
 				std::cout << ", -" << *option.shortName;
 			std::cout << " - " << option.help;
 
-			if(option.flag)
+			if(option.isFlag)
 			{
 				std::cout << " [Flag, default: off]";
 			}
