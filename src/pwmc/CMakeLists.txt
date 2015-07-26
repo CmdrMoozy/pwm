@@ -13,8 +13,8 @@ set(pwmc_SOURCES
 
 	crypto/checkReturn.cpp
 	crypto/checkReturn.hpp
-	crypto/Passphrase.cpp
-	crypto/Passphrase.hpp
+	crypto/Key.cpp
+	crypto/Key.hpp
 	crypto/Util.cpp
 	crypto/Util.hpp
 
@@ -51,6 +51,8 @@ set(pwmc_SOURCES
 	util/Clipboard.hpp
 	util/OutputSuppressor.cpp
 	util/OutputSuppressor.hpp
+	util/printBytesAsHex.cpp
+	util/printBytesAsHex.hpp
 	util/ScopeExit.cpp
 	util/ScopeExit.hpp
 	util/String.cpp

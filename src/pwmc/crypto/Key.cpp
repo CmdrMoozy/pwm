@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Passphrase.hpp"
+#include "Key.hpp"
 
 #include <cstddef>
 
@@ -42,6 +42,14 @@ Key::Key(const std::string &p, const std::vector<uint8_t> &s)
 	                            SCRYPT_WORK_FACTOR, salt.data(),
 	                            salt.size(), SCRYPT_PARALLELIZATION_FACTOR,
 	                            KEY_SIZE_OCTETS, key.data()));
+}
+
+Key::Key(std::string const &p, std::string const &s)
+        : Key(p,
+              std::vector<uint8_t>(
+                      reinterpret_cast<uint8_t const *>(s.data()),
+                      reinterpret_cast<uint8_t const *>(s.data() + s.length())))
+{
 }
 
 Key::Key(const std::string &p) : Key(p, util::generateSalt(DEFAULT_SALT_SIZE))
