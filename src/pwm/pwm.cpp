@@ -87,6 +87,11 @@ void initCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
 	        repoPath, pwm::git::RepositoryCreateMode::CreateNormal, false);
 }
 
+void listCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
+                 pwm::params::ArgumentsMap const &)
+{
+}
+
 #ifdef PWM_DEBUG
 void clipboardCommand(pwm::params::OptionsMap const &options,
                       pwm::params::FlagsMap const &,
@@ -117,6 +122,15 @@ const std::vector<pwm::params::Argument> INIT_COMMAND_ARGUMENTS{
                               "The path to the repository to initialize.",
                               pwm::config::getUseConfigDefaultArgument())};
 
+const std::initializer_list<pwm::params::Option> LIST_COMMAND_OPTIONS{
+        pwm::params::Option::optional(
+                "repository", "The path to the repository to examine.", 'r')};
+
+const std::vector<pwm::params::Argument> LIST_COMMAND_ARGUMENTS{
+        pwm::params::Argument(
+                "path", "The path to list, relative to the repository's root.",
+                "/")};
+
 #ifdef PWM_DEBUG
 const std::initializer_list<pwm::params::Option> CLIPBOARD_COMMAND_OPTIONS{
         pwm::params::Option::optional(
@@ -128,7 +142,10 @@ const std::set<pwm::params::Command> PWM_COMMANDS = {
                              configCommand, CONFIG_COMMAND_OPTIONS,
                              CONFIG_COMMAND_ARGUMENTS),
         pwm::params::Command("init", "Initialize a new pwm repository",
-                             initCommand, {}, INIT_COMMAND_ARGUMENTS)
+                             initCommand, {}, INIT_COMMAND_ARGUMENTS),
+        pwm::params::Command("ls", "List passwords stored in a pwm repository",
+                             listCommand, LIST_COMMAND_OPTIONS,
+                             LIST_COMMAND_ARGUMENTS)
 #ifdef PWM_DEBUG
                 ,
         pwm::params::Command("clipboard", "Access clipboard data",
