@@ -46,6 +46,10 @@ public:
 		std::experimental::optional<char> const& sn,
 		std::string const& dv);
 
+	static Option optional(std::string const& n,
+		std::string const& h,
+		std::experimental::optional<char> const& sn = std::experimental::nullopt);
+
 	static Option flag(std::string const& n,
 		std::string const& h,
 		std::experimental::optional<char> const& sn = std::experimental::nullopt);
@@ -54,6 +58,7 @@ public:
 	std::string help;
 	std::experimental::optional<char> shortName;
 	std::experimental::optional<std::string> defaultValue;
+	bool isOptional;
 	bool isFlag;
 
 private:
@@ -63,6 +68,7 @@ private:
 		std::string const& h,
 		std::experimental::optional<char> const& sn,
 		std::experimental::optional<std::string> const& dv,
+		bool o,
 		bool f);
 
 	Option(std::string const& n);

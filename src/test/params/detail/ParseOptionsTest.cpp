@@ -143,3 +143,32 @@ TEST_CASE("Test arguments left alone during option parsing", "[Parameters]")
 	CHECK(flagValueCorrect("flagc", false, parsed));
 	CHECK(optionValueCorrect("optionc", "barbaz", parsed));
 }
+
+TEST_CASE("Test optional option parsing", "[Parameters]")
+{
+	pwm::params::ProgramParameters parameters(
+	        {"--foo=barbaz", "--rab", "--opta=foobaz"});
+
+	const pwm::params::Command command(
+	        "test", "A command for testing.",
+	        pwm::params::CommandFunction(),
+	        {pwm::params::Option::required("foo", "foo", 'f'),
+	         pwm::params::Option::required("bar", "bar", 'b', "foobar"),
+	         pwm::params::Option::flag("oof", "oof", 'o'),
+	         pwm::params::Option::flag("rab", "rab", 'r'),
+	         pwm::params::Option::optional("opta", "opta"),
+	         pwm::params::Option::optional("optb", "optb")},
+	        {}, false);
+
+	std::tuple<pwm::params::OptionsMap, pwm::params::FlagsMap> parsed;
+	REQUIRE_NOTHROW(parsed = pwm::params::detail::parseOptions(parameters,
+	                                                           command));
+	CHECK(parameters.parameters.size() == 0);
+
+	CHECK(optionValueCorrect("foo", "barbaz", parsed));
+	CHECK(optionValueCorrect("bar", "foobar", parsed));
+	CHECK(flagValueCorrect("oof", false, parsed));
+	CHECK(flagValueCorrect("rab", true, parsed));
+	CHECK(optionValueCorrect("opta", "foobaz", parsed));
+	CHECK(std::get<0>(parsed).find("optb") == std::get<0>(parsed).end());
+}

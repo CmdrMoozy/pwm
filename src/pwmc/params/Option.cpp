@@ -19,6 +19,7 @@
 #include "Option.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <set>
 #include <stdexcept>
 #include <utility>
@@ -52,32 +53,49 @@ Option Option::required(std::string const &n, std::string const &h,
                         std::experimental::optional<char> const &sn,
                         std::experimental::optional<std::string> const &dv)
 {
-	return Option(n, h, sn, dv, false);
+	return Option(n, h, sn, dv, false, false);
 }
 
 Option Option::required(std::string const &n, std::string const &h,
                         std::experimental::optional<char> const &sn,
                         std::string const &dv)
 {
-	return Option(n, h, sn, dv, false);
+	return Option(n, h, sn, dv, false, false);
+}
+
+Option Option::optional(std::string const &n, std::string const &h,
+                        std::experimental::optional<char> const &sn)
+{
+	return Option(n, h, sn, std::experimental::nullopt, true, false);
 }
 
 Option Option::flag(std::string const &n, std::string const &h,
                     std::experimental::optional<char> const &sn)
 {
-	return Option(n, h, sn, std::experimental::nullopt, true);
+	return Option(n, h, sn, std::experimental::nullopt, false, true);
 }
 
 Option::Option(std::string const &n, std::string const &h,
                std::experimental::optional<char> const &sn,
-               std::experimental::optional<std::string> const &dv, bool f)
-        : name(n), help(h), shortName(sn), defaultValue(dv), isFlag(f)
+               std::experimental::optional<std::string> const &dv, bool o,
+               bool f)
+        : name(n),
+          help(h),
+          shortName(sn),
+          defaultValue(dv),
+          isOptional(o),
+          isFlag(f)
 {
+	// Optionals and flags cannot have default values.
+	assert(!(isOptional || isFlag) || !defaultValue);
+
+	// The optional and flag parameters are mutually exclusive.
+	assert(!isOptional || !isFlag);
 }
 
 Option::Option(std::string const &n)
         : Option(n, n, std::experimental::nullopt, std::experimental::nullopt,
-                 false)
+                 false, false)
 {
 }
 
