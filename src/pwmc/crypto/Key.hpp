@@ -28,7 +28,7 @@ namespace pwm
 {
 namespace crypto
 {
-constexpr std::size_t DEFAULT_KEY_SIZE_OCTETS = 512 / 8;
+constexpr std::size_t DEFAULT_KEY_SIZE_OCTETS = 256 / 8;
 constexpr int DEFAULT_SCRYPT_WORK_FACTOR = 20;
 constexpr int DEFAULT_SCRYPT_PARALLELIZATION_FACTOR = 1;
 constexpr std::size_t DEFAULT_SALT_SIZE = 16;
