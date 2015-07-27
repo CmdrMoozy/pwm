@@ -171,9 +171,6 @@ void removeDirectory(std::string const &p)
 	{
 		throw std::runtime_error("Removing directory contents failed.");
 	}
-
-	ret = rmdir(p.c_str());
-	if(ret != 0) throw std::runtime_error("Removing directory failed.");
 }
 
 void createPath(const std::string &p)
@@ -195,8 +192,11 @@ std::string getTemporaryDirectoryPath()
 	std::string path("/tmp");
 
 	char const *tmpdir = std::getenv("TMPDIR");
-	std::string tmpdirStr(tmpdir);
-	if(isDirectory(tmpdirStr)) path = tmpdirStr;
+	if(tmpdir != nullptr)
+	{
+		std::string tmpdirStr(tmpdir);
+		if(isDirectory(tmpdirStr)) path = tmpdirStr;
+	}
 
 	return path;
 }
