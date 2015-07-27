@@ -59,6 +59,8 @@ set(pwmc_SOURCES
 	util/ScopeExit.hpp
 	util/String.cpp
 	util/String.hpp
+	util/UUID.cpp
+	util/UUID.hpp
 
 )
 
