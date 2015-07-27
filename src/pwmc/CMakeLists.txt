@@ -18,6 +18,8 @@ set(pwmc_SOURCES
 	crypto/Util.cpp
 	crypto/Util.hpp
 
+	fs/TemporaryStorage.cpp
+	fs/TemporaryStorage.hpp
 	fs/Util.cpp
 	fs/Util.hpp
 
