@@ -18,6 +18,8 @@
 
 #include "Repository.hpp"
 
+#include <stdexcept>
+
 #include "pwmc/fs/Util.hpp"
 #include "pwmc/git/checkReturn.hpp"
 
@@ -65,6 +67,17 @@ Repository::Repository(const std::string &p, RepositoryCreateMode c, bool ab)
         : base_type(git_repository_open,
                     getRepositoryConstructPath(p, c, ab).c_str())
 {
+}
+
+std::string Repository::getWorkDirectoryPath() const
+{
+	char const *path = git_repository_workdir(get());
+	if(path == nullptr)
+	{
+		throw std::runtime_error(
+		        "This repository has no work directory.");
+	}
+	return path;
 }
 }
 }
