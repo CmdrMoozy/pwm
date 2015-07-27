@@ -78,12 +78,19 @@ namespace fs
 std::string normalizePath(const std::string &p)
 {
 	std::string ret = p;
+
+	// Convert Windows-style separators to POSIX separators.
 	std::transform(ret.begin(), ret.end(), ret.begin(),
 	               [](const char &c) -> char
 	               {
 		               if(c == '\\') return '/';
 		               return c;
 		       });
+
+	// Remove any trailing separators.
+	while(!ret.empty() && (*ret.rbegin() == '/'))
+		ret.erase(ret.length() - 1);
+
 	return ret;
 }
 
