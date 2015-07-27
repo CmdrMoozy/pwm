@@ -56,7 +56,7 @@ std::string generateUUID()
 	for(std::size_t i = 0; i < UUID_BYTE_LENGTH; ++i)
 	{
 		int ret = snprintf(&hex[i * 2], 3, "%02x", bytes[i]);
-		assert(ret == 3);
+		assert(ret == 2);
 	}
 
 	// Add '-' characters to form the final UUID. The components are
