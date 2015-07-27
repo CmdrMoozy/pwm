@@ -6,6 +6,8 @@ set(pwm-test_SOURCES
 
 	crypto/KeyTest.cpp
 
+	fs/TemporaryStorageTest.cpp
+
 	params/CommandTest.cpp
 	params/OptionTest.cpp
 
