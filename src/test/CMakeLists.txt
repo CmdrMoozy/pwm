@@ -8,6 +8,8 @@ set(pwm-test_SOURCES
 
 	fs/TemporaryStorageTest.cpp
 
+	git/RepositoryTest.cpp
+
 	params/CommandTest.cpp
 	params/OptionTest.cpp
 
