@@ -23,11 +23,14 @@
 #include <gtk/gtk.h>
 #endif
 
-int main(int argc, char *const argv[])
+#include "pwmc/git/Library.hpp"
+
+int main(int argc, char **argv)
 {
 #ifdef PWM_USE_CLIPBOARD
 	gtk_init(nullptr, nullptr);
 #endif
 
+	pwm::git::LibraryInstance gitLibrary;
 	return Catch::Session().run(argc, argv);
 }
