@@ -18,6 +18,8 @@
 
 #include "Key.hpp"
 
+#include <gcrypt.h>
+
 #include "pwmc/crypto/checkReturn.hpp"
 #include "pwmc/crypto/Util.hpp"
 
