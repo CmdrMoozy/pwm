@@ -49,6 +49,9 @@ set(pwmc_SOURCES
 	params/detail/parseOptions.cpp
 	params/detail/parseOptions.hpp
 
+	repository/EncryptionHeader.cpp
+	repository/EncryptionHeader.hpp
+
 	util/Base64.cpp
 	util/Base64.hpp
 	util/Clipboard.cpp
