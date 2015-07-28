@@ -17,6 +17,8 @@ set(pwm-test_SOURCES
 	params/detail/ParseCommandTest.cpp
 	params/detail/ParseOptionsTest.cpp
 
+	repository/EncryptionHeaderTest.cpp
+
 	util/Base64Test.cpp
 	util/ClipboardTest.cpp
 	util/StringTest.cpp
