@@ -39,25 +39,27 @@ struct ConfigurationRadixTreeNode
 	std::vector<std::unique_ptr<ConfigurationRadixTreeNode>> children;
 	std::string value;
 
-	ConfigurationRadixTreeNode(const std::string& k);
+	ConfigurationRadixTreeNode(const std::string &k);
 
-	ConfigurationRadixTreeNode(const ConfigurationRadixTreeNode&) = delete;
+	ConfigurationRadixTreeNode(const ConfigurationRadixTreeNode &) = delete;
 	~ConfigurationRadixTreeNode() = default;
-	ConfigurationRadixTreeNode& operator=(const ConfigurationRadixTreeNode&) = delete;
+	ConfigurationRadixTreeNode &
+	operator=(const ConfigurationRadixTreeNode &) = delete;
 };
 }
 
 class ConfigurationRadixTree
 {
 public:
-	typedef std::function<bool(const std::string &k, const std::string &v)> TraversalFunction;
+	typedef std::function<bool(const std::string &k, const std::string &v)>
+	        TraversalFunction;
 
-	ConfigurationRadixTree(const ConfigurationData& data);
+	ConfigurationRadixTree(const ConfigurationData &data);
 
 	~ConfigurationRadixTree() = default;
 
 	void traverse(const TraversalFunction &pre,
-		const TraversalFunction &post) const;
+	              const TraversalFunction &post) const;
 
 private:
 	std::unique_ptr<detail::ConfigurationRadixTreeNode> root;

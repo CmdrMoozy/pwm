@@ -38,15 +38,11 @@ enum class PasswordCharacters
 };
 
 std::string generatePassword(
-	std::vector<PasswordCharacters> characters = {
-		PasswordCharacters::LOWERCASE,
-		PasswordCharacters::UPPERCASE,
-		PasswordCharacters::NUMBERS,
-		PasswordCharacters::SPECIAL
-	},
-	std::size_t minimumLength = 8,
-	std::size_t maximumLength = 32,
-	std::set<char> excludedCharacters = {});
+        std::vector<PasswordCharacters> characters =
+                {PasswordCharacters::LOWERCASE, PasswordCharacters::UPPERCASE,
+                 PasswordCharacters::NUMBERS, PasswordCharacters::SPECIAL},
+        std::size_t minimumLength = 8, std::size_t maximumLength = 32,
+        std::set<char> excludedCharacters = {});
 }
 }
 

@@ -31,11 +31,11 @@ class OutputSuppressor
 public:
 	OutputSuppressor();
 
-	OutputSuppressor(OutputSuppressor const&) = delete;
+	OutputSuppressor(OutputSuppressor const &) = delete;
 
 	~OutputSuppressor();
 
-	OutputSuppressor& operator=(OutputSuppressor const&) = delete;
+	OutputSuppressor &operator=(OutputSuppressor const &) = delete;
 
 private:
 	std::ostringstream out;

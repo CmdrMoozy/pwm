@@ -34,17 +34,17 @@ class Repository;
 
 namespace repository
 {
-std::string getEncryptionHeaderPath(git::Repository const& repository);
+std::string getEncryptionHeaderPath(git::Repository const &repository);
 
 class EncryptionHeader
 {
 public:
-	EncryptionHeader(git::Repository const& repository);
+	EncryptionHeader(git::Repository const &repository);
 
-	EncryptionHeader(EncryptionHeader const&) = default;
-	EncryptionHeader(EncryptionHeader&&) = default;
-	EncryptionHeader& operator=(EncryptionHeader const&) = default;
-	EncryptionHeader& operator=(EncryptionHeader&&) = default;
+	EncryptionHeader(EncryptionHeader const &) = default;
+	EncryptionHeader(EncryptionHeader &&) = default;
+	EncryptionHeader &operator=(EncryptionHeader const &) = default;
+	EncryptionHeader &operator=(EncryptionHeader &&) = default;
 
 	~EncryptionHeader();
 

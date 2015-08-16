@@ -27,9 +27,11 @@ namespace pwm
 {
 namespace config
 {
-std::string serializeConfiguration(const ConfigurationData &data, bool formatted = true);
+std::string serializeConfiguration(const ConfigurationData &data,
+                                   bool formatted = true);
 
-void serializeConfiguration(const std::string &p, const ConfigurationData &data, bool formatted = true);
+void serializeConfiguration(const std::string &p, const ConfigurationData &data,
+                            bool formatted = true);
 }
 }
 

@@ -28,8 +28,8 @@ namespace pwm
 {
 namespace util
 {
-std::string encodeBase64(void const* data, std::size_t length) noexcept;
-std::vector<uint8_t> decodeBase64(std::string const& s);
+std::string encodeBase64(void const *data, std::size_t length) noexcept;
+std::vector<uint8_t> decodeBase64(std::string const &s);
 }
 }
 

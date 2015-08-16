@@ -29,8 +29,8 @@ struct ProgramParameters;
 
 namespace detail
 {
-ArgumentsMap parseArguments(ProgramParameters& parameters,
-	Command const& command);
+ArgumentsMap parseArguments(ProgramParameters &parameters,
+                            Command const &command);
 }
 }
 }

@@ -47,9 +47,9 @@ public:
 	 * \param c The creation mode to use if it doesn't already exist.
 	 * \param ab Whether or not to consider bare repositories valid.
 	 */
-	Repository(const std::string& p,
-		RepositoryCreateMode c = RepositoryCreateMode::CreateNormal,
-		bool ab = false);
+	Repository(const std::string &p,
+	           RepositoryCreateMode c = RepositoryCreateMode::CreateNormal,
+	           bool ab = false);
 
 	std::string getWorkDirectoryPath() const;
 };

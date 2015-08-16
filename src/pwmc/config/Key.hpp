@@ -31,13 +31,13 @@ struct Key
 {
 	std::vector<std::string> components;
 
-	Key(const std::string& k);
+	Key(const std::string &k);
 };
 
-bool operator<(const Key& a, const Key &b);
-bool operator==(const Key& a, const Key &b);
+bool operator<(const Key &a, const Key &b);
+bool operator==(const Key &a, const Key &b);
 
-std::ostream& operator<<(std::ostream &os, const Key& k);
+std::ostream &operator<<(std::ostream &os, const Key &k);
 }
 }
 

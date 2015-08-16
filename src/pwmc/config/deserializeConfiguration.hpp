@@ -28,7 +28,7 @@ namespace pwm
 {
 namespace config
 {
-ConfigurationData deserializeConfiguration(std::istream& in);
+ConfigurationData deserializeConfiguration(std::istream &in);
 
 ConfigurationData deserializeConfiguration(const std::string &p);
 }

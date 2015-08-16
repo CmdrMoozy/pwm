@@ -43,9 +43,9 @@ struct ConfigurationData
 	std::map<Key, std::string> data;
 
 	ConfigurationData();
-	explicit ConfigurationData(const std::map<Key, std::string>& d);
+	explicit ConfigurationData(const std::map<Key, std::string> &d);
 
-	ConfigurationData(const ConfigurationData&) = default;
+	ConfigurationData(const ConfigurationData &) = default;
 	~ConfigurationData() = default;
 	ConfigurationData &operator=(const ConfigurationData &) = default;
 
@@ -61,7 +61,8 @@ public:
 
 	~ConfigurationInstance();
 
-	ConfigurationInstance &operator=(const ConfigurationInstance &) = delete;
+	ConfigurationInstance &
+	operator=(const ConfigurationInstance &) = delete;
 };
 
 class Configuration

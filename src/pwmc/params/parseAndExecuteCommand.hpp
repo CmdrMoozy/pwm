@@ -27,7 +27,8 @@ namespace pwm
 {
 namespace params
 {
-int parseAndExecuteCommand(int argc, char const* const* argv, std::set<Command> const& commands);
+int parseAndExecuteCommand(int argc, char const *const *argv,
+                           std::set<Command> const &commands);
 }
 }
 

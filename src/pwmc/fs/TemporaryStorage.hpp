@@ -36,10 +36,10 @@ class TemporaryStorage
 public:
 	explicit TemporaryStorage(TemporaryStorageType t);
 
-	TemporaryStorage(TemporaryStorage const&) = delete;
+	TemporaryStorage(TemporaryStorage const &) = delete;
 	TemporaryStorage(TemporaryStorage &&) = default;
-	TemporaryStorage& operator=(TemporaryStorage const&) = delete;
-	TemporaryStorage& operator=(TemporaryStorage &&) = default;
+	TemporaryStorage &operator=(TemporaryStorage const &) = delete;
+	TemporaryStorage &operator=(TemporaryStorage &&) = default;
 
 	~TemporaryStorage();
 

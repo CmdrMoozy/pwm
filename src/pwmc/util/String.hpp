@@ -41,8 +41,7 @@ std::string join(Iterator begin, Iterator end, const std::string &delimiter)
 
 		auto next = it;
 		++next;
-		if(next != end)
-			oss << delimiter;
+		if(next != end) oss << delimiter;
 	}
 	return oss.str();
 }
