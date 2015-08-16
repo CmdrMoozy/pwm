@@ -26,7 +26,7 @@ namespace pwm
 {
 namespace util
 {
-void printBytesAsHex(void const* data, std::size_t length, FILE* out = stdout);
+void printBytesAsHex(void const *data, std::size_t length, FILE *out = stdout);
 }
 }
 

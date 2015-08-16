@@ -31,9 +31,9 @@ struct ProgramParameters;
 
 namespace detail
 {
-std::set<Command>::const_iterator parseCommand(
-	ProgramParameters& parameters,
-	std::set<Command> const& commands) noexcept;
+std::set<Command>::const_iterator
+parseCommand(ProgramParameters &parameters,
+             std::set<Command> const &commands) noexcept;
 }
 }
 }

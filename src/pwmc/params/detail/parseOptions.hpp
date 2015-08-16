@@ -31,9 +31,8 @@ struct ProgramParameters;
 
 namespace detail
 {
-std::tuple<OptionsMap, FlagsMap> parseOptions(
-	ProgramParameters& parameters,
-	Command const& command);
+std::tuple<OptionsMap, FlagsMap> parseOptions(ProgramParameters &parameters,
+                                              Command const &command);
 }
 }
 }

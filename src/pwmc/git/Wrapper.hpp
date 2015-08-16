@@ -29,25 +29,23 @@ namespace pwm
 namespace git
 {
 template <typename T, typename... Arg>
-T* constructGitObject(int (*f)(T**, Arg...), Arg... arg)
+T *constructGitObject(int (*f)(T **, Arg...), Arg... arg)
 {
 	T *o = nullptr;
 	checkReturn(f(&o, std::forward<Arg...>(arg...)));
 	return o;
 }
 
-template <typename T, void (*deleter)(T *)>
-class Wrapper
+template <typename T, void (*deleter)(T *)> class Wrapper
 {
 public:
-	Wrapper(T* o)
-		: object(o, deleter)
+	Wrapper(T *o) : object(o, deleter)
 	{
 	}
 
 	template <typename... Arg>
-	Wrapper(int (*f)(T**, Arg...), Arg... arg)
-		: Wrapper(constructGitObject(f, std::forward<Arg...>(arg...)))
+	Wrapper(int (*f)(T **, Arg...), Arg... arg)
+	        : Wrapper(constructGitObject(f, std::forward<Arg...>(arg...)))
 	{
 	}
 

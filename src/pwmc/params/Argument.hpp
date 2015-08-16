@@ -32,11 +32,12 @@ struct Argument
 	std::string help;
 	std::experimental::optional<std::string> defaultValue;
 
-	Argument(std::string const& n, std::string const& h,
-		std::experimental::optional<std::string> const& dv = std::experimental::nullopt);
+	Argument(std::string const &n, std::string const &h,
+	         std::experimental::optional<std::string> const &dv =
+	                 std::experimental::nullopt);
 
-	Argument(std::string const& n, std::string const& h,
-		std::string const& dv);
+	Argument(std::string const &n, std::string const &h,
+	         std::string const &dv);
 };
 }
 }

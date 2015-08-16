@@ -34,16 +34,16 @@ namespace util
 enum class RandomQuality
 {
 	WEAK,
-	STRONG, // Use for session keys and similar purposes
+	STRONG,     // Use for session keys and similar purposes
 	VERY_STRONG // Use for long-term key material
 };
 
 std::vector<uint8_t> generateSalt(std::size_t length);
 
-std::vector<uint8_t> generateRandomBytes(std::size_t length, RandomQuality quality);
+std::vector<uint8_t> generateRandomBytes(std::size_t length,
+                                         RandomQuality quality);
 
-template <RandomQuality quality>
-class SecureUniformRandomNumberGenerator
+template <RandomQuality quality> class SecureUniformRandomNumberGenerator
 {
 public:
 	using result_type = uint64_t;
@@ -54,27 +54,33 @@ public:
 };
 
 template <RandomQuality quality>
-constexpr typename SecureUniformRandomNumberGenerator<quality>::result_type SecureUniformRandomNumberGenerator<quality>::min()
+constexpr typename SecureUniformRandomNumberGenerator<quality>::result_type
+SecureUniformRandomNumberGenerator<quality>::min()
 {
 	return std::numeric_limits<uint64_t>::min();
 }
 
 template <RandomQuality quality>
-constexpr typename SecureUniformRandomNumberGenerator<quality>::result_type SecureUniformRandomNumberGenerator<quality>::max()
+constexpr typename SecureUniformRandomNumberGenerator<quality>::result_type
+SecureUniformRandomNumberGenerator<quality>::max()
 {
 	return std::numeric_limits<uint64_t>::max();
 }
 
 template <RandomQuality quality>
-typename SecureUniformRandomNumberGenerator<quality>::result_type SecureUniformRandomNumberGenerator<quality>::operator()()
+typename SecureUniformRandomNumberGenerator<quality>::result_type
+        SecureUniformRandomNumberGenerator<quality>::
+        operator()()
 {
-	std::vector<uint8_t> bytes = generateRandomBytes(sizeof(uint64_t), quality);
-	return *reinterpret_cast<uint64_t const*>(bytes.data());
+	std::vector<uint8_t> bytes =
+	        generateRandomBytes(sizeof(uint64_t), quality);
+	return *reinterpret_cast<uint64_t const *>(bytes.data());
 }
 
 template <RandomQuality quality>
-uint64_t generateRandomNumber(uint64_t min = std::numeric_limits<uint64_t>::min(),
-                              uint64_t max = std::numeric_limits<uint64_t>::max())
+uint64_t
+generateRandomNumber(uint64_t min = std::numeric_limits<uint64_t>::min(),
+                     uint64_t max = std::numeric_limits<uint64_t>::max())
 {
 	SecureUniformRandomNumberGenerator<quality> generator;
 	std::uniform_int_distribution<uint64_t> distribution(min, max);

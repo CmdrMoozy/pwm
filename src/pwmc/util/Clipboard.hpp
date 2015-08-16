@@ -30,8 +30,8 @@ namespace clipboard
 enum class ClipboardType
 {
 	Clipboard, // Typical cross-platform clipboard.
-	Primary, // Used by X11 for selected but not copied text.
-	Secondary // Generally unused.
+	Primary,   // Used by X11 for selected but not copied text.
+	Secondary  // Generally unused.
 };
 
 std::string getClipboardContents(ClipboardType type);
