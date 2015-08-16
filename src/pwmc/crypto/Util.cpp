@@ -18,7 +18,28 @@
 
 #include "Util.hpp"
 
+#include <stdexcept>
+
 #include <gcrypt.h>
+
+namespace
+{
+gcry_random_level_t
+randomQualityToGcryptLevel(pwm::crypto::util::RandomQuality quality)
+{
+	switch(quality)
+	{
+	case pwm::crypto::util::RandomQuality::WEAK:
+		return GCRY_WEAK_RANDOM;
+	case pwm::crypto::util::RandomQuality::STRONG:
+		return GCRY_STRONG_RANDOM;
+	case pwm::crypto::util::RandomQuality::VERY_STRONG:
+		return GCRY_VERY_STRONG_RANDOM;
+	default:
+		throw std::runtime_error("Invalid random quality value.");
+	}
+}
+}
 
 namespace pwm
 {
@@ -31,6 +52,15 @@ std::vector<uint8_t> generateSalt(std::size_t length)
 	std::vector<uint8_t> salt(length, 0);
 	gcry_randomize(salt.data(), length, GCRY_STRONG_RANDOM);
 	return salt;
+}
+
+std::vector<uint8_t> generateRandomBytes(std::size_t length,
+                                         RandomQuality quality)
+{
+	std::vector<uint8_t> bytes(length, 0);
+	gcry_randomize(bytes.data(), length,
+	               randomQualityToGcryptLevel(quality));
+	return bytes;
 }
 }
 }

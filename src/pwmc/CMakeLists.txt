@@ -13,6 +13,8 @@ set(pwmc_SOURCES
 
 	crypto/checkReturn.cpp
 	crypto/checkReturn.hpp
+	crypto/generatePassword.cpp
+	crypto/generatePassword.hpp
 	crypto/Key.cpp
 	crypto/Key.hpp
 	crypto/Util.cpp
