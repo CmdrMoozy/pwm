@@ -4,6 +4,7 @@ set(pwm-test_SOURCES
 
 	config/ConfigurationTest.cpp
 
+	crypto/GeneratePasswordTest.cpp
 	crypto/KeyTest.cpp
 
 	fs/TemporaryStorageTest.cpp
