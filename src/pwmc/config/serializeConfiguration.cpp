@@ -62,9 +62,6 @@ void checkStatus(yajl_gen_status status)
 	case yajl_gen_invalid_string:
 		oss << "invalid UTF8 string contents.";
 		break;
-	default:
-		oss << "unknown error.";
-		break;
 	}
 
 	throw std::runtime_error(oss.str());

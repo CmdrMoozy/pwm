@@ -32,8 +32,6 @@ namespace
 {
 GdkAtom clipboardTypeToAtom(pwm::util::clipboard::ClipboardType type)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
 	switch(type)
 	{
 	case pwm::util::clipboard::ClipboardType::Clipboard:
@@ -42,10 +40,8 @@ GdkAtom clipboardTypeToAtom(pwm::util::clipboard::ClipboardType type)
 		return GDK_SELECTION_PRIMARY;
 	case pwm::util::clipboard::ClipboardType::Secondary:
 		return GDK_SELECTION_SECONDARY;
-	default:
-		return GDK_NONE;
 	}
-#pragma GCC diagnostic pop
+	return GDK_NONE;
 }
 }
 #endif
@@ -69,8 +65,9 @@ std::string getClipboardContents(ClipboardType
 	std::string ret(text);
 	g_free(text);
 	return ret;
-#endif
+#else
 	return "";
+#endif
 }
 
 void setClipboardContents(ClipboardType
@@ -105,7 +102,8 @@ void setClipboardContents(ClipboardType
 	GtkClipboard *clipboard = gtk_clipboard_get_for_display(
 	        display, clipboardTypeToAtom(type));
 	assert(clipboard != nullptr);
-	gtk_clipboard_set_text(clipboard, text.c_str(), text.length());
+	gtk_clipboard_set_text(clipboard, text.c_str(),
+	                       static_cast<gint>(text.length()));
 	gdk_display_store_clipboard(display, window, GDK_CURRENT_TIME, nullptr,
 	                            0);
 #endif
