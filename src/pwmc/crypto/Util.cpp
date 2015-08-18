@@ -35,9 +35,9 @@ randomQualityToGcryptLevel(pwm::crypto::util::RandomQuality quality)
 		return GCRY_STRONG_RANDOM;
 	case pwm::crypto::util::RandomQuality::VERY_STRONG:
 		return GCRY_VERY_STRONG_RANDOM;
-	default:
-		throw std::runtime_error("Invalid random quality value.");
 	}
+
+	throw std::runtime_error("Unsupported random quality value.");
 }
 }
 

@@ -293,9 +293,10 @@ std::vector<uint8_t> decodeBase64(std::string const &s)
 		uint8_t d = dit->second;
 
 		// Compute the final full byte values.
-		uint8_t av = (a << 2) | (b >> 4);
-		uint8_t bv = ((b & 0x0F_b) << 4) | (c >> 2);
-		uint8_t cv = ((c & 0x03_b) << 6) | d;
+		uint8_t av = static_cast<uint8_t>((a << 2) | (b >> 4));
+		uint8_t bv =
+		        static_cast<uint8_t>(((b & 0x0F_b) << 4) | (c >> 2));
+		uint8_t cv = static_cast<uint8_t>(((c & 0x03_b) << 6) | d);
 
 		// Place these final values in the return vector.
 		std::size_t retOffset = (i / 4) * 3;

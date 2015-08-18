@@ -51,6 +51,8 @@ public:
 	           RepositoryCreateMode c = RepositoryCreateMode::CreateNormal,
 	           bool ab = false);
 
+	virtual ~Repository();
+
 	std::string getWorkDirectoryPath() const;
 };
 }

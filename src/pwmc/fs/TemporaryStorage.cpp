@@ -65,9 +65,6 @@ TemporaryStorage::TemporaryStorage(TemporaryStorageType t)
 			        "Creating temporary directory failed.");
 		}
 		break;
-
-	default:
-		throw std::runtime_error("Unsupported temporary storage type.");
 	}
 }
 
@@ -82,9 +79,6 @@ TemporaryStorage::~TemporaryStorage()
 	case TemporaryStorageType::DIRECTORY:
 		removeDirectory(path);
 		break;
-
-	default:
-		assert(false);
 	}
 }
 
