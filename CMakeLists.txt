@@ -29,6 +29,7 @@ find_package(Libgcrypt REQUIRED) # Must be 1.6.0 or newer.
 
 if(USE_CLIPBOARD)
 	find_package(GTK3 REQUIRED)
+	include_directories(SYSTEM ${GTK3_INCLUDE_DIRS})
 endif()
 
 # Setup our compile flags.
