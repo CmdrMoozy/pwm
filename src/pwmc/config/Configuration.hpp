@@ -40,6 +40,9 @@ Key getConfigurationKey(ConfigurationValue value);
 
 struct ConfigurationData
 {
+	using ConfigurationMap = std::map<Key, std::string>;
+	using const_iterator = ConfigurationMap::const_iterator;
+
 	std::map<Key, std::string> data;
 
 	ConfigurationData();
@@ -71,6 +74,9 @@ public:
 	static Configuration &getInstance();
 
 	~Configuration();
+
+	ConfigurationData::const_iterator begin() const;
+	ConfigurationData::const_iterator end() const;
 
 	std::string get(const Key &key) const;
 	std::string getOr(const Key &key, const std::string &defaultVal) const;

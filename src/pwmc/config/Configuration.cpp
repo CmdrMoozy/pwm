@@ -119,6 +119,16 @@ Configuration::~Configuration()
 	}
 }
 
+ConfigurationData::const_iterator Configuration::begin() const
+{
+	return data.data.begin();
+}
+
+ConfigurationData::const_iterator Configuration::end() const
+{
+	return data.data.end();
+}
+
 std::string Configuration::get(const Key &key) const
 {
 	auto it = data.data.find(key);
