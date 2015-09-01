@@ -32,6 +32,7 @@ constexpr std::size_t DEFAULT_KEY_SIZE_OCTETS = 256 / 8;
 constexpr int DEFAULT_SCRYPT_WORK_FACTOR = 20;
 constexpr int DEFAULT_SCRYPT_PARALLELIZATION_FACTOR = 1;
 constexpr std::size_t DEFAULT_SALT_SIZE = 16;
+constexpr std::size_t DEFAULT_IV_SIZE_OCTECTS = 128 / 8;
 
 class Key
 {
@@ -55,8 +56,8 @@ public:
 
 	~Key() = default;
 
-	const std::vector<uint8_t> &getSalt() const;
-	const std::vector<uint8_t> &getKey() const;
+	std::vector<uint8_t> const &getSalt() const;
+	std::vector<uint8_t> const &getKey() const;
 
 private:
 	const std::vector<uint8_t> salt;
