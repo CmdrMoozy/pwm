@@ -51,12 +51,12 @@ Key::Key(const std::string &p, std::size_t ks, int sw, int sp)
 {
 }
 
-const std::vector<uint8_t> &Key::getSalt() const
+std::vector<uint8_t> const &Key::getSalt() const
 {
 	return salt;
 }
 
-const std::vector<uint8_t> &Key::getKey() const
+std::vector<uint8_t> const &Key::getKey() const
 {
 	return key;
 }
