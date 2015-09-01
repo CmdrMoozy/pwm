@@ -58,6 +58,8 @@ set(pwmc_SOURCES
 	util/Base64.hpp
 	util/Clipboard.cpp
 	util/Clipboard.hpp
+	util/MemoryFile.cpp
+	util/MemoryFile.hpp
 	util/OutputSuppressor.cpp
 	util/OutputSuppressor.hpp
 	util/printBytesAsHex.cpp

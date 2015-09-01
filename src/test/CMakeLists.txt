@@ -22,6 +22,7 @@ set(pwm-test_SOURCES
 
 	util/Base64Test.cpp
 	util/ClipboardTest.cpp
+	util/MemoryFileTest.cpp
 	util/StringTest.cpp
 
 )
