@@ -103,6 +103,7 @@ void initCommand(pwm::params::OptionsMap const &options,
 
 	pwm::git::Repository repo(
 	        repoPath, pwm::git::RepositoryCreateMode::CreateNormal, false);
+	std::cout << "Initialized repository: " << repoPath << "\n";
 }
 
 void listCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
