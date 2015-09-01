@@ -44,18 +44,38 @@ namespace
 {
 void configCommand(pwm::params::OptionsMap const &options,
                    pwm::params::FlagsMap const &,
-                   pwm::params::ArgumentsMap const &arguments)
+                   pwm::params::ArgumentsMap const &)
 {
-	pwm::config::Key key(*arguments.find("key")->second.begin());
+	auto keyIt = options.find("key");
+	auto setIt = options.find("set");
 
-	if(options.find("set") != options.end())
+	if(keyIt == options.end())
 	{
-		pwm::config::Configuration::getInstance().set(
-		        key, options.find("set")->second);
+		if(setIt != options.end())
+		{
+			std::cout << "Error: a 'key' must be provided when "
+			             "setting a configuration value.\n";
+			return;
+		}
+
+		for(auto it = pwm::config::Configuration::getInstance().begin();
+		    it != pwm::config::Configuration::getInstance().end(); ++it)
+		{
+			std::cout << it->first << " = " << it->second << "\n";
+		}
+
+		return;
 	}
 
-	std::cout << pwm::config::Key(key) << " = "
-	          << pwm::config::Configuration::getInstance().get(key) << "\n";
+	if(setIt != options.end())
+	{
+		pwm::config::Configuration::getInstance().set(keyIt->second,
+		                                              setIt->second);
+	}
+
+	std::cout << pwm::config::Key(keyIt->second) << " = "
+	          << pwm::config::Configuration::getInstance().get(
+	                     keyIt->second) << "\n";
 }
 
 void initCommand(pwm::params::OptionsMap const &options,
@@ -116,10 +136,9 @@ void clipboardCommand(pwm::params::OptionsMap const &options,
 
 const std::initializer_list<pwm::params::Option> CONFIG_COMMAND_OPTIONS{
         pwm::params::Option::optional("set", "Set the key to this new value.",
-                                      's')};
-
-const std::vector<pwm::params::Argument> CONFIG_COMMAND_ARGUMENTS{
-        pwm::params::Argument("key", "The configuration key to get or set.")};
+                                      's'),
+        pwm::params::Option::optional("key", "The specific key to view/set.",
+                                      'k')};
 
 const std::initializer_list<pwm::params::Option> INIT_COMMAND_OPTIONS{
         pwm::params::Option::optional(
@@ -154,8 +173,7 @@ const std::initializer_list<pwm::params::Option> CLIPBOARD_COMMAND_OPTIONS{
 
 const std::set<pwm::params::Command> PWM_COMMANDS = {
         pwm::params::Command("config", "Get or set a configuration value",
-                             configCommand, CONFIG_COMMAND_OPTIONS,
-                             CONFIG_COMMAND_ARGUMENTS),
+                             configCommand, CONFIG_COMMAND_OPTIONS),
         pwm::params::Command("init", "Initialize a new pwm repository",
                              initCommand, INIT_COMMAND_OPTIONS),
         pwm::params::Command("ls", "List passwords stored in a pwm repository",
