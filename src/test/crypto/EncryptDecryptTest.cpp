@@ -18,6 +18,7 @@
 
 #include <catch/catch.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -48,6 +49,9 @@ TEST_CASE("Encryption round trip test", "[Crypto]")
 
 	CHECK(plaintext == decrypted);
 	CHECK(plaintext != encrypted);
+	CHECK(!std::equal(plaintext.begin(), plaintext.end(),
+	                  encrypted.data() +
+	                          (2 * pwm::crypto::DEFAULT_IV_SIZE_OCTETS)));
 	CHECK(encrypted.size() ==
 	      (plaintext.size() + 2 * pwm::crypto::DEFAULT_IV_SIZE_OCTETS));
 }
