@@ -24,6 +24,24 @@
 
 #include "pwmc/util/String.hpp"
 
+TEST_CASE("Test string lowercasing algorithm", "[String]")
+{
+	const std::vector<std::pair<std::string, std::string>> TEST_CASES{
+	        {"", ""},
+	        {" 1234567890 !@#$%^&*() -= \\/+_",
+	         " 1234567890 !@#$%^&*() -= \\/+_"},
+	        {"abcdefghijklmnopqrstuvwxyz", "abcdefghijklmnopqrstuvwxyz"},
+	        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"},
+	        {"17#@&$*dAcJfHssdkFKdjsS(9", "17#@&$*dacjfhssdkfkdjss(9"},
+	        {"   \t   ", "   \t   "}};
+
+	for(auto const &test : TEST_CASES)
+	{
+		auto output = pwm::util::toLower(test.first);
+		CHECK(test.second == output);
+	}
+}
+
 TEST_CASE("Test string split algorithm", "[String]")
 {
 	const char TEST_DELIMITER = ',';
@@ -37,9 +55,41 @@ TEST_CASE("Test string split algorithm", "[String]")
 	                     {",,,,foo,,,,bar,,,,", {"foo", "bar"}},
 	                     {"f,o,o,b,a,r", {"f", "o", "o", "b", "a", "r"}}};
 
-	for(const auto &test : TEST_DATA)
+	for(auto const &test : TEST_DATA)
 	{
 		auto output = pwm::util::split(test.first, TEST_DELIMITER);
-		REQUIRE(test.second == output);
+		CHECK(test.second == output);
+	}
+}
+
+namespace
+{
+struct JoinTestCase
+{
+	std::vector<std::string> input;
+	std::string delimiter;
+	std::string expected;
+
+	JoinTestCase(std::vector<std::string> const &i, std::string const &d,
+	             std::string const &e)
+	        : input(i), delimiter(d), expected(e)
+	{
+	}
+};
+}
+
+TEST_CASE("Test string join algorithm", "[String]")
+{
+	const std::vector<JoinTestCase> TEST_CASES{
+	        {{"foo", "bar", "baz"}, " ", "foo bar baz"},
+	        {{}, "foobar", ""},
+	        {{"", "", ""}, ",", ",,"},
+	        {{"foo", "bar", "baz"}, "", "foobarbaz"}};
+
+	for(auto const &test : TEST_CASES)
+	{
+		std::string output = pwm::util::join(
+		        test.input.begin(), test.input.end(), test.delimiter);
+		CHECK(test.expected == output);
 	}
 }
