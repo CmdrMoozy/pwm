@@ -50,16 +50,20 @@ TEST_CASE("Test memory file writing", "[MemoryFile]")
 		                pwm::crypto::util::RandomQuality::WEAK);
 		std::size_t offset = 0;
 
+		bool chunkLengthsCorrect = true;
 		while(fileLength > 0)
 		{
 			std::size_t chunkLength =
 			        std::min(fileLength, WRITE_TEST_CHUNK_SIZE_MIN);
 			fileLength -= chunkLength;
-			REQUIRE(chunkLength ==
-			        file.write(contents.data() + offset,
-			                   chunkLength));
+			chunkLengthsCorrect =
+			        chunkLengthsCorrect &&
+			        (chunkLength ==
+			         file.write(contents.data() + offset,
+			                    chunkLength));
 			offset += chunkLength;
 		}
+		CHECK(chunkLengthsCorrect);
 
 		file.flush();
 		CHECK(totalFileLength == file.size());
