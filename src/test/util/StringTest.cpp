@@ -152,3 +152,37 @@ TEST_CASE("Test string trim algorithm", "[String]")
 		CHECK(test.second == result);
 	}
 }
+
+namespace
+{
+struct RemoveRepeatedCharacterTestCase
+{
+	std::string input;
+	char character;
+	std::string expected;
+
+	RemoveRepeatedCharacterTestCase(std::string const &i, char c,
+	                                std::string const &e)
+	        : input(i), character(c), expected(e)
+	{
+	}
+};
+}
+
+TEST_CASE("Test repeated character removal", "[String]")
+{
+	const std::vector<RemoveRepeatedCharacterTestCase> TEST_CASES{
+	        {"", ' ', ""},
+	        {"abcdefghijklmnop", 'g', "abcdefghijklmnop"},
+	        {"/foo/bar//baz/test/foobar//", '/',
+	         "/foo/bar/baz/test/foobar/"},
+	        {"//////////", '/', "/"},
+	        {"/", '/', "/"}};
+
+	for(auto const &test : TEST_CASES)
+	{
+		std::string result(test.input);
+		pwm::util::removeRepeatedCharacters(result, test.character);
+		CHECK(test.expected == result);
+	}
+}

@@ -96,6 +96,8 @@ std::string &trim(std::string &s,
 {
 	return rightTrim(leftTrim(s, predicate), predicate);
 }
+
+std::string &removeRepeatedCharacters(std::string &str, char character);
 }
 }
 
