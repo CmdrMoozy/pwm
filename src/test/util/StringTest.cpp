@@ -93,3 +93,62 @@ TEST_CASE("Test string join algorithm", "[String]")
 		CHECK(test.expected == output);
 	}
 }
+
+TEST_CASE("Test string left trim algorithm", "[String]")
+{
+	const std::vector<std::pair<std::string, std::string>> TEST_CASES{
+	        {"", ""},
+	        {"foobar", "foobar"},
+	        {"foobar\t\n ", "foobar\t\n "},
+	        {"\n\n\nfoobar", "foobar"},
+	        {"\t \t \n ", ""},
+	        {"\t \t \n foobar", "foobar"},
+	        {"foobar \t\n foobar", "foobar \t\n foobar"}};
+
+	for(auto const &test : TEST_CASES)
+	{
+		std::string result(test.first);
+		pwm::util::leftTrim(result);
+		CHECK(test.second == result);
+	}
+}
+
+TEST_CASE("Test string right trim algorithm", "[String]")
+{
+	const std::vector<std::pair<std::string, std::string>> TEST_CASES{
+	        {"", ""},
+	        {"foobar", "foobar"},
+	        {"foobar\t\n ", "foobar"},
+	        {"foobar\n\n\n", "foobar"},
+	        {"\n\n\nfoobar", "\n\n\nfoobar"},
+	        {"\t \t \n ", ""},
+	        {"foobar\t \t \n ", "foobar"},
+	        {"foobar \t\n foobar", "foobar \t\n foobar"}};
+
+	for(auto const &test : TEST_CASES)
+	{
+		std::string result(test.first);
+		pwm::util::rightTrim(result);
+		CHECK(test.second == result);
+	}
+}
+
+TEST_CASE("Test string trim algorithm", "[String]")
+{
+	const std::vector<std::pair<std::string, std::string>> TEST_CASES{
+	        {"", ""},
+	        {"foobar", "foobar"},
+	        {"foobar\t\n ", "foobar"},
+	        {"foobar\n\n\n", "foobar"},
+	        {"\n\n\nfoobar", "foobar"},
+	        {"\t \t \n ", ""},
+	        {"foobar\t \t \n ", "foobar"},
+	        {"foobar \t\n foobar", "foobar \t\n foobar"}};
+
+	for(auto const &test : TEST_CASES)
+	{
+		std::string result(test.first);
+		pwm::util::trim(result);
+		CHECK(test.second == result);
+	}
+}
