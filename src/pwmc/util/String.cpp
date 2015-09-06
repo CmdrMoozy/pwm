@@ -19,6 +19,7 @@
 #include "String.hpp"
 
 #include <algorithm>
+#include <iterator>
 #include <locale>
 
 namespace pwm
@@ -52,6 +53,29 @@ std::vector<std::string> split(const std::string &s, char d)
 	}
 
 	return components;
+}
+
+std::string &removeRepeatedCharacters(std::string &str, char character)
+{
+	bool repeatState = false;
+	std::vector<char> copied;
+	std::copy_if(str.begin(), str.end(), std::back_inserter(copied),
+	             [&repeatState, character](char const &c) -> bool
+	             {
+		             if(c == character)
+		             {
+			             if(repeatState) return false;
+			             repeatState = true;
+		             }
+		             else
+		             {
+			             repeatState = false;
+		             }
+
+		             return true;
+		     });
+	str.assign(copied.data(), copied.size());
+	return str;
 }
 }
 }
