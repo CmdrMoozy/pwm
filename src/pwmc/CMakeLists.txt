@@ -57,6 +57,8 @@ set(pwmc_SOURCES
 
 	repository/EncryptionHeader.cpp
 	repository/EncryptionHeader.hpp
+	repository/Path.cpp
+	repository/Path.hpp
 
 	util/Base64.cpp
 	util/Base64.hpp
