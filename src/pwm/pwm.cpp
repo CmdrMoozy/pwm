@@ -28,13 +28,14 @@
 #include <gtk/gtk.h>
 #endif
 
+#include <bdrck/params/Argument.hpp>
+#include <bdrck/params/Command.hpp>
+#include <bdrck/params/Option.hpp>
+#include <bdrck/params/parseAndExecuteCommand.hpp>
+
 #include "pwmc/config/Configuration.hpp"
 #include "pwmc/git/Library.hpp"
 #include "pwmc/git/Repository.hpp"
-#include "pwmc/params/Argument.hpp"
-#include "pwmc/params/Command.hpp"
-#include "pwmc/params/Option.hpp"
-#include "pwmc/params/parseAndExecuteCommand.hpp"
 #include "pwmc/repository/Path.hpp"
 
 #ifdef PWM_DEBUG
@@ -43,9 +44,9 @@
 
 namespace
 {
-void configCommand(pwm::params::OptionsMap const &options,
-                   pwm::params::FlagsMap const &,
-                   pwm::params::ArgumentsMap const &)
+void configCommand(bdrck::params::OptionsMap const &options,
+                   bdrck::params::FlagsMap const &,
+                   bdrck::params::ArgumentsMap const &)
 {
 	auto keyIt = options.find("key");
 	auto setIt = options.find("set");
@@ -80,9 +81,9 @@ void configCommand(pwm::params::OptionsMap const &options,
 	          << "\n";
 }
 
-void initCommand(pwm::params::OptionsMap const &options,
-                 pwm::params::FlagsMap const &,
-                 pwm::params::ArgumentsMap const &)
+void initCommand(bdrck::params::OptionsMap const &options,
+                 bdrck::params::FlagsMap const &,
+                 bdrck::params::ArgumentsMap const &)
 {
 	std::string repoPath = pwm::config::Configuration::getInstance().getOr(
 	        pwm::config::getConfigurationKey(
@@ -108,23 +109,24 @@ void initCommand(pwm::params::OptionsMap const &options,
 	std::cout << "Initialized repository: " << repoPath << "\n";
 }
 
-void listCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
-                 pwm::params::ArgumentsMap const &)
+void listCommand(bdrck::params::OptionsMap const &,
+                 bdrck::params::FlagsMap const &,
+                 bdrck::params::ArgumentsMap const &)
 {
 }
 
-void passwordCommand(pwm::params::OptionsMap const &,
-                     pwm::params::FlagsMap const &,
-                     pwm::params::ArgumentsMap const &arguments)
+void passwordCommand(bdrck::params::OptionsMap const &,
+                     bdrck::params::FlagsMap const &,
+                     bdrck::params::ArgumentsMap const &arguments)
 {
 	pwm::repository::Path path(arguments.find("path")->second.front());
 	std::cout << "Passoword path: " << path << "\n";
 }
 
 #ifdef PWM_DEBUG
-void clipboardCommand(pwm::params::OptionsMap const &options,
-                      pwm::params::FlagsMap const &,
-                      pwm::params::ArgumentsMap const &)
+void clipboardCommand(bdrck::params::OptionsMap const &options,
+                      bdrck::params::FlagsMap const &,
+                      bdrck::params::ArgumentsMap const &)
 {
 	if(options.find("set") != options.end())
 	{
@@ -139,59 +141,59 @@ void clipboardCommand(pwm::params::OptionsMap const &options,
 }
 #endif
 
-const std::initializer_list<pwm::params::Option> CONFIG_COMMAND_OPTIONS{
-        pwm::params::Option::optional("set", "Set the key to this new value.",
-                                      's'),
-        pwm::params::Option::optional("key", "The specific key to view/set.",
-                                      'k')};
+const std::initializer_list<bdrck::params::Option> CONFIG_COMMAND_OPTIONS{
+        bdrck::params::Option::optional("set", "Set the key to this new value.",
+                                        's'),
+        bdrck::params::Option::optional("key", "The specific key to view/set.",
+                                        'k')};
 
-const std::initializer_list<pwm::params::Option> INIT_COMMAND_OPTIONS{
-        pwm::params::Option::optional(
+const std::initializer_list<bdrck::params::Option> INIT_COMMAND_OPTIONS{
+        bdrck::params::Option::optional(
                 "repository", "The path to the repository to initialize.",
                 'r')};
 
-const std::initializer_list<pwm::params::Option> LIST_COMMAND_OPTIONS{
-        pwm::params::Option::optional(
+const std::initializer_list<bdrck::params::Option> LIST_COMMAND_OPTIONS{
+        bdrck::params::Option::optional(
                 "repository", "The path to the repository to examine.", 'r')};
 
-const std::vector<pwm::params::Argument> LIST_COMMAND_ARGUMENTS{
-        pwm::params::Argument(
+const std::vector<bdrck::params::Argument> LIST_COMMAND_ARGUMENTS{
+        bdrck::params::Argument(
                 "path", "The path to list, relative to the repository's root.",
                 "/")};
 
-const std::initializer_list<pwm::params::Option> PASSWORD_COMMAND_OPTIONS{
-        pwm::params::Option::optional(
+const std::initializer_list<bdrck::params::Option> PASSWORD_COMMAND_OPTIONS{
+        bdrck::params::Option::optional(
                 "repository", "The path to the repository to examine.", 'r'),
-        pwm::params::Option::optional("set", "Set this password.", 's'),
-        pwm::params::Option::optional(
+        bdrck::params::Option::optional("set", "Set this password.", 's'),
+        bdrck::params::Option::optional(
                 "key", "Set this password using a key file.", 'k')};
 
-const std::vector<pwm::params::Argument> PASSWORD_COMMAND_ARGUMENTS{
-        pwm::params::Argument("path",
-                              "The path of the password to get or set.")};
+const std::vector<bdrck::params::Argument> PASSWORD_COMMAND_ARGUMENTS{
+        bdrck::params::Argument("path",
+                                "The path of the password to get or set.")};
 
 #ifdef PWM_DEBUG
-const std::initializer_list<pwm::params::Option> CLIPBOARD_COMMAND_OPTIONS{
-        pwm::params::Option::optional(
+const std::initializer_list<bdrck::params::Option> CLIPBOARD_COMMAND_OPTIONS{
+        bdrck::params::Option::optional(
                 "set", "Set the clipboard contents to this value.", 's')};
 #endif
 
-const std::set<pwm::params::Command> PWM_COMMANDS = {
-        pwm::params::Command("config", "Get or set a configuration value",
-                             configCommand, CONFIG_COMMAND_OPTIONS),
-        pwm::params::Command("init", "Initialize a new pwm repository",
-                             initCommand, INIT_COMMAND_OPTIONS),
-        pwm::params::Command("ls", "List passwords stored in a pwm repository",
-                             listCommand, LIST_COMMAND_OPTIONS,
-                             LIST_COMMAND_ARGUMENTS),
-        pwm::params::Command("pw",
-                             "Get or set a password from a pwm repository",
-                             passwordCommand, PASSWORD_COMMAND_OPTIONS,
-                             PASSWORD_COMMAND_ARGUMENTS)
+const std::set<bdrck::params::Command> PWM_COMMANDS = {
+        bdrck::params::Command("config", "Get or set a configuration value",
+                               configCommand, CONFIG_COMMAND_OPTIONS),
+        bdrck::params::Command("init", "Initialize a new pwm repository",
+                               initCommand, INIT_COMMAND_OPTIONS),
+        bdrck::params::Command(
+                "ls", "List passwords stored in a pwm repository", listCommand,
+                LIST_COMMAND_OPTIONS, LIST_COMMAND_ARGUMENTS),
+        bdrck::params::Command("pw",
+                               "Get or set a password from a pwm repository",
+                               passwordCommand, PASSWORD_COMMAND_OPTIONS,
+                               PASSWORD_COMMAND_ARGUMENTS)
 #ifdef PWM_DEBUG
                 ,
-        pwm::params::Command("clipboard", "Access clipboard data",
-                             clipboardCommand, CLIPBOARD_COMMAND_OPTIONS)
+        bdrck::params::Command("clipboard", "Access clipboard data",
+                               clipboardCommand, CLIPBOARD_COMMAND_OPTIONS)
 #endif
 };
 }
@@ -204,5 +206,5 @@ int main(int argc, char **argv)
 
 	pwm::git::LibraryInstance gitLibrary;
 	pwm::config::ConfigurationInstance configInstance;
-	return pwm::params::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
+	return bdrck::params::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
 }
