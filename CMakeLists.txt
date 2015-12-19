@@ -56,6 +56,7 @@ set(pwm_LIBRARIES
 	${LIBGCRYPT_LIBRARIES}
 	bdrck-algorithm
 	bdrck-fs
+	bdrck-params
 	bdrck-util
 
 )

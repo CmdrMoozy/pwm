@@ -35,24 +35,6 @@ set(pwmc_SOURCES
 	git/Repository.hpp
 	git/Wrapper.hpp
 
-	params/Argument.cpp
-	params/Argument.hpp
-	params/Command.cpp
-	params/Command.hpp
-	params/Option.cpp
-	params/Option.hpp
-	params/parseAndExecuteCommand.cpp
-	params/parseAndExecuteCommand.hpp
-	params/ProgramParameters.cpp
-	params/ProgramParameters.hpp
-
-	params/detail/parseArguments.cpp
-	params/detail/parseArguments.hpp
-	params/detail/parseCommand.cpp
-	params/detail/parseCommand.hpp
-	params/detail/parseOptions.cpp
-	params/detail/parseOptions.hpp
-
 	repository/EncryptionHeader.cpp
 	repository/EncryptionHeader.hpp
 	repository/Path.cpp

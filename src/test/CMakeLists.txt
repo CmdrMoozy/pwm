@@ -10,13 +10,6 @@ set(pwm-test_SOURCES
 
 	git/RepositoryTest.cpp
 
-	params/CommandTest.cpp
-	params/OptionTest.cpp
-
-	params/detail/ParseArgumentsTest.cpp
-	params/detail/ParseCommandTest.cpp
-	params/detail/ParseOptionsTest.cpp
-
 	repository/EncryptionHeaderTest.cpp
 
 	util/Base64Test.cpp
