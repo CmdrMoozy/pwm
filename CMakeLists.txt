@@ -4,7 +4,7 @@ project(pwm)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/3rdparty/cmu/cmake)
 
 # Note which type of build we're performing.
 
@@ -34,8 +34,8 @@ endif()
 
 # Setup our compile flags.
 
-include(${PROJECT_SOURCE_DIR}/cmake/SetFlags.cmake)
-pwmSetCompileFlags()
+include(${PROJECT_SOURCE_DIR}/3rdparty/cmu/cmake/SetFlags.cmake)
+cmuSetCompileFlags()
 
 if(CMAKE_BUILD_TYPE_LOWER MATCHES debug)
 	add_definitions(-DPWM_DEBUG)
