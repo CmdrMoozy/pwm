@@ -78,7 +78,4 @@ enable_testing()
 add_subdirectory(3rdparty/bdrck)
 add_subdirectory(src/pwmc)
 add_subdirectory(src/pwm)
-
-if(CMAKE_BUILD_TYPE_LOWER MATCHES debug)
-	add_subdirectory(src/test)
-endif()
+add_subdirectory(src/test)
