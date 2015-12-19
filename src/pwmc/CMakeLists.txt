@@ -24,8 +24,6 @@ set(pwmc_SOURCES
 	crypto/Util.cpp
 	crypto/Util.hpp
 
-	fs/TemporaryStorage.cpp
-	fs/TemporaryStorage.hpp
 	fs/Util.cpp
 	fs/Util.hpp
 
@@ -70,13 +68,8 @@ set(pwmc_SOURCES
 	util/OutputSuppressor.hpp
 	util/printBytesAsHex.cpp
 	util/printBytesAsHex.hpp
-	util/ScopeExit.cpp
-	util/ScopeExit.hpp
-	util/String.cpp
-	util/String.hpp
-	util/UUID.cpp
-	util/UUID.hpp
 
 )
 
 add_library(pwmc STATIC ${pwmc_SOURCES})
+target_link_libraries(pwmc ${pwm_LIBRARIES})

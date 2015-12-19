@@ -18,16 +18,17 @@
 
 #include <catch/catch.hpp>
 
+#include <bdrck/fs/TemporaryStorage.hpp>
+
 #include "pwmc/crypto/Key.hpp"
-#include "pwmc/fs/TemporaryStorage.hpp"
 #include "pwmc/git/Repository.hpp"
 #include "pwmc/repository/EncryptionHeader.hpp"
 
 TEST_CASE("Test that encryption header default values are populated",
           "[Repository]")
 {
-	pwm::fs::TemporaryStorage directory(
-	        pwm::fs::TemporaryStorageType::DIRECTORY);
+	bdrck::fs::TemporaryStorage directory(
+	        bdrck::fs::TemporaryStorageType::DIRECTORY);
 	pwm::git::Repository repository(directory.getPath());
 
 	// Construct an encryption header, and then destruct it to write the

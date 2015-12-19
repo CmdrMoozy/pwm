@@ -39,8 +39,8 @@ public:
 	static Option required(std::string const &n, std::string const &h,
 	                       std::experimental::optional<char> const &sn =
 	                               std::experimental::nullopt,
-	                       std::experimental::optional<std::string> const &
-	                               dv = std::experimental::nullopt);
+	                       std::experimental::optional<std::string> const
+	                               &dv = std::experimental::nullopt);
 
 	static Option required(std::string const &n, std::string const &h,
 	                       std::experimental::optional<char> const &sn,

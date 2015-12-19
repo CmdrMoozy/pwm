@@ -8,8 +8,6 @@ set(pwm-test_SOURCES
 	crypto/GeneratePasswordTest.cpp
 	crypto/KeyTest.cpp
 
-	fs/TemporaryStorageTest.cpp
-
 	git/RepositoryTest.cpp
 
 	params/CommandTest.cpp
@@ -24,7 +22,6 @@ set(pwm-test_SOURCES
 	util/Base64Test.cpp
 	util/ClipboardTest.cpp
 	util/MemoryFileTest.cpp
-	util/StringTest.cpp
 
 )
 

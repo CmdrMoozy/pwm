@@ -20,7 +20,8 @@
 
 #include <stdexcept>
 
-#include "pwmc/fs/Util.hpp"
+#include <bdrck/fs/Util.hpp>
+
 #include "pwmc/git/checkReturn.hpp"
 
 namespace
@@ -47,7 +48,7 @@ std::string getRepositoryConstructPath(const std::string &p,
 		if(!ab && (c == pwm::git::RepositoryCreateMode::CreateBare))
 			throw;
 
-		pwm::fs::createPath(p);
+		bdrck::fs::createPath(p);
 		git_repository *repo;
 		pwm::git::checkReturn(git_repository_init(
 		        &repo, p.c_str(),

@@ -21,12 +21,13 @@
 #include <cassert>
 #include <map>
 
+#include <bdrck/fs/Util.hpp>
+
 #include "pwmc/config/deserializeConfiguration.hpp"
 #include "pwmc/config/Key.hpp"
 #include "pwmc/config/serializeConfiguration.hpp"
 #include "pwmc/crypto/Key.hpp"
 #include "pwmc/crypto/Util.hpp"
-#include "pwmc/fs/Util.hpp"
 #include "pwmc/git/Repository.hpp"
 #include "pwmc/util/Base64.hpp"
 
@@ -58,8 +59,8 @@ namespace repository
 std::string getEncryptionHeaderPath(git::Repository const &repository)
 {
 	static const std::string ENCRYPTION_HEADER_FILE = ".header";
-	return fs::combinePaths(repository.getWorkDirectoryPath(),
-	                        ENCRYPTION_HEADER_FILE);
+	return bdrck::fs::combinePaths(repository.getWorkDirectoryPath(),
+	                               ENCRYPTION_HEADER_FILE);
 }
 
 EncryptionHeader::EncryptionHeader(git::Repository const &repository)

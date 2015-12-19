@@ -76,7 +76,8 @@ void configCommand(pwm::params::OptionsMap const &options,
 
 	std::cout << pwm::config::Key(keyIt->second) << " = "
 	          << pwm::config::Configuration::getInstance().get(
-	                     keyIt->second) << "\n";
+	                     keyIt->second)
+	          << "\n";
 }
 
 void initCommand(pwm::params::OptionsMap const &options,

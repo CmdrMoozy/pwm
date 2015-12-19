@@ -28,9 +28,9 @@
 
 #include <yajl/yajl_parse.h>
 
-#include "pwmc/fs/Util.hpp"
-#include "pwmc/util/ScopeExit.hpp"
-#include "pwmc/util/String.hpp"
+#include <bdrck/algorithm/String.hpp>
+#include <bdrck/fs/Util.hpp>
+#include <bdrck/util/ScopeExit.hpp>
 
 namespace
 {
@@ -49,7 +49,8 @@ struct ParseState
 
 pwm::config::Key toKey(const std::deque<std::string> &components)
 {
-	return pwm::util::join(components.begin(), components.end(), ".");
+	return bdrck::algorithm::string::join(components.begin(),
+	                                      components.end(), ".");
 }
 
 int nullCallback(void *ctx)
@@ -117,9 +118,9 @@ int endArrayCallback(void *ctx)
 }
 
 const yajl_callbacks CALLBACKS = {
-        nullCallback, booleanCallback, nullptr, nullptr, numberCallback,
-        stringCallback, startMapCallback, mapKeyCallback, endMapCallback,
-        startArrayCallback, endArrayCallback};
+        nullCallback,   booleanCallback,    nullptr,          nullptr,
+        numberCallback, stringCallback,     startMapCallback, mapKeyCallback,
+        endMapCallback, startArrayCallback, endArrayCallback};
 
 const std::size_t BUFFER_SIZE = 4096;
 
@@ -154,10 +155,10 @@ ConfigurationData deserializeConfiguration(std::istream &in)
 	yajl_handle parser = yajl_alloc(&CALLBACKS, nullptr, &state);
 	if(parser == nullptr)
 		throw std::runtime_error("Creating JSON parser failed.");
-	util::ScopeExit cleanup([&parser]()
-	                        {
-		                        yajl_free(parser);
-		                });
+	bdrck::util::ScopeExit cleanup([&parser]()
+	                               {
+		                               yajl_free(parser);
+		                       });
 
 	std::vector<char> buffer(BUFFER_SIZE, '\0');
 	std::streamsize read;
@@ -177,7 +178,7 @@ ConfigurationData deserializeConfiguration(std::istream &in)
 
 ConfigurationData deserializeConfiguration(const std::string &p)
 {
-	if(!fs::exists(p)) return ConfigurationData();
+	if(!bdrck::fs::exists(p)) return ConfigurationData();
 
 	std::ifstream in(p, std::ios_base::in | std::ios_base::binary);
 	if(!in.is_open())

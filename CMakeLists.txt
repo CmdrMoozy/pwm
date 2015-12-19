@@ -54,6 +54,9 @@ set(pwm_LIBRARIES
 	${LIBGIT2_LIBRARIES}
 	${YAJL_LIBRARIES}
 	${LIBGCRYPT_LIBRARIES}
+	bdrck-algorithm
+	bdrck-fs
+	bdrck-util
 
 )
 
@@ -72,6 +75,7 @@ endif()
 
 enable_testing()
 
+add_subdirectory(3rdparty/bdrck)
 add_subdirectory(src/pwmc)
 add_subdirectory(src/pwm)
 
