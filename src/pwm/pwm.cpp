@@ -35,6 +35,7 @@
 #include "pwmc/params/Command.hpp"
 #include "pwmc/params/Option.hpp"
 #include "pwmc/params/parseAndExecuteCommand.hpp"
+#include "pwmc/repository/Path.hpp"
 
 #ifdef PWM_DEBUG
 #include "pwmc/util/Clipboard.hpp"
@@ -113,8 +114,10 @@ void listCommand(pwm::params::OptionsMap const &, pwm::params::FlagsMap const &,
 
 void passwordCommand(pwm::params::OptionsMap const &,
                      pwm::params::FlagsMap const &,
-                     pwm::params::ArgumentsMap const &)
+                     pwm::params::ArgumentsMap const &arguments)
 {
+	pwm::repository::Path path(arguments.find("path")->second.front());
+	std::cout << "Passoword path: " << path << "\n";
 }
 
 #ifdef PWM_DEBUG
