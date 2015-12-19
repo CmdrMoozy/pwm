@@ -67,8 +67,8 @@ void ConfigurationRadixTree::traverse(const TraversalFunction &pre,
                                       const TraversalFunction &post) const
 {
 	std::function<void(const detail::ConfigurationRadixTreeNode &)> fn =
-	        [this, &pre, &post, &fn](
-	                const detail::ConfigurationRadixTreeNode &n)
+	        [this, &pre, &post,
+	         &fn](const detail::ConfigurationRadixTreeNode &n)
 	{
 		if(&n != root.get())
 		{

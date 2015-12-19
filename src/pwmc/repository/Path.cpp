@@ -23,7 +23,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "pwmc/util/String.hpp"
+#include <bdrck/algorithm/String.hpp>
 
 namespace
 {
@@ -52,10 +52,10 @@ void normalizeSeparators(std::string &path)
 
 void trimSeparators(std::string &path)
 {
-	pwm::util::trim(path, [](char const &c) -> bool
-	                      {
-		                      return c == '/';
-		              });
+	bdrck::algorithm::string::trim(path, [](char const &c) -> bool
+	                               {
+		                               return c == '/';
+		                       });
 }
 }
 
@@ -74,7 +74,7 @@ Path::Path(std::string const &p) : path(p)
 
 	normalizeSeparators(path);
 	trimSeparators(path);
-	pwm::util::removeRepeatedCharacters(path, '/');
+	bdrck::algorithm::string::removeRepeatedCharacters(path, '/');
 }
 
 std::string const &Path::getPath() const

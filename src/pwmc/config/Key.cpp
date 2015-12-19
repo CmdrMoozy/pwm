@@ -22,13 +22,14 @@
 #include <locale>
 #include <stdexcept>
 
-#include "pwmc/util/String.hpp"
+#include <bdrck/algorithm/String.hpp>
 
 namespace pwm
 {
 namespace config
 {
-Key::Key(const std::string &k) : components(util::split(k, '.'))
+Key::Key(const std::string &k)
+        : components(bdrck::algorithm::string::split(k, '.'))
 {
 	if(components.size() == 0)
 		throw std::runtime_error("Configuration key must be nonempty.");
@@ -63,7 +64,8 @@ bool operator==(const Key &a, const Key &b)
 
 std::ostream &operator<<(std::ostream &os, const Key &k)
 {
-	os << pwm::util::join(k.components.begin(), k.components.end(), ".");
+	os << bdrck::algorithm::string::join(k.components.begin(),
+	                                     k.components.end(), ".");
 	return os;
 }
 }

@@ -18,16 +18,17 @@
 
 #include <catch/catch.hpp>
 
-#include "pwmc/fs/TemporaryStorage.hpp"
-#include "pwmc/fs/Util.hpp"
+#include <bdrck/fs/TemporaryStorage.hpp>
+#include <bdrck/fs/Util.hpp>
+
 #include "pwmc/git/Repository.hpp"
 
 TEST_CASE("Test Git repository work directory path retrieval", "[Git]")
 {
-	pwm::fs::TemporaryStorage directory(
-	        pwm::fs::TemporaryStorageType::DIRECTORY);
-	REQUIRE(pwm::fs::isDirectory(directory.getPath()));
+	bdrck::fs::TemporaryStorage directory(
+	        bdrck::fs::TemporaryStorageType::DIRECTORY);
+	REQUIRE(bdrck::fs::isDirectory(directory.getPath()));
 	pwm::git::Repository repository(directory.getPath());
-	CHECK(pwm::fs::normalizePath(directory.getPath()) ==
-	      pwm::fs::normalizePath(repository.getWorkDirectoryPath()));
+	CHECK(bdrck::fs::normalizePath(directory.getPath()) ==
+	      bdrck::fs::normalizePath(repository.getWorkDirectoryPath()));
 }

@@ -28,8 +28,9 @@
 
 #include <yajl/yajl_gen.h>
 
+#include <bdrck/util/ScopeExit.hpp>
+
 #include "pwmc/config/ConfigurationRadixTree.hpp"
-#include "pwmc/util/ScopeExit.hpp"
 
 namespace
 {
@@ -111,10 +112,10 @@ std::string serializeConfiguration(const ConfigurationData &data,
 	yajl_gen gen = yajl_gen_alloc(nullptr);
 	if(gen == nullptr)
 		throw std::runtime_error("Creating JSON generator failed.");
-	util::ScopeExit cleanup([&gen]()
-	                        {
-		                        yajl_gen_free(gen);
-		                });
+	bdrck::util::ScopeExit cleanup([&gen]()
+	                               {
+		                               yajl_gen_free(gen);
+		                       });
 
 	yajl_gen_config(gen, yajl_gen_validate_utf8, 1);
 	if(formatted) yajl_gen_config(gen, yajl_gen_beautify, 1);

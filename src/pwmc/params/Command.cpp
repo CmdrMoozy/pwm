@@ -48,7 +48,8 @@ Command::Command(std::string const &n, std::string const &h,
 	                     [](Argument const &argument) -> bool
 	                     {
 		                     return !argument.defaultValue;
-		             }).base();
+		             })
+	                .base();
 	if(lastNonDefault != arguments.end()) --lastNonDefault;
 
 	if(firstDefault < lastNonDefault)
