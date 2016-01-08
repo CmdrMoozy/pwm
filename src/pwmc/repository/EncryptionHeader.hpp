@@ -25,21 +25,24 @@
 
 #include "pwmc/config/Configuration.hpp"
 
-namespace pwm
+namespace bdrck
 {
 namespace git
 {
 class Repository;
 }
+}
 
+namespace pwm
+{
 namespace repository
 {
-std::string getEncryptionHeaderPath(git::Repository const &repository);
+std::string getEncryptionHeaderPath(bdrck::git::Repository const &repository);
 
 class EncryptionHeader
 {
 public:
-	EncryptionHeader(git::Repository const &repository);
+	EncryptionHeader(bdrck::git::Repository const &repository);
 
 	EncryptionHeader(EncryptionHeader const &) = default;
 	EncryptionHeader(EncryptionHeader &&) = default;

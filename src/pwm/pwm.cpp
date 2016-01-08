@@ -28,14 +28,14 @@
 #include <gtk/gtk.h>
 #endif
 
+#include <bdrck/git/Library.hpp>
+#include <bdrck/git/Repository.hpp>
 #include <bdrck/params/Argument.hpp>
 #include <bdrck/params/Command.hpp>
 #include <bdrck/params/Option.hpp>
 #include <bdrck/params/parseAndExecuteCommand.hpp>
 
 #include "pwmc/config/Configuration.hpp"
-#include "pwmc/git/Library.hpp"
-#include "pwmc/git/Repository.hpp"
 #include "pwmc/repository/Path.hpp"
 
 #ifdef PWM_DEBUG
@@ -104,8 +104,9 @@ void initCommand(bdrck::params::OptionsMap const &options,
 		throw std::runtime_error(oss.str());
 	}
 
-	pwm::git::Repository repo(
-	        repoPath, pwm::git::RepositoryCreateMode::CreateNormal, false);
+	bdrck::git::Repository repo(
+	        repoPath, bdrck::git::RepositoryCreateMode::CreateNormal,
+	        false);
 	std::cout << "Initialized repository: " << repoPath << "\n";
 }
 
@@ -204,7 +205,7 @@ int main(int argc, char **argv)
 	gtk_init(nullptr, nullptr);
 #endif
 
-	pwm::git::LibraryInstance gitLibrary;
+	bdrck::git::LibraryInstance gitLibrary;
 	pwm::config::ConfigurationInstance configInstance;
 	return bdrck::params::parseAndExecuteCommand(argc, argv, PWM_COMMANDS);
 }

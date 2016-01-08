@@ -27,14 +27,6 @@ set(pwmc_SOURCES
 	fs/Util.cpp
 	fs/Util.hpp
 
-	git/checkReturn.cpp
-	git/checkReturn.hpp
-	git/Library.cpp
-	git/Library.hpp
-	git/Repository.cpp
-	git/Repository.hpp
-	git/Wrapper.hpp
-
 	repository/EncryptionHeader.cpp
 	repository/EncryptionHeader.hpp
 	repository/Path.cpp

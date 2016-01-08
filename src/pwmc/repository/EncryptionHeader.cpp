@@ -23,12 +23,13 @@
 
 #include <bdrck/fs/Util.hpp>
 
+#include <bdrck/git/Repository.hpp>
+
 #include "pwmc/config/deserializeConfiguration.hpp"
 #include "pwmc/config/Key.hpp"
 #include "pwmc/config/serializeConfiguration.hpp"
 #include "pwmc/crypto/Key.hpp"
 #include "pwmc/crypto/Util.hpp"
-#include "pwmc/git/Repository.hpp"
 #include "pwmc/util/Base64.hpp"
 
 namespace
@@ -56,14 +57,14 @@ namespace pwm
 {
 namespace repository
 {
-std::string getEncryptionHeaderPath(git::Repository const &repository)
+std::string getEncryptionHeaderPath(bdrck::git::Repository const &repository)
 {
 	static const std::string ENCRYPTION_HEADER_FILE = ".header";
 	return bdrck::fs::combinePaths(repository.getWorkDirectoryPath(),
 	                               ENCRYPTION_HEADER_FILE);
 }
 
-EncryptionHeader::EncryptionHeader(git::Repository const &repository)
+EncryptionHeader::EncryptionHeader(bdrck::git::Repository const &repository)
         : path(getEncryptionHeaderPath(repository)),
           data(config::deserializeConfiguration(path))
 {
