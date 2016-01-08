@@ -23,7 +23,7 @@
 #include <gtk/gtk.h>
 #endif
 
-#include "pwmc/git/Library.hpp"
+#include <bdrck/git/Library.hpp>
 
 int main(int argc, char **argv)
 {
@@ -31,6 +31,6 @@ int main(int argc, char **argv)
 	gtk_init(nullptr, nullptr);
 #endif
 
-	pwm::git::LibraryInstance gitLibrary;
+	bdrck::git::LibraryInstance gitLibrary;
 	return Catch::Session().run(argc, argv);
 }

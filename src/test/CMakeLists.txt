@@ -8,8 +8,6 @@ set(pwm-test_SOURCES
 	crypto/GeneratePasswordTest.cpp
 	crypto/KeyTest.cpp
 
-	git/RepositoryTest.cpp
-
 	repository/EncryptionHeaderTest.cpp
 
 	util/Base64Test.cpp
