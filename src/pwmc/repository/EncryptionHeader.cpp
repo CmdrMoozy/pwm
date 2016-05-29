@@ -24,13 +24,13 @@
 #include <bdrck/fs/Util.hpp>
 
 #include <bdrck/git/Repository.hpp>
+#include <bdrck/util/Base64.hpp>
 
 #include "pwmc/config/deserializeConfiguration.hpp"
 #include "pwmc/config/Key.hpp"
 #include "pwmc/config/serializeConfiguration.hpp"
 #include "pwmc/crypto/Key.hpp"
 #include "pwmc/crypto/Util.hpp"
-#include "pwmc/util/Base64.hpp"
 
 namespace
 {
@@ -76,7 +76,7 @@ EncryptionHeader::EncryptionHeader(bdrck::git::Repository const &repository)
 	// depends on a static).
 	if(getSalt().size() == 0)
 	{
-		data.data[HEADER_KEY_SALT] = pwm::util::encodeBase64(
+		data.data[HEADER_KEY_SALT] = bdrck::util::encodeBase64(
 		        DEFAULT_SALT.data(), DEFAULT_SALT.size());
 	}
 }
@@ -96,7 +96,7 @@ std::vector<uint8_t> EncryptionHeader::getSalt() const
 {
 	auto it = data.data.find(HEADER_KEY_SALT);
 	assert(it != data.data.end());
-	return util::decodeBase64(it->second);
+	return bdrck::util::decodeBase64(it->second);
 }
 
 std::size_t EncryptionHeader::getKeySize() const

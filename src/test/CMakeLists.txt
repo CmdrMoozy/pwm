@@ -10,7 +10,6 @@ set(pwm-test_SOURCES
 
 	repository/EncryptionHeaderTest.cpp
 
-	util/Base64Test.cpp
 	util/ClipboardTest.cpp
 	util/MemoryFileTest.cpp
 
