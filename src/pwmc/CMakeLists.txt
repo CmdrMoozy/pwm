@@ -32,8 +32,6 @@ set(pwmc_SOURCES
 	repository/Path.cpp
 	repository/Path.hpp
 
-	util/Base64.cpp
-	util/Base64.hpp
 	util/Clipboard.cpp
 	util/Clipboard.hpp
 	util/MemoryFile.cpp
