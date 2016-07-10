@@ -24,9 +24,9 @@
 
 #include <bdrck/util/ScopeExit.hpp>
 
-#include "pwmc/crypto/checkReturn.hpp"
 #include "pwmc/crypto/Key.hpp"
 #include "pwmc/crypto/Util.hpp"
+#include "pwmc/crypto/checkReturn.hpp"
 #include "pwmc/util/MemoryFile.hpp"
 
 namespace
@@ -39,10 +39,8 @@ std::vector<uint8_t> encryptImpl(pwm::crypto::Key const &key, int algorithm,
 	gcry_cipher_hd_t cipher;
 	pwm::crypto::checkReturn(gcry_cipher_open(
 	        &cipher, algorithm, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE));
-	bdrck::util::ScopeExit destroyCipher([&cipher]()
-	                                     {
-		                                     gcry_cipher_close(cipher);
-		                             });
+	bdrck::util::ScopeExit destroyCipher(
+	        [&cipher]() { gcry_cipher_close(cipher); });
 
 	std::vector<uint8_t> iv = pwm::crypto::util::generateRandomBytes(
 	        pwm::crypto::DEFAULT_IV_SIZE_OCTETS,

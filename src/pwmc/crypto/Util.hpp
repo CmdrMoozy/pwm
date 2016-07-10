@@ -69,8 +69,7 @@ SecureUniformRandomNumberGenerator<quality>::max()
 
 template <RandomQuality quality>
 typename SecureUniformRandomNumberGenerator<quality>::result_type
-        SecureUniformRandomNumberGenerator<quality>::
-        operator()()
+SecureUniformRandomNumberGenerator<quality>::operator()()
 {
 	std::vector<uint8_t> bytes =
 	        generateRandomBytes(sizeof(uint64_t), quality);
