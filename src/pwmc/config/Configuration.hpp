@@ -19,82 +19,31 @@
 #ifndef pwmc_config_Configuration_HPP
 #define pwmc_config_Configuration_HPP
 
-#include <iostream>
-#include <map>
-#include <memory>
-#include <mutex>
 #include <string>
 
-#include "pwmc/config/Key.hpp"
+#include <boost/optional/optional.hpp>
+
+#include <bdrck/config/Configuration.hpp>
+
+#include "Configuration.pb.h"
 
 namespace pwm
 {
 namespace config
 {
-enum class ConfigurationValue
-{
-	RepositoryDefaultPath
-};
-
-Key getConfigurationKey(ConfigurationValue value);
-
-struct ConfigurationData
-{
-	using ConfigurationMap = std::map<Key, std::string>;
-	using const_iterator = ConfigurationMap::const_iterator;
-
-	std::map<Key, std::string> data;
-
-	ConfigurationData();
-	explicit ConfigurationData(const std::map<Key, std::string> &d);
-
-	ConfigurationData(const ConfigurationData &) = default;
-	~ConfigurationData() = default;
-	ConfigurationData &operator=(const ConfigurationData &) = default;
-
-	void apply(const ConfigurationData &o, bool overwrite = false);
-};
-
 class ConfigurationInstance
 {
 public:
-	ConfigurationInstance();
-
-	ConfigurationInstance(const ConfigurationInstance &) = delete;
-
-	~ConfigurationInstance();
-
-	ConfigurationInstance &
-	operator=(const ConfigurationInstance &) = delete;
-};
-
-class Configuration
-{
-public:
-	static Configuration &getInstance();
-
-	~Configuration();
-
-	ConfigurationData::const_iterator begin() const;
-	ConfigurationData::const_iterator end() const;
-
-	std::string get(const Key &key) const;
-	std::string getOr(const Key &key, const std::string &defaultVal) const;
-	void set(const Key &key, const std::string &value);
-	void reset(const Key &key);
+	ConfigurationInstance(boost::optional<std::string> const &customPath = boost::none);
 
 private:
-	friend class ConfigurationInstance;
-
-	static std::mutex mutex;
-	static std::unique_ptr<Configuration> instance;
-
-	ConfigurationData data;
-
-	Configuration();
+	bdrck::config::ConfigurationInstance<pwm::proto::Configuration> instanceHandle;
 };
 
-std::ostream &operator<<(std::ostream &os, const ConfigurationData &d);
+bdrck::config::Configuration<pwm::proto::Configuration>& instance();
+
+std::string getFieldAsString(std::string const& path);
+void setFieldFromString(std::string const& path, std::string const& value);
 }
 }
 

@@ -23,6 +23,8 @@ option(USE_CLIPBOARD "Enable clipboard support" ON)
 
 set(CMAKE_AUTOMOC ON)
 
+find_package(Boost REQUIRED)
+find_package(Protobuf REQUIRED)
 find_package(Libgit2 REQUIRED)
 find_package(Yajl REQUIRED)
 find_package(Libgcrypt REQUIRED) # Must be 1.6.0 or newer.
@@ -45,16 +47,27 @@ if(USE_CLIPBOARD)
 	add_definitions(-DPWM_USE_CLIPBOARD)
 endif()
 
-include_directories(3rdparty/include src)
+include_directories(src)
+
+include_directories(SYSTEM
+
+	3rdparty/include
+	${Boost_INCLUDE_DIRS}
+	${PROTOBUF_INCLUDE_DIRS}
+	${CMAKE_BINARY_DIR}/src/pwmc
+
+)
 
 # Define the libraries to link against.
 
 set(pwm_LIBRARIES
 
+	${PROTOBUF_LIBRARIES}
 	${LIBGIT2_LIBRARIES}
 	${YAJL_LIBRARIES}
 	${LIBGCRYPT_LIBRARIES}
 	bdrck-algorithm
+	bdrck-config
 	bdrck-fs
 	bdrck-git
 	bdrck-params

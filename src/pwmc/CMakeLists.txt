@@ -2,14 +2,6 @@ set(pwmc_SOURCES
 
 	config/Configuration.cpp
 	config/Configuration.hpp
-	config/ConfigurationRadixTree.cpp
-	config/ConfigurationRadixTree.hpp
-	config/deserializeConfiguration.cpp
-	config/deserializeConfiguration.hpp
-	config/Key.cpp
-	config/Key.hpp
-	config/serializeConfiguration.cpp
-	config/serializeConfiguration.hpp
 
 	crypto/checkReturn.cpp
 	crypto/checkReturn.hpp
@@ -43,5 +35,9 @@ set(pwmc_SOURCES
 
 )
 
-add_library(pwmc STATIC ${pwmc_SOURCES})
+add_definitions(-DPROTOBUF_INLINE_NOT_IN_HEADERS=0)
+file(GLOB proto_FILES "${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto")
+PROTOBUF_GENERATE_CPP(proto_SOURCES proto_HEADERS ${proto_FILES})
+
+add_library(pwmc STATIC ${pwmc_SOURCES} ${proto_SOURCES} ${proto_HEADERS})
 target_link_libraries(pwmc ${pwm_LIBRARIES})

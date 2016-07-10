@@ -18,157 +18,61 @@
 
 #include "Configuration.hpp"
 
-#include <stdexcept>
+#include <mutex>
 
-#include "pwmc/config/deserializeConfiguration.hpp"
-#include "pwmc/config/serializeConfiguration.hpp"
-#include "pwmc/fs/Util.hpp"
-
-namespace pwm
-{
-namespace config
-{
-std::mutex Configuration::mutex;
-std::unique_ptr<Configuration> Configuration::instance;
-
-Key getConfigurationKey(ConfigurationValue value)
-{
-	static std::map<ConfigurationValue, std::string> CONFIGURATION_KEYS = {
-	        {ConfigurationValue::RepositoryDefaultPath,
-	         "repository.defaultpath"}};
-
-	auto it = CONFIGURATION_KEYS.find(value);
-	if(it == CONFIGURATION_KEYS.end())
-	{
-		throw std::runtime_error(
-		        "No configuration key known for the given value.");
-	}
-	return it->second;
-}
-
-ConfigurationData::ConfigurationData() : data()
-{
-}
-
-ConfigurationData::ConfigurationData(const std::map<Key, std::string> &d)
-        : data(d)
-{
-}
-
-void ConfigurationData::apply(const ConfigurationData &o, bool overwrite)
-{
-	for(const auto &kv : o.data)
-	{
-		auto it = data.find(kv.first);
-		if(!overwrite && (it != data.end())) continue;
-		if(it == data.end())
-			it = data.insert(kv).first;
-		else
-			it->second = kv.second;
-	}
-}
-}
-}
+#include <bdrck/config/Util.hpp>
 
 namespace
 {
-const pwm::config::ConfigurationData
-        DEFAULT_CONFIG(std::map<pwm::config::Key, std::string>({}));
+constexpr char const *CONFIG_ID_APPLICATION = "pwm";
+constexpr char const *CONFIG_ID_NAME = "configuration";
+
+bdrck::config::ConfigurationIdentifier getConfigurationIdentifier()
+{
+	static const bdrck::config::ConfigurationIdentifier identifier{CONFIG_ID_APPLICATION, CONFIG_ID_NAME};
+	return identifier;
+}
+
+pwm::proto::Configuration getDefaultConfiguration()
+{
+	static std::mutex mutex;
+	static bool initialized{false};
+	static pwm::proto::Configuration defaults;
+
+	std::lock_guard<std::mutex> lock(mutex);
+	if(!initialized)
+	{
+		initialized = true;
+	}
+
+	return defaults;
+}
 }
 
 namespace pwm
 {
 namespace config
 {
-ConfigurationInstance::ConfigurationInstance()
+ConfigurationInstance::ConfigurationInstance(boost::optional<std::string> const &customPath)
+	: instanceHandle(getConfigurationIdentifier(), getDefaultConfiguration(), customPath)
 {
-	std::lock_guard<std::mutex> lock(Configuration::mutex);
-	if(!!Configuration::instance)
-	{
-		throw std::runtime_error(
-		        "Can't initialize two Configuration instances.");
-	}
-	Configuration::instance.reset(new Configuration());
 }
 
-ConfigurationInstance::~ConfigurationInstance()
+bdrck::config::Configuration<pwm::proto::Configuration>& instance()
 {
-	std::lock_guard<std::mutex> lock(Configuration::mutex);
-	if(!Configuration::instance)
-	{
-		throw std::runtime_error(
-		        "No Configuration instance initialized.");
-	}
-	Configuration::instance.reset();
+	return bdrck::config::Configuration<pwm::proto::Configuration>::instance(getConfigurationIdentifier());
 }
 
-Configuration &Configuration::getInstance()
+std::string getFieldAsString(std::string const& path)
 {
-	std::lock_guard<std::mutex> lock(Configuration::mutex);
-	return *instance;
+	return bdrck::config::getFieldAsString(path, instance().get());
 }
 
-Configuration::~Configuration()
+void setFieldFromString(std::string const& path, std::string const& value)
 {
-	try
-	{
-		serializeConfiguration(fs::getConfigurationFilePath(), data);
-	}
-	catch(...)
-	{
-	}
-}
-
-ConfigurationData::const_iterator Configuration::begin() const
-{
-	return data.data.begin();
-}
-
-ConfigurationData::const_iterator Configuration::end() const
-{
-	return data.data.end();
-}
-
-std::string Configuration::get(const Key &key) const
-{
-	auto it = data.data.find(key);
-	if(it == data.data.end()) throw std::runtime_error("Key not found.");
-	return it->second;
-}
-
-std::string Configuration::getOr(const Key &key,
-                                 const std::string &defaultVal) const
-{
-	auto it = data.data.find(key);
-	if(it == data.data.end()) return defaultVal;
-	return it->second;
-}
-
-void Configuration::set(const Key &key, const std::string &value)
-{
-	data.data[key] = value;
-}
-
-void Configuration::reset(const Key &key)
-{
-	auto defaultIt = DEFAULT_CONFIG.data.find(key);
-	if(defaultIt == DEFAULT_CONFIG.data.end())
-		throw std::runtime_error("No default value for that key.");
-
-	data.data[key] = defaultIt->second;
-}
-
-Configuration::Configuration()
-        : data(deserializeConfiguration(fs::getConfigurationFilePath()))
-{
-	data.apply(DEFAULT_CONFIG);
-}
-
-std::ostream &operator<<(std::ostream &os, const ConfigurationData &d)
-{
-	for(const auto &kv : d.data)
-		os << kv.first << " = " << kv.second << "\n";
-	return os;
+	auto message = instance().get();
+	bdrck::config::setFieldFromString(path, message, value);
+	instance().set(message);
 }
 }
 }
