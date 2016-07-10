@@ -37,8 +37,7 @@ TEST_CASE("Password character exclusion test", "[Crypto]")
 		        {pwm::crypto::PasswordCharacters::LOWERCASE}, 1, 1,
 		        {'f'});
 		CHECK(std::find_if(password.begin(), password.end(),
-		                   [](char const &c) -> bool
-		                   {
+		                   [](char const &c) -> bool {
 			                   return c == 'f';
 			           }) == password.end());
 	}
@@ -53,8 +52,7 @@ TEST_CASE("Passowrd character set test", "[Crypto]")
 		         pwm::crypto::PasswordCharacters::UPPERCASE},
 		        1, 1);
 		CHECK(std::find_if_not(password.begin(), password.end(),
-		                       [](char const &c) -> bool
-		                       {
+		                       [](char const &c) -> bool {
 			                       return std::isalpha(c);
 			               }) == password.end());
 	}

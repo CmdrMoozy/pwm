@@ -30,8 +30,7 @@ namespace
 bool isValidPath(std::string const &path)
 {
 	auto it = std::find_if_not(path.begin(), path.end(),
-	                           [](char const &c) -> bool
-	                           {
+	                           [](char const &c) -> bool {
 		                           std::locale locale;
 		                           return std::isalpha(c, locale) ||
 		                                  std::isdigit(c, locale) ||
@@ -43,19 +42,13 @@ bool isValidPath(std::string const &path)
 void normalizeSeparators(std::string &path)
 {
 	std::replace_if(path.begin(), path.end(),
-	                [](char const &c) -> bool
-	                {
-		                return c == '\\';
-		        },
-	                '/');
+	                [](char const &c) -> bool { return c == '\\'; }, '/');
 }
 
 void trimSeparators(std::string &path)
 {
-	bdrck::algorithm::string::trim(path, [](char const &c) -> bool
-	                               {
-		                               return c == '/';
-		                       });
+	bdrck::algorithm::string::trim(
+	        path, [](char const &c) -> bool { return c == '/'; });
 }
 }
 

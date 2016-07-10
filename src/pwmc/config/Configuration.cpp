@@ -29,7 +29,8 @@ constexpr char const *CONFIG_ID_NAME = "configuration";
 
 bdrck::config::ConfigurationIdentifier getConfigurationIdentifier()
 {
-	static const bdrck::config::ConfigurationIdentifier identifier{CONFIG_ID_APPLICATION, CONFIG_ID_NAME};
+	static const bdrck::config::ConfigurationIdentifier identifier{
+	        CONFIG_ID_APPLICATION, CONFIG_ID_NAME};
 	return identifier;
 }
 
@@ -53,22 +54,25 @@ namespace pwm
 {
 namespace config
 {
-ConfigurationInstance::ConfigurationInstance(boost::optional<std::string> const &customPath)
-	: instanceHandle(getConfigurationIdentifier(), getDefaultConfiguration(), customPath)
+ConfigurationInstance::ConfigurationInstance(
+        boost::optional<std::string> const &customPath)
+        : instanceHandle(getConfigurationIdentifier(),
+                         getDefaultConfiguration(), customPath)
 {
 }
 
-bdrck::config::Configuration<pwm::proto::Configuration>& instance()
+bdrck::config::Configuration<pwm::proto::Configuration> &instance()
 {
-	return bdrck::config::Configuration<pwm::proto::Configuration>::instance(getConfigurationIdentifier());
+	return bdrck::config::Configuration<pwm::proto::Configuration>::
+	        instance(getConfigurationIdentifier());
 }
 
-std::string getFieldAsString(std::string const& path)
+std::string getFieldAsString(std::string const &path)
 {
 	return bdrck::config::getFieldAsString(path, instance().get());
 }
 
-void setFieldFromString(std::string const& path, std::string const& value)
+void setFieldFromString(std::string const &path, std::string const &value)
 {
 	auto message = instance().get();
 	bdrck::config::setFieldFromString(path, message, value);

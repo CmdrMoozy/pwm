@@ -18,9 +18,9 @@
 
 #include <catch/catch.hpp>
 
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include "pwmc/util/Clipboard.hpp"
 

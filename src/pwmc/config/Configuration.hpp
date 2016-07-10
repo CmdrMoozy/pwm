@@ -34,16 +34,18 @@ namespace config
 class ConfigurationInstance
 {
 public:
-	ConfigurationInstance(boost::optional<std::string> const &customPath = boost::none);
+	ConfigurationInstance(
+	        boost::optional<std::string> const &customPath = boost::none);
 
 private:
-	bdrck::config::ConfigurationInstance<pwm::proto::Configuration> instanceHandle;
+	bdrck::config::ConfigurationInstance<pwm::proto::Configuration>
+	        instanceHandle;
 };
 
-bdrck::config::Configuration<pwm::proto::Configuration>& instance();
+bdrck::config::Configuration<pwm::proto::Configuration> &instance();
 
-std::string getFieldAsString(std::string const& path);
-void setFieldFromString(std::string const& path, std::string const& value);
+std::string getFieldAsString(std::string const &path);
+void setFieldFromString(std::string const &path, std::string const &value);
 }
 }
 

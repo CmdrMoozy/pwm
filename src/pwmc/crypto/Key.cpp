@@ -20,8 +20,8 @@
 
 #include <gcrypt.h>
 
-#include "pwmc/crypto/checkReturn.hpp"
 #include "pwmc/crypto/Util.hpp"
+#include "pwmc/crypto/checkReturn.hpp"
 
 namespace pwm
 {

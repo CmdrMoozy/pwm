@@ -24,11 +24,11 @@
 #include <string>
 #include <vector>
 
+#include "pwmc/crypto/Key.hpp"
+#include "pwmc/crypto/Util.hpp"
 #include "pwmc/crypto/decrypt.hpp"
 #include "pwmc/crypto/encrypt.hpp"
 #include "pwmc/crypto/generatePassword.hpp"
-#include "pwmc/crypto/Key.hpp"
-#include "pwmc/crypto/Util.hpp"
 
 namespace
 {
