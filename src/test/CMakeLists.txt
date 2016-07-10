@@ -2,8 +2,6 @@ set(pwm-test_SOURCES
 
 	pwm-test.cpp
 
-	config/ConfigurationTest.cpp
-
 	crypto/EncryptDecryptTest.cpp
 	crypto/GeneratePasswordTest.cpp
 	crypto/KeyTest.cpp

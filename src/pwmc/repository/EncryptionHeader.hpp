@@ -23,7 +23,9 @@
 #include <string>
 #include <vector>
 
-#include "pwmc/config/Configuration.hpp"
+#include <bdrck/config/Configuration.hpp>
+
+#include "EncryptionHeader.pb.h"
 
 namespace bdrck
 {
@@ -44,12 +46,12 @@ class EncryptionHeader
 public:
 	EncryptionHeader(bdrck::git::Repository const &repository);
 
-	EncryptionHeader(EncryptionHeader const &) = default;
+	EncryptionHeader(EncryptionHeader const &) = delete;
 	EncryptionHeader(EncryptionHeader &&) = default;
-	EncryptionHeader &operator=(EncryptionHeader const &) = default;
+	EncryptionHeader &operator=(EncryptionHeader const &) = delete;
 	EncryptionHeader &operator=(EncryptionHeader &&) = default;
 
-	~EncryptionHeader();
+	~EncryptionHeader() = default;
 
 	std::vector<uint8_t> getSalt() const;
 	std::size_t getKeySize() const;
@@ -58,7 +60,9 @@ public:
 
 private:
 	std::string path;
-	config::ConfigurationData data;
+	bdrck::config::ConfigurationInstance<pwm::proto::EncryptionHeader>
+	        instanceHandle;
+	bdrck::config::Configuration<pwm::proto::EncryptionHeader> &instance;
 };
 }
 }

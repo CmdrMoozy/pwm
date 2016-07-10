@@ -26,31 +26,31 @@
 #include <bdrck/git/Repository.hpp>
 #include <bdrck/util/Base64.hpp>
 
-#include "pwmc/config/deserializeConfiguration.hpp"
-#include "pwmc/config/Key.hpp"
-#include "pwmc/config/serializeConfiguration.hpp"
 #include "pwmc/crypto/Key.hpp"
 #include "pwmc/crypto/Util.hpp"
 
 namespace
 {
-const pwm::config::Key HEADER_KEY_SALT("salt");
-const pwm::config::Key HEADER_KEY_KEY_SIZE("keysize");
-const pwm::config::Key HEADER_KEY_WORK_FACTOR("workfactor");
-const pwm::config::Key
-        HEADER_KEY_PARALLELIZATION_FACTOR("parallelizationfactor");
+pwm::proto::EncryptionHeader getDefaultEncryptionHeader()
+{
+	auto defaultSalt =
+	        pwm::crypto::util::generateSalt(pwm::crypto::DEFAULT_SALT_SIZE);
 
-const std::vector<uint8_t> DEFAULT_SALT =
-        pwm::crypto::util::generateSalt(pwm::crypto::DEFAULT_SALT_SIZE);
+	pwm::proto::EncryptionHeader header;
+	header.set_key_salt(bdrck::util::encodeBase64(defaultSalt.data(),
+	                                              defaultSalt.size()));
+	header.set_key_size_octets(pwm::crypto::DEFAULT_KEY_SIZE_OCTETS);
+	header.set_key_work_factor(pwm::crypto::DEFAULT_SCRYPT_WORK_FACTOR);
+	header.set_key_parallelization_factor(
+	        pwm::crypto::DEFAULT_SCRYPT_PARALLELIZATION_FACTOR);
+	return header;
+}
 
-const std::map<pwm::config::Key, std::string> DEFAULT_HEADER_VALUES{
-        {HEADER_KEY_SALT, ""},
-        {HEADER_KEY_KEY_SIZE,
-         std::to_string(pwm::crypto::DEFAULT_KEY_SIZE_OCTETS)},
-        {HEADER_KEY_WORK_FACTOR,
-         std::to_string(pwm::crypto::DEFAULT_SCRYPT_WORK_FACTOR)},
-        {HEADER_KEY_PARALLELIZATION_FACTOR,
-         std::to_string(pwm::crypto::DEFAULT_SCRYPT_PARALLELIZATION_FACTOR)}};
+bdrck::config::ConfigurationIdentifier
+getConfigurationIdentifier(std::string const &p)
+{
+	return {"pwm", p};
+}
 }
 
 namespace pwm
@@ -66,58 +66,31 @@ std::string getEncryptionHeaderPath(bdrck::git::Repository const &repository)
 
 EncryptionHeader::EncryptionHeader(bdrck::git::Repository const &repository)
         : path(getEncryptionHeaderPath(repository)),
-          data(config::deserializeConfiguration(path))
+          instanceHandle(getConfigurationIdentifier(path),
+                         getDefaultEncryptionHeader(), path),
+          instance(bdrck::config::Configuration<pwm::proto::EncryptionHeader>::
+                           instance(getConfigurationIdentifier(path)))
 {
-	data.apply(config::ConfigurationData(DEFAULT_HEADER_VALUES), false);
-
-	// If there is no existing salt, generate one. This must be done here
-	// rather than in the constant default map at the top, because static
-	// variable initialization order is undefined (and encodeBase64
-	// depends on a static).
-	if(getSalt().size() == 0)
-	{
-		data.data[HEADER_KEY_SALT] = bdrck::util::encodeBase64(
-		        DEFAULT_SALT.data(), DEFAULT_SALT.size());
-	}
-}
-
-EncryptionHeader::~EncryptionHeader()
-{
-	try
-	{
-		serializeConfiguration(path, data);
-	}
-	catch(...)
-	{
-	}
 }
 
 std::vector<uint8_t> EncryptionHeader::getSalt() const
 {
-	auto it = data.data.find(HEADER_KEY_SALT);
-	assert(it != data.data.end());
-	return bdrck::util::decodeBase64(it->second);
+	return bdrck::util::decodeBase64(instance.get().key_salt());
 }
 
 std::size_t EncryptionHeader::getKeySize() const
 {
-	auto it = data.data.find(HEADER_KEY_KEY_SIZE);
-	assert(it != data.data.end());
-	return static_cast<std::size_t>(std::stoull(it->second));
+	return instance.get().key_size_octets();
 }
 
 int EncryptionHeader::getWorkFactor() const
 {
-	auto it = data.data.find(HEADER_KEY_WORK_FACTOR);
-	assert(it != data.data.end());
-	return std::stoi(it->second);
+	return instance.get().key_work_factor();
 }
 
 int EncryptionHeader::getParallelizationFactor() const
 {
-	auto it = data.data.find(HEADER_KEY_PARALLELIZATION_FACTOR);
-	assert(it != data.data.end());
-	return std::stoi(it->second);
+	return instance.get().key_parallelization_factor();
 }
 }
 }

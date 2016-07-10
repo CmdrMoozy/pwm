@@ -28,6 +28,7 @@
 #include <gtk/gtk.h>
 #endif
 
+#include <bdrck/config/Configuration.hpp>
 #include <bdrck/git/Library.hpp>
 #include <bdrck/git/Repository.hpp>
 #include <bdrck/params/Argument.hpp>
@@ -60,35 +61,24 @@ void configCommand(bdrck::params::OptionsMap const &options,
 			return;
 		}
 
-		for(auto it = pwm::config::Configuration::getInstance().begin();
-		    it != pwm::config::Configuration::getInstance().end(); ++it)
-		{
-			std::cout << it->first << " = " << it->second << "\n";
-		}
+		// TODO - Print out all configuration values.
 
 		return;
 	}
 
 	if(setIt != options.end())
-	{
-		pwm::config::Configuration::getInstance().set(keyIt->second,
-		                                              setIt->second);
-	}
+		pwm::config::setFieldFromString(keyIt->second, setIt->second);
 
-	std::cout << pwm::config::Key(keyIt->second) << " = "
-	          << pwm::config::Configuration::getInstance().get(
-	                     keyIt->second)
-	          << "\n";
+	std::cout << keyIt->second << " = "
+	          << pwm::config::getFieldAsString(keyIt->second) << "\n";
 }
 
 void initCommand(bdrck::params::OptionsMap const &options,
                  bdrck::params::FlagsMap const &,
                  bdrck::params::ArgumentsMap const &)
 {
-	std::string repoPath = pwm::config::Configuration::getInstance().getOr(
-	        pwm::config::getConfigurationKey(
-	                pwm::config::ConfigurationValue::RepositoryDefaultPath),
-	        "");
+	std::string repoPath =
+	        pwm::config::instance().get().default_repository();
 	if(options.find("repository") != options.end())
 		repoPath = options.find("repository")->second;
 
@@ -96,11 +86,8 @@ void initCommand(bdrck::params::OptionsMap const &options,
 	{
 		std::ostringstream oss;
 		oss << "No repository path specified. Try the 'repository' "
-		       "command option, or setting the '"
-		    << pwm::config::getConfigurationKey(
-		               pwm::config::ConfigurationValue::
-		                       RepositoryDefaultPath)
-		    << "' configuration key.";
+		       "command option, or setting the 'default_repository' "
+		       "configuration key.";
 		throw std::runtime_error(oss.str());
 	}
 
