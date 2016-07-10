@@ -25,8 +25,6 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Boost REQUIRED)
 find_package(Protobuf REQUIRED)
-find_package(Libgit2 REQUIRED)
-find_package(Yajl REQUIRED)
 find_package(Libgcrypt REQUIRED) # Must be 1.6.0 or newer.
 
 if(USE_CLIPBOARD)
@@ -63,8 +61,6 @@ include_directories(SYSTEM
 set(pwm_LIBRARIES
 
 	${PROTOBUF_LIBRARIES}
-	${LIBGIT2_LIBRARIES}
-	${YAJL_LIBRARIES}
 	${LIBGCRYPT_LIBRARIES}
 	bdrck-algorithm
 	bdrck-config
@@ -76,7 +72,7 @@ set(pwm_LIBRARIES
 )
 
 if(USE_CLIPBOARD)
-	include_directories(${GTK3_INCLUDE_DIRS})
+	include_directories(SYSTEM ${GTK3_INCLUDE_DIRS})
 
 	set(pwm_LIBRARIES
 
