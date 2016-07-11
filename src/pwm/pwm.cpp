@@ -45,6 +45,25 @@
 
 namespace
 {
+std::string getRepositoryPath(bdrck::params::OptionsMap const &options)
+{
+	std::string repoPath =
+	        pwm::config::instance().get().default_repository();
+	if(options.find("repository") != options.end())
+		repoPath = options.find("repository")->second;
+
+	if(repoPath.empty())
+	{
+		std::ostringstream oss;
+		oss << "No repository path specified. Try the 'repository' "
+		       "command option, or setting the 'default_repository' "
+		       "configuration key.";
+		throw std::runtime_error(oss.str());
+	}
+
+	return repoPath;
+}
+
 void configCommand(bdrck::params::OptionsMap const &options,
                    bdrck::params::FlagsMap const &,
                    bdrck::params::ArgumentsMap const &)
@@ -77,20 +96,7 @@ void initCommand(bdrck::params::OptionsMap const &options,
                  bdrck::params::FlagsMap const &,
                  bdrck::params::ArgumentsMap const &)
 {
-	std::string repoPath =
-	        pwm::config::instance().get().default_repository();
-	if(options.find("repository") != options.end())
-		repoPath = options.find("repository")->second;
-
-	if(repoPath.empty())
-	{
-		std::ostringstream oss;
-		oss << "No repository path specified. Try the 'repository' "
-		       "command option, or setting the 'default_repository' "
-		       "configuration key.";
-		throw std::runtime_error(oss.str());
-	}
-
+	std::string repoPath = getRepositoryPath(options);
 	bdrck::git::Repository repo(
 	        repoPath, bdrck::git::RepositoryCreateMode::CreateNormal,
 	        false);
@@ -103,12 +109,17 @@ void listCommand(bdrck::params::OptionsMap const &,
 {
 }
 
-void passwordCommand(bdrck::params::OptionsMap const &,
+void passwordCommand(bdrck::params::OptionsMap const &options,
                      bdrck::params::FlagsMap const &,
                      bdrck::params::ArgumentsMap const &arguments)
 {
-	pwm::repository::Path path(arguments.find("path")->second.front());
-	std::cout << "Passoword path: " << path << "\n";
+	bdrck::git::Repository repo(getRepositoryPath(options),
+	                            bdrck::git::RepositoryCreateMode::NoCreate,
+	                            false);
+	pwm::repository::Path path(arguments.find("path")->second.front(),
+	                           repo);
+	std::cout << "Passoword path: " << path.getRelativePath() << "\n";
+	std::cout << "File path: " << path.getAbsolutePath() << "\n";
 }
 
 #ifdef PWM_DEBUG
