@@ -63,10 +63,10 @@ namespace pwm
 {
 namespace repository
 {
-Path::Path(std::string const &p, bdrck::git::Repository const &r)
+Path::Path(std::string const &p, Repository const &r)
         : relativePath(normalize(p)),
-          absolutePath(bdrck::fs::combinePaths(r.getWorkDirectoryPath(),
-                                               relativePath))
+          absolutePath(bdrck::fs::combinePaths(
+                  r.repository.getWorkDirectoryPath(), relativePath))
 {
 }
 

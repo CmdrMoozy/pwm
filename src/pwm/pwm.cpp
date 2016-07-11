@@ -38,6 +38,7 @@
 
 #include "pwmc/config/Configuration.hpp"
 #include "pwmc/repository/Path.hpp"
+#include "pwmc/repository/Repository.hpp"
 
 #ifdef PWM_DEBUG
 #include "pwmc/util/Clipboard.hpp"
@@ -96,11 +97,10 @@ void initCommand(bdrck::params::OptionsMap const &options,
                  bdrck::params::FlagsMap const &,
                  bdrck::params::ArgumentsMap const &)
 {
-	std::string repoPath = getRepositoryPath(options);
-	bdrck::git::Repository repo(
-	        repoPath, bdrck::git::RepositoryCreateMode::CreateNormal,
-	        false);
-	std::cout << "Initialized repository: " << repoPath << "\n";
+	pwm::repository::Repository repo(getRepositoryPath(options),
+	                                 /*create=*/true);
+	std::cout << "Initialized repository: "
+	          << repo.repository.getWorkDirectoryPath() << "\n";
 }
 
 void listCommand(bdrck::params::OptionsMap const &,
@@ -113,9 +113,8 @@ void passwordCommand(bdrck::params::OptionsMap const &options,
                      bdrck::params::FlagsMap const &,
                      bdrck::params::ArgumentsMap const &arguments)
 {
-	bdrck::git::Repository repo(getRepositoryPath(options),
-	                            bdrck::git::RepositoryCreateMode::NoCreate,
-	                            false);
+	pwm::repository::Repository repo(getRepositoryPath(options),
+	                                 /*create=*/false);
 	pwm::repository::Path path(arguments.find("path")->second.front(),
 	                           repo);
 	std::cout << "Passoword path: " << path.getRelativePath() << "\n";
