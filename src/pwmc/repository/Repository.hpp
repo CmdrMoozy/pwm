@@ -16,38 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef pwmc_repository_Path_HPP
-#define pwmc_repository_Path_HPP
+#ifndef pwmc_repository_Repository_HPP
+#define pwmc_repository_Repository_HPP
 
-#include <string>
+#include <bdrck/git/Repository.hpp>
 
-#include "pwmc/repository/Repository.hpp"
+#include "pwmc/repository/EncryptionHeader.hpp"
 
 namespace pwm
 {
 namespace repository
 {
-class Path
+struct Repository
 {
-public:
-	Path(std::string const &p, Repository const &r);
+	bdrck::git::Repository repository;
+	EncryptionHeader header;
 
-	Path(Path const &) = default;
-	Path(Path &&) = default;
-	Path &operator=(Path const &) = default;
-	Path &operator=(Path &&) = default;
-
-	~Path() = default;
-
-	std::string const &getRelativePath() const;
-	std::string const &getAbsolutePath() const;
-
-private:
-	std::string relativePath;
-	std::string absolutePath;
+	Repository(std::string const &path, bool create);
 };
-
-std::ostream &operator<<(std::ostream &out, Path const &path);
 }
 }
 

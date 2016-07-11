@@ -23,6 +23,8 @@ set(pwmc_SOURCES
 	repository/EncryptionHeader.hpp
 	repository/Path.cpp
 	repository/Path.hpp
+	repository/Repository.cpp
+	repository/Repository.hpp
 
 	util/Clipboard.cpp
 	util/Clipboard.hpp
