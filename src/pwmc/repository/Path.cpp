@@ -24,6 +24,7 @@
 #include <stdexcept>
 
 #include <bdrck/algorithm/String.hpp>
+#include <bdrck/fs/Util.hpp>
 
 namespace
 {
@@ -39,24 +40,7 @@ bool isValidPath(std::string const &path)
 	return it == path.end();
 }
 
-void normalizeSeparators(std::string &path)
-{
-	std::replace_if(path.begin(), path.end(),
-	                [](char const &c) -> bool { return c == '\\'; }, '/');
-}
-
-void trimSeparators(std::string &path)
-{
-	bdrck::algorithm::string::trim(
-	        path, [](char const &c) -> bool { return c == '/'; });
-}
-}
-
-namespace pwm
-{
-namespace repository
-{
-Path::Path(std::string const &p) : path(p)
+std::string normalize(std::string const &path)
 {
 	if(!isValidPath(path))
 	{
@@ -65,19 +49,40 @@ Path::Path(std::string const &p) : path(p)
 		throw std::runtime_error(oss.str());
 	}
 
-	normalizeSeparators(path);
-	trimSeparators(path);
-	bdrck::algorithm::string::removeRepeatedCharacters(path, '/');
+	std::string normalized(path);
+	std::replace_if(normalized.begin(), normalized.end(),
+	                [](char const &c) -> bool { return c == '\\'; }, '/');
+	bdrck::algorithm::string::trim(
+	        normalized, [](char const &c) -> bool { return c == '/'; });
+	bdrck::algorithm::string::removeRepeatedCharacters(normalized, '/');
+	return normalized;
+}
 }
 
-std::string const &Path::getPath() const
+namespace pwm
 {
-	return path;
+namespace repository
+{
+Path::Path(std::string const &p, bdrck::git::Repository const &r)
+        : relativePath(normalize(p)),
+          absolutePath(bdrck::fs::combinePaths(r.getWorkDirectoryPath(),
+                                               relativePath))
+{
+}
+
+std::string const &Path::getRelativePath() const
+{
+	return relativePath;
+}
+
+std::string const &Path::getAbsolutePath() const
+{
+	return absolutePath;
 }
 
 std::ostream &operator<<(std::ostream &out, Path const &path)
 {
-	out << path.getPath();
+	out << path.getRelativePath();
 	return out;
 }
 }

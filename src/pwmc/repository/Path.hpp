@@ -21,6 +21,8 @@
 
 #include <string>
 
+#include <bdrck/git/Repository.hpp>
+
 namespace pwm
 {
 namespace repository
@@ -28,7 +30,7 @@ namespace repository
 class Path
 {
 public:
-	Path(std::string const &p);
+	Path(std::string const &p, bdrck::git::Repository const &r);
 
 	Path(Path const &) = default;
 	Path(Path &&) = default;
@@ -37,10 +39,12 @@ public:
 
 	~Path() = default;
 
-	std::string const &getPath() const;
+	std::string const &getRelativePath() const;
+	std::string const &getAbsolutePath() const;
 
 private:
-	std::string path;
+	std::string relativePath;
+	std::string absolutePath;
 };
 
 std::ostream &operator<<(std::ostream &out, Path const &path);
