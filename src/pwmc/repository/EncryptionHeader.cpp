@@ -23,7 +23,10 @@
 
 #include <bdrck/fs/Util.hpp>
 
+#include <bdrck/git/Commit.hpp>
+#include <bdrck/git/Index.hpp>
 #include <bdrck/git/Repository.hpp>
+#include <bdrck/git/StrArray.hpp>
 #include <bdrck/util/Base64.hpp>
 
 #include "pwmc/crypto/Key.hpp"
@@ -31,6 +34,18 @@
 
 namespace
 {
+constexpr char const *HEADER_RELATIVE_PATH = ".header";
+
+constexpr char const *HEADER_CHANGE_MESSAGE =
+        "Update encryption header contents.";
+
+std::string getEncryptionHeaderPath(bdrck::git::Repository const &repository)
+{
+	static const std::string ENCRYPTION_HEADER_FILE{HEADER_RELATIVE_PATH};
+	return bdrck::fs::combinePaths(repository.getWorkDirectoryPath(),
+	                               ENCRYPTION_HEADER_FILE);
+}
+
 pwm::proto::EncryptionHeader getDefaultEncryptionHeader()
 {
 	auto defaultSalt =
@@ -57,20 +72,33 @@ namespace pwm
 {
 namespace repository
 {
-std::string getEncryptionHeaderPath(bdrck::git::Repository const &repository)
-{
-	static const std::string ENCRYPTION_HEADER_FILE = ".header";
-	return bdrck::fs::combinePaths(repository.getWorkDirectoryPath(),
-	                               ENCRYPTION_HEADER_FILE);
-}
-
-EncryptionHeader::EncryptionHeader(bdrck::git::Repository const &repository)
-        : path(getEncryptionHeaderPath(repository)),
-          instanceHandle(getConfigurationIdentifier(path),
-                         getDefaultEncryptionHeader(), path),
+EncryptionHeader::EncryptionHeader(std::shared_ptr<bdrck::git::Repository> r)
+        : repository(r),
+          path(getEncryptionHeaderPath(*repository)),
+          instanceHandle(std::make_unique<bdrck::config::ConfigurationInstance<
+                                 pwm::proto::EncryptionHeader>>(
+                  getConfigurationIdentifier(path),
+                  getDefaultEncryptionHeader(), path)),
           instance(bdrck::config::Configuration<pwm::proto::EncryptionHeader>::
                            instance(getConfigurationIdentifier(path)))
 {
+}
+
+EncryptionHeader::~EncryptionHeader()
+{
+	// Reset the header configuration instance, to write its contents.
+	instanceHandle.reset();
+	// NOTE: From this point forward, instance is an invalid reference.
+
+	// Create a Git commit with encryption header changes, if any.
+	bdrck::git::Index index(*repository);
+	index.addAll({HEADER_RELATIVE_PATH});
+	bdrck::git::commitIndex(*repository, HEADER_CHANGE_MESSAGE);
+}
+
+std::string const &EncryptionHeader::getPath() const
+{
+	return path;
 }
 
 std::vector<uint8_t> EncryptionHeader::getSalt() const
