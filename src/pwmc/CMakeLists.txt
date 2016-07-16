@@ -34,6 +34,8 @@ set(pwmc_SOURCES
 	util/MemoryFile.hpp
 	util/OutputSuppressor.cpp
 	util/OutputSuppressor.hpp
+	util/passwordPrompt.cpp
+	util/passwordPrompt.hpp
 	util/printBytesAsHex.cpp
 	util/printBytesAsHex.hpp
 

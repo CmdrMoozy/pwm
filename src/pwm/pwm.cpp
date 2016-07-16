@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/optional/optional.hpp>
+
 #ifdef PWM_USE_CLIPBOARD
 #include <gtk/gtk.h>
 #endif
@@ -39,6 +41,7 @@
 #include "pwmc/config/Configuration.hpp"
 #include "pwmc/repository/Path.hpp"
 #include "pwmc/repository/Repository.hpp"
+#include "pwmc/util/passwordPrompt.hpp"
 
 #ifdef PWM_DEBUG
 #include "pwmc/util/Clipboard.hpp"
@@ -110,14 +113,24 @@ void listCommand(bdrck::params::OptionsMap const &,
 }
 
 void passwordCommand(bdrck::params::OptionsMap const &options,
-                     bdrck::params::FlagsMap const &,
+                     bdrck::params::FlagsMap const &flags,
                      bdrck::params::ArgumentsMap const &arguments)
 {
 	pwm::repository::Repository repo(getRepositoryPath(options),
 	                                 /*create=*/false);
 	pwm::repository::Path path(arguments.find("path")->second.front(),
 	                           repo);
-	std::cout << "Passoword path: " << path.getRelativePath() << "\n";
+
+	auto setIt = flags.find("set");
+	auto keyIt = options.find("key");
+
+	if(setIt != flags.end() && keyIt == options.end())
+	{
+		std::string password = pwm::util::passwordPrompt();
+		std::cout << "Password to set: '" << password << "'\n";
+	}
+
+	std::cout << "Password path: " << path.getRelativePath() << "\n";
 	std::cout << "File path: " << path.getAbsolutePath() << "\n";
 }
 
@@ -162,7 +175,8 @@ const std::vector<bdrck::params::Argument> LIST_COMMAND_ARGUMENTS{
 const std::initializer_list<bdrck::params::Option> PASSWORD_COMMAND_OPTIONS{
         bdrck::params::Option::optional(
                 "repository", "The path to the repository to examine.", 'r'),
-        bdrck::params::Option::optional("set", "Set this password.", 's'),
+        bdrck::params::Option::flag(
+                "set", "Set this password using a command-line prompt.", 's'),
         bdrck::params::Option::optional(
                 "key", "Set this password using a key file.", 'k')};
 
