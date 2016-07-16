@@ -66,7 +66,7 @@ namespace repository
 Path::Path(std::string const &p, Repository const &r)
         : relativePath(normalize(p)),
           absolutePath(bdrck::fs::combinePaths(
-                  r.repository.getWorkDirectoryPath(), relativePath))
+                  r.repository->getWorkDirectoryPath(), relativePath))
 {
 }
 

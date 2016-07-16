@@ -20,6 +20,7 @@
 #define pwmc_repository_EncryptionHeader_HPP
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,19 +40,19 @@ namespace pwm
 {
 namespace repository
 {
-std::string getEncryptionHeaderPath(bdrck::git::Repository const &repository);
-
 class EncryptionHeader
 {
 public:
-	EncryptionHeader(bdrck::git::Repository const &repository);
+	EncryptionHeader(std::shared_ptr<bdrck::git::Repository> r);
 
 	EncryptionHeader(EncryptionHeader const &) = delete;
 	EncryptionHeader(EncryptionHeader &&) = default;
 	EncryptionHeader &operator=(EncryptionHeader const &) = delete;
 	EncryptionHeader &operator=(EncryptionHeader &&) = default;
 
-	~EncryptionHeader() = default;
+	~EncryptionHeader();
+
+	std::string const &getPath() const;
 
 	std::vector<uint8_t> getSalt() const;
 	std::size_t getKeySize() const;
@@ -59,8 +60,10 @@ public:
 	int getParallelizationFactor() const;
 
 private:
+	std::shared_ptr<bdrck::git::Repository> repository;
 	std::string path;
-	bdrck::config::ConfigurationInstance<pwm::proto::EncryptionHeader>
+	std::unique_ptr<bdrck::config::ConfigurationInstance<
+	        pwm::proto::EncryptionHeader>>
 	        instanceHandle;
 	bdrck::config::Configuration<pwm::proto::EncryptionHeader> &instance;
 };

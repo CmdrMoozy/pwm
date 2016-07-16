@@ -23,10 +23,10 @@ namespace pwm
 namespace repository
 {
 Repository::Repository(std::string const &path, bool create)
-        : repository(path,
-                     create ? bdrck::git::RepositoryCreateMode::CreateNormal
-                            : bdrck::git::RepositoryCreateMode::NoCreate,
-                     false),
+        : repository(std::make_shared<bdrck::git::Repository>(
+                  path, create ? bdrck::git::RepositoryCreateMode::CreateNormal
+                               : bdrck::git::RepositoryCreateMode::NoCreate,
+                  false)),
           header(repository)
 {
 }

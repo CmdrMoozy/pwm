@@ -19,6 +19,8 @@
 #ifndef pwmc_repository_Repository_HPP
 #define pwmc_repository_Repository_HPP
 
+#include <memory>
+
 #include <bdrck/git/Repository.hpp>
 
 #include "pwmc/repository/EncryptionHeader.hpp"
@@ -29,7 +31,7 @@ namespace repository
 {
 struct Repository
 {
-	bdrck::git::Repository repository;
+	std::shared_ptr<bdrck::git::Repository> repository;
 	EncryptionHeader header;
 
 	Repository(std::string const &path, bool create);

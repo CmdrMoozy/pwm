@@ -100,7 +100,7 @@ void initCommand(bdrck::params::OptionsMap const &options,
 	pwm::repository::Repository repo(getRepositoryPath(options),
 	                                 /*create=*/true);
 	std::cout << "Initialized repository: "
-	          << repo.repository.getWorkDirectoryPath() << "\n";
+	          << repo.repository->getWorkDirectoryPath() << "\n";
 }
 
 void listCommand(bdrck::params::OptionsMap const &,

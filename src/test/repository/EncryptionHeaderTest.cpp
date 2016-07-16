@@ -29,7 +29,8 @@ TEST_CASE("Test that encryption header default values are populated",
 {
 	bdrck::fs::TemporaryStorage directory(
 	        bdrck::fs::TemporaryStorageType::DIRECTORY);
-	bdrck::git::Repository repository(directory.getPath());
+	std::shared_ptr<bdrck::git::Repository> repository =
+	        std::make_shared<bdrck::git::Repository>(directory.getPath());
 
 	// Construct an encryption header, and then destruct it to write the
 	// values to the repository.
