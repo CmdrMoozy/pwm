@@ -86,8 +86,7 @@ void configCommand(bdrck::params::OptionsMap const &options,
 			return;
 		}
 
-		// TODO - Print out all configuration values.
-
+		std::cout << pwm::config::instance().get().DebugString();
 		return;
 	}
 
