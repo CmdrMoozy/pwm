@@ -18,7 +18,9 @@
 
 #include "IO.hpp"
 
+#include <algorithm>
 #include <fstream>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 
@@ -35,6 +37,44 @@ std::string getPasswordChangeMessage(pwm::repository::Path const &path)
 	oss << "Change password '" << path.getRelativePath() << "'.";
 	return oss.str();
 }
+
+struct WriteContext
+{
+	pwm::repository::Repository &repository;
+	pwm::repository::Path const &path;
+	std::ofstream out;
+
+	WriteContext(pwm::repository::Repository &r,
+	             pwm::repository::Path const &p)
+	        : repository(r), path(p), out()
+	{
+		// Create the file's parent directory, if it doesn't already
+		// exist.
+		bdrck::fs::createPath(
+		        bdrck::fs::dirname(path.getAbsolutePath()));
+
+		// Open the password file for writing.
+		out.open(path.getAbsolutePath(), std::ios_base::out |
+		                                         std::ios_base::binary |
+		                                         std::ios_base::trunc);
+		if(!out.is_open())
+		{
+			throw std::runtime_error(
+			        "Opening password file for writing failed.");
+		}
+	}
+
+	~WriteContext()
+	{
+		out.close();
+
+		// Commit the change.
+		bdrck::git::Index index(*repository.repository);
+		index.addAll({path.getRelativePath()});
+		bdrck::git::commitIndex(*repository.repository,
+		                        getPasswordChangeMessage(path));
+	}
+};
 }
 
 namespace pwm
@@ -49,27 +89,18 @@ std::string read(Repository const &, Path const &path)
 void write(Repository &repository, Path const &path, uint8_t const *data,
            std::size_t length)
 {
-	// Create the file's parent directory, if it doesn't already exist.
-	bdrck::fs::createPath(bdrck::fs::dirname(path.getAbsolutePath()));
+	WriteContext context(repository, path);
+	context.out.write(reinterpret_cast<char const *>(data),
+	                  static_cast<std::streamsize>(length));
+}
 
-	// Write the new password file.
-	std::ofstream out(path.getAbsolutePath(),
-	                  std::ios_base::out | std::ios_base::binary |
-	                          std::ios_base::trunc);
-	if(!out.is_open())
-	{
-		throw std::runtime_error(
-		        "Opening password file for writing failed.");
-	}
-	out.write(reinterpret_cast<char const *>(data),
-	          static_cast<std::streamsize>(length));
-	out.close();
-
-	// Commit the change.
-	bdrck::git::Index index(*repository.repository);
-	index.addAll({path.getRelativePath()});
-	bdrck::git::commitIndex(*repository.repository,
-	                        getPasswordChangeMessage(path));
+void write(Repository &repository, Path const &path, std::istream &in)
+{
+	WriteContext context(repository, path);
+	std::istreambuf_iterator<char> inBegin(in);
+	std::istreambuf_iterator<char> inEnd;
+	std::ostreambuf_iterator<char> outBegin(context.out);
+	std::copy(inBegin, inEnd, outBegin);
 }
 }
 }

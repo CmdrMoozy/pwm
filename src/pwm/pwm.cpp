@@ -18,10 +18,12 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <fstream>
 #include <initializer_list>
 #include <iostream>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -56,8 +58,8 @@ std::string getRepositoryPath(bdrck::params::OptionsMap const &options)
 {
 	std::string repoPath =
 	        pwm::config::instance().get().default_repository();
-	if(options.find("repository") != options.end())
-		repoPath = options.find("repository")->second;
+	auto repoIt = options.find("repository");
+	if(repoIt != options.end()) repoPath = repoIt->second;
 
 	if(repoPath.empty())
 	{
@@ -150,6 +152,17 @@ void passwordCommand(bdrck::params::OptionsMap const &options,
 	else if(keyIt != options.end())
 	{
 		// The user wants to set the password using a key file.
+
+		std::ifstream in(keyIt->second,
+		                 std::ios_base::in | std::ios_base::binary);
+		if(!in.is_open())
+		{
+			std::ostringstream oss;
+			oss << "Failed opening key file '" << keyIt->second
+			    << "' for reading.";
+			throw std::runtime_error(oss.str());
+		}
+		pwm::repository::write(repo, path, in);
 	}
 	else
 	{

@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <istream>
 #include <string>
 
 #include "pwmc/repository/Path.hpp"
@@ -33,6 +34,7 @@ namespace repository
 std::string read(Repository const &repository, Path const &path);
 void write(Repository &repository, Path const &path, uint8_t const *data,
            std::size_t length);
+void write(Repository &repository, Path const &path, std::istream &in);
 }
 }
 
