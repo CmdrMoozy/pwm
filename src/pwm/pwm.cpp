@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
 #include <iostream>
@@ -39,6 +40,7 @@
 #include <bdrck/params/parseAndExecuteCommand.hpp>
 
 #include "pwmc/config/Configuration.hpp"
+#include "pwmc/repository/IO.hpp"
 #include "pwmc/repository/Path.hpp"
 #include "pwmc/repository/Repository.hpp"
 #include "pwmc/util/passwordPrompt.hpp"
@@ -124,14 +126,27 @@ void passwordCommand(bdrck::params::OptionsMap const &options,
 	auto setIt = flags.find("set");
 	auto keyIt = options.find("key");
 
-	if(setIt != flags.end() && keyIt == options.end())
+	if(setIt->second && keyIt == options.end())
 	{
-		std::string password = pwm::util::passwordPrompt();
-		std::cout << "Password to set: '" << password << "'\n";
-	}
+		// The user wants to set the password, but no key file was
+		// given, so prompt for the password interactively.
 
-	std::cout << "Password path: " << path.getRelativePath() << "\n";
-	std::cout << "File path: " << path.getAbsolutePath() << "\n";
+		std::string password = pwm::util::passwordPrompt();
+		pwm::repository::write(
+		        repo, path,
+		        reinterpret_cast<uint8_t const *>(password.data()),
+		        password.length());
+	}
+	else if(keyIt != options.end())
+	{
+		// The user wants to set the password using a key file.
+	}
+	else
+	{
+		// The user wants to retrieve the password, instead of set it.
+
+		std::cout << pwm::repository::read(repo, path) << "\n";
+	}
 }
 
 #ifdef PWM_DEBUG

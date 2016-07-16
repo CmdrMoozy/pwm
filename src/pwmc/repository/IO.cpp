@@ -18,17 +18,58 @@
 
 #include "IO.hpp"
 
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+
+#include <bdrck/fs/Util.hpp>
+#include <bdrck/git/Commit.hpp>
+#include <bdrck/git/Index.hpp>
+#include <bdrck/git/StrArray.hpp>
+
+namespace
+{
+std::string getPasswordChangeMessage(pwm::repository::Path const &path)
+{
+	std::ostringstream oss;
+	oss << "Change password '" << path.getRelativePath() << "'.";
+	return oss.str();
+}
+}
+
 namespace pwm
 {
 namespace repository
 {
-std::string read(Repository const &, Path const &)
+std::string read(Repository const &, Path const &path)
 {
-	return "";
+	return bdrck::fs::readEntireFile(path.getAbsolutePath());
 }
 
-void write(Repository &, Path const &, uint8_t const *, std::size_t)
+void write(Repository &repository, Path const &path, uint8_t const *data,
+           std::size_t length)
 {
+	// Create the file's parent directory, if it doesn't already exist.
+	bdrck::fs::createPath(bdrck::fs::dirname(path.getAbsolutePath()));
+
+	// Write the new password file.
+	std::ofstream out(path.getAbsolutePath(),
+	                  std::ios_base::out | std::ios_base::binary |
+	                          std::ios_base::trunc);
+	if(!out.is_open())
+	{
+		throw std::runtime_error(
+		        "Opening password file for writing failed.");
+	}
+	out.write(reinterpret_cast<char const *>(data),
+	          static_cast<std::streamsize>(length));
+	out.close();
+
+	// Commit the change.
+	bdrck::git::Index index(*repository.repository);
+	index.addAll({path.getRelativePath()});
+	bdrck::git::commitIndex(*repository.repository,
+	                        getPasswordChangeMessage(path));
 }
 }
 }
