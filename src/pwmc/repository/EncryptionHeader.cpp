@@ -34,14 +34,13 @@
 
 namespace
 {
-constexpr char const *HEADER_RELATIVE_PATH = ".header";
-
 constexpr char const *HEADER_CHANGE_MESSAGE =
         "Update encryption header contents.";
 
 std::string getEncryptionHeaderPath(bdrck::git::Repository const &repository)
 {
-	static const std::string ENCRYPTION_HEADER_FILE{HEADER_RELATIVE_PATH};
+	static const std::string ENCRYPTION_HEADER_FILE{
+	        pwm::repository::ENCRYPTION_HEADER_RELATIVE_PATH};
 	return bdrck::fs::combinePaths(repository.getWorkDirectoryPath(),
 	                               ENCRYPTION_HEADER_FILE);
 }
@@ -92,7 +91,7 @@ EncryptionHeader::~EncryptionHeader()
 
 	// Create a Git commit with encryption header changes, if any.
 	bdrck::git::Index index(*repository);
-	index.addAll({HEADER_RELATIVE_PATH});
+	index.addAll({ENCRYPTION_HEADER_RELATIVE_PATH});
 	bdrck::git::commitIndex(*repository, HEADER_CHANGE_MESSAGE);
 }
 

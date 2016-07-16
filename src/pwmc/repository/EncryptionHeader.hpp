@@ -40,6 +40,8 @@ namespace pwm
 {
 namespace repository
 {
+constexpr char const *ENCRYPTION_HEADER_RELATIVE_PATH = ".header";
+
 class EncryptionHeader
 {
 public:

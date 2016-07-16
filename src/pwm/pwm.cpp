@@ -43,6 +43,7 @@
 #include "pwmc/repository/IO.hpp"
 #include "pwmc/repository/Path.hpp"
 #include "pwmc/repository/Repository.hpp"
+#include "pwmc/repository/list.hpp"
 #include "pwmc/util/passwordPrompt.hpp"
 
 #ifdef PWM_DEBUG
@@ -107,10 +108,20 @@ void initCommand(bdrck::params::OptionsMap const &options,
 	          << repo.repository->getWorkDirectoryPath() << "\n";
 }
 
-void listCommand(bdrck::params::OptionsMap const &,
+void listCommand(bdrck::params::OptionsMap const &options,
                  bdrck::params::FlagsMap const &,
-                 bdrck::params::ArgumentsMap const &)
+                 bdrck::params::ArgumentsMap const &arguments)
 {
+	pwm::repository::Repository repo(getRepositoryPath(options),
+	                                 /*create=*/false);
+	pwm::repository::Path path(arguments.find("path")->second.front(),
+	                           repo);
+
+	pwm::repository::list(repo, path,
+	                      [](pwm::repository::Path const &p) -> bool {
+		                      std::cout << p.getRelativePath() << "\n";
+		                      return true;
+		              });
 }
 
 void passwordCommand(bdrck::params::OptionsMap const &options,
