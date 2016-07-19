@@ -23,14 +23,15 @@
 #include <bdrck/util/ScopeExit.hpp>
 
 #include "pwmc/crypto/Key.hpp"
+#include "pwmc/crypto/Padding.hpp"
 #include "pwmc/crypto/checkReturn.hpp"
 
 namespace
 {
 std::vector<uint8_t> decryptImpl(pwm::crypto::Key const &key, int algorithm,
-                                 std::vector<uint8_t> const &ciphertext)
+                                 uint8_t const *ciphertext, std::size_t size)
 {
-	if(ciphertext.size() <= pwm::crypto::DEFAULT_IV_SIZE_OCTETS)
+	if(size <= pwm::crypto::DEFAULT_IV_SIZE_OCTETS)
 		return std::vector<uint8_t>();
 
 	gcry_cipher_hd_t cipher;
@@ -39,21 +40,28 @@ std::vector<uint8_t> decryptImpl(pwm::crypto::Key const &key, int algorithm,
 	bdrck::util::ScopeExit destroyCipher(
 	        [&cipher]() { gcry_cipher_close(cipher); });
 
-	pwm::crypto::checkReturn(
-	        gcry_cipher_setiv(cipher, ciphertext.data(),
-	                          pwm::crypto::DEFAULT_IV_SIZE_OCTETS));
+	pwm::crypto::checkReturn(gcry_cipher_setiv(
+	        cipher, ciphertext + size - pwm::crypto::DEFAULT_IV_SIZE_OCTETS,
+	        pwm::crypto::DEFAULT_IV_SIZE_OCTETS));
 
 	pwm::crypto::checkReturn(gcry_cipher_setkey(cipher, key.getKey().data(),
 	                                            key.getKey().size()));
 
 	std::vector<uint8_t> plaintext(
-	        ciphertext.size() - pwm::crypto::DEFAULT_IV_SIZE_OCTETS, 0);
+	        size - pwm::crypto::DEFAULT_IV_SIZE_OCTETS, 0);
 	pwm::crypto::checkReturn(gcry_cipher_decrypt(
-	        cipher, plaintext.data(), plaintext.size(),
-	        ciphertext.data() + pwm::crypto::DEFAULT_IV_SIZE_OCTETS,
-	        ciphertext.size() - pwm::crypto::DEFAULT_IV_SIZE_OCTETS));
+	        cipher, plaintext.data(), plaintext.size(), ciphertext,
+	        size - pwm::crypto::DEFAULT_IV_SIZE_OCTETS));
+	pwm::crypto::padding::unpad(plaintext);
 
 	return plaintext;
+}
+
+std::vector<uint8_t> decryptImpl(pwm::crypto::Key const &key, int algorithm,
+                                 std::vector<uint8_t> const &ciphertext)
+{
+	return decryptImpl(key, algorithm, ciphertext.data(),
+	                   ciphertext.size());
 }
 }
 
@@ -61,11 +69,18 @@ namespace pwm
 {
 namespace crypto
 {
+std::vector<uint8_t> decrypt(Key const &key, uint8_t const *ciphertext,
+                             std::size_t size)
+{
+	return decryptImpl(
+	        key, GCRY_CIPHER_SERPENT256,
+	        decryptImpl(key, GCRY_CIPHER_AES256, ciphertext, size));
+}
+
 std::vector<uint8_t> decrypt(Key const &key,
                              std::vector<uint8_t> const &ciphertext)
 {
-	return decryptImpl(key, GCRY_CIPHER_SERPENT256,
-	                   decryptImpl(key, GCRY_CIPHER_AES256, ciphertext));
+	return decrypt(key, ciphertext.data(), ciphertext.size());
 }
 }
 }

@@ -30,28 +30,25 @@
 #include "pwmc/crypto/encrypt.hpp"
 #include "pwmc/crypto/generatePassword.hpp"
 
-namespace
-{
-constexpr std::size_t ENCRYPTION_TEST_DATA_SIZE_BYTES = 4096;
-}
-
 TEST_CASE("Encryption round trip test", "[Crypto]")
 {
-	std::string password = pwm::crypto::generatePassword();
-	pwm::crypto::Key key(password);
-	std::vector<uint8_t> plaintext = pwm::crypto::util::generateRandomBytes(
-	        ENCRYPTION_TEST_DATA_SIZE_BYTES,
-	        pwm::crypto::util::RandomQuality::WEAK);
+	static const std::vector<std::size_t> TEST_CASE_DATA_SIZES{4096, 123};
 
-	std::vector<uint8_t> encrypted = pwm::crypto::encrypt(key, plaintext);
+	for(std::size_t dataSize : TEST_CASE_DATA_SIZES)
+	{
+		std::string password = pwm::crypto::generatePassword();
+		pwm::crypto::Key key(password);
+		std::vector<uint8_t> plaintext =
+		        pwm::crypto::util::generateRandomBytes(
+		                dataSize,
+		                pwm::crypto::util::RandomQuality::WEAK);
 
-	std::vector<uint8_t> decrypted = pwm::crypto::decrypt(key, encrypted);
+		std::vector<uint8_t> encrypted =
+		        pwm::crypto::encrypt(key, plaintext);
+		std::vector<uint8_t> decrypted =
+		        pwm::crypto::decrypt(key, encrypted);
 
-	CHECK(plaintext == decrypted);
-	CHECK(plaintext != encrypted);
-	CHECK(!std::equal(plaintext.begin(), plaintext.end(),
-	                  encrypted.data() +
-	                          (2 * pwm::crypto::DEFAULT_IV_SIZE_OCTETS)));
-	CHECK(encrypted.size() ==
-	      (plaintext.size() + 2 * pwm::crypto::DEFAULT_IV_SIZE_OCTETS));
+		CHECK(plaintext == decrypted);
+		CHECK(plaintext != encrypted);
+	}
 }

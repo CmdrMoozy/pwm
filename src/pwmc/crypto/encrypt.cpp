@@ -25,6 +25,7 @@
 #include <bdrck/util/ScopeExit.hpp>
 
 #include "pwmc/crypto/Key.hpp"
+#include "pwmc/crypto/Padding.hpp"
 #include "pwmc/crypto/Util.hpp"
 #include "pwmc/crypto/checkReturn.hpp"
 #include "pwmc/util/MemoryFile.hpp"
@@ -32,34 +33,44 @@
 namespace
 {
 std::vector<uint8_t> encryptImpl(pwm::crypto::Key const &key, int algorithm,
-                                 std::vector<uint8_t> const &plaintext)
+                                 uint8_t const *plaintext, std::size_t size)
 {
-	pwm::util::MemoryFile file;
+	// Pad the input data.
+	std::vector<uint8_t> paddedPlaintext(plaintext, plaintext + size);
+	pwm::crypto::padding::pad(paddedPlaintext, algorithm);
 
+	// Initialize the cipher.
 	gcry_cipher_hd_t cipher;
 	pwm::crypto::checkReturn(gcry_cipher_open(
 	        &cipher, algorithm, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE));
 	bdrck::util::ScopeExit destroyCipher(
 	        [&cipher]() { gcry_cipher_close(cipher); });
 
+	std::vector<uint8_t> ciphertext(paddedPlaintext.size(), 0);
+
+	// Setup the cipher's initialization vector, adding it to ciphertext.
 	std::vector<uint8_t> iv = pwm::crypto::util::generateRandomBytes(
 	        pwm::crypto::DEFAULT_IV_SIZE_OCTETS,
 	        pwm::crypto::util::RandomQuality::VERY_STRONG);
 	pwm::crypto::checkReturn(
 	        gcry_cipher_setiv(cipher, iv.data(), iv.size()));
-	file.write(iv.data(), iv.size());
+	ciphertext.insert(ciphertext.end(), iv.data(), iv.data() + iv.size());
 
+	// Set the encryption key.
 	pwm::crypto::checkReturn(gcry_cipher_setkey(cipher, key.getKey().data(),
 	                                            key.getKey().size()));
 
-	std::vector<uint8_t> ciphertext(plaintext.size(), 0);
+	// Encrypt!
 	pwm::crypto::checkReturn(gcry_cipher_encrypt(
-	        cipher, ciphertext.data(), ciphertext.size(), plaintext.data(),
-	        plaintext.size()));
-	file.write(ciphertext.data(), ciphertext.size());
+	        cipher, ciphertext.data(), paddedPlaintext.size(),
+	        paddedPlaintext.data(), paddedPlaintext.size()));
+	return ciphertext;
+}
 
-	file.flush();
-	return std::vector<uint8_t>(file.data(), file.data() + file.size());
+std::vector<uint8_t> encryptImpl(pwm::crypto::Key const &key, int algorithm,
+                                 std::vector<uint8_t> const &plaintext)
+{
+	return encryptImpl(key, algorithm, plaintext.data(), plaintext.size());
 }
 }
 
@@ -67,8 +78,8 @@ namespace pwm
 {
 namespace crypto
 {
-std::vector<uint8_t> encrypt(Key const &key,
-                             std::vector<uint8_t> const &plaintext)
+std::vector<uint8_t> encrypt(Key const &key, uint8_t const *plaintext,
+                             std::size_t size)
 {
 	/*
 	 * For maximum protection, we're going to encrypt the plaintext with
@@ -76,8 +87,15 @@ std::vector<uint8_t> encrypt(Key const &key,
 	 * prepend the IV to the ciphertext. Start by encrypting with Serpent:
 	 */
 
-	return encryptImpl(key, GCRY_CIPHER_AES256,
-	                   encryptImpl(key, GCRY_CIPHER_SERPENT256, plaintext));
+	return encryptImpl(
+	        key, GCRY_CIPHER_AES256,
+	        encryptImpl(key, GCRY_CIPHER_SERPENT256, plaintext, size));
+}
+
+std::vector<uint8_t> encrypt(Key const &key,
+                             std::vector<uint8_t> const &plaintext)
+{
+	return encrypt(key, plaintext.data(), plaintext.size());
 }
 }
 }
