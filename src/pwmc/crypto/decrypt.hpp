@@ -28,6 +28,8 @@ namespace crypto
 {
 class Key;
 
+std::vector<uint8_t> decrypt(Key const &key, uint8_t const *ciphertext,
+                             std::size_t size);
 std::vector<uint8_t> decrypt(Key const &key,
                              std::vector<uint8_t> const &ciphertext);
 }
