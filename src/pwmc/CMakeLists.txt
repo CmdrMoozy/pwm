@@ -13,6 +13,8 @@ set(pwmc_SOURCES
 	crypto/generatePassword.hpp
 	crypto/Key.cpp
 	crypto/Key.hpp
+	crypto/Padding.cpp
+	crypto/Padding.hpp
 	crypto/Util.cpp
 	crypto/Util.hpp
 
