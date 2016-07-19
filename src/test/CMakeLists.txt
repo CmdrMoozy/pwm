@@ -5,6 +5,7 @@ set(pwm-test_SOURCES
 	crypto/EncryptDecryptTest.cpp
 	crypto/GeneratePasswordTest.cpp
 	crypto/KeyTest.cpp
+	crypto/PaddingTest.cpp
 
 	repository/EncryptionHeaderTest.cpp
 
