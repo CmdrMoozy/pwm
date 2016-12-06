@@ -16,17 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef pwmc_util_passwordPrompt_HPP
-#define pwmc_util_passwordPrompt_HPP
+#ifndef pwmc_repository_buildMasterKey_HPP
+#define pwmc_repository_buildMasterKey_HPP
 
 #include <string>
 
+#include "pwmc/crypto/Key.hpp"
+#include "pwmc/repository/Repository.hpp"
+
 namespace pwm
 {
-namespace util
+namespace repository
 {
-std::string passwordPrompt(std::string const &prompt = "Password: ",
-                           bool confirm = false);
+pwm::crypto::Key buildMasterKey(Repository const &repository,
+                                std::string const &passphrase);
+pwm::crypto::Key buildMasterKey(Repository const &repository);
 }
 }
 

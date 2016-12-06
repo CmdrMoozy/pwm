@@ -23,11 +23,17 @@
 #include <iterator>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 #include <bdrck/fs/Util.hpp>
 #include <bdrck/git/Commit.hpp>
 #include <bdrck/git/Index.hpp>
 #include <bdrck/git/StrArray.hpp>
+
+#include "pwmc/crypto/Key.hpp"
+#include "pwmc/crypto/decrypt.hpp"
+#include "pwmc/crypto/encrypt.hpp"
+#include "pwmc/repository/buildMasterKey.hpp"
 
 namespace
 {
@@ -74,6 +80,15 @@ struct WriteContext
 		bdrck::git::commitIndex(*repository.repository,
 		                        getPasswordChangeMessage(path));
 	}
+
+	void write(uint8_t const *plaintext, std::size_t size)
+	{
+		auto data = pwm::crypto::encrypt(
+		        pwm::repository::buildMasterKey(repository), plaintext,
+		        size);
+		out.write(reinterpret_cast<char const *>(data.data()),
+		          static_cast<std::streamsize>(data.size()));
+	}
 };
 }
 
@@ -81,26 +96,45 @@ namespace pwm
 {
 namespace repository
 {
-std::string read(Repository const &, Path const &path)
+std::string read(Repository const &repository, Path const &path)
 {
-	return bdrck::fs::readEntireFile(path.getAbsolutePath());
+	std::ifstream in(path.getAbsolutePath());
+	if(!in.is_open())
+	{
+		std::ostringstream oss;
+		oss << "Failed to open password file '"
+		    << path.getRelativePath() << "' for reading.";
+		throw std::runtime_error(oss.str());
+	}
+
+	std::vector<char> ciphertext;
+	std::istreambuf_iterator<char> inBegin(in);
+	std::istreambuf_iterator<char> inEnd;
+	std::copy(inBegin, inEnd, std::back_inserter(ciphertext));
+	std::vector<uint8_t> plaintext = pwm::crypto::decrypt(
+	        pwm::repository::buildMasterKey(repository),
+	        reinterpret_cast<uint8_t const *>(ciphertext.data()),
+	        ciphertext.size());
+	return std::string(reinterpret_cast<char const *>(plaintext.data()),
+	                   plaintext.size());
 }
 
 void write(Repository &repository, Path const &path, uint8_t const *data,
            std::size_t length)
 {
 	WriteContext context(repository, path);
-	context.out.write(reinterpret_cast<char const *>(data),
-	                  static_cast<std::streamsize>(length));
+	context.write(data, length);
 }
 
 void write(Repository &repository, Path const &path, std::istream &in)
 {
 	WriteContext context(repository, path);
+	std::vector<char> plaintext;
 	std::istreambuf_iterator<char> inBegin(in);
 	std::istreambuf_iterator<char> inEnd;
-	std::ostreambuf_iterator<char> outBegin(context.out);
-	std::copy(inBegin, inEnd, outBegin);
+	std::copy(inBegin, inEnd, std::back_inserter(plaintext));
+	context.write(reinterpret_cast<uint8_t const *>(plaintext.data()),
+	              plaintext.size());
 }
 }
 }

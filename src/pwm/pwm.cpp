@@ -143,7 +143,8 @@ void passwordCommand(bdrck::params::OptionsMap const &options,
 		// The user wants to set the password, but no key file was
 		// given, so prompt for the password interactively.
 
-		std::string password = pwm::util::passwordPrompt();
+		std::string password = pwm::util::passwordPrompt(
+		        "Password: ", /*confirm=*/true);
 		pwm::repository::write(
 		        repo, path,
 		        reinterpret_cast<uint8_t const *>(password.data()),
