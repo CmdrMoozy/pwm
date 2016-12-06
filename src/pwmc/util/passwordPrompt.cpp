@@ -62,12 +62,12 @@ namespace pwm
 {
 namespace util
 {
-std::string passwordPrompt(bool confirm)
+std::string passwordPrompt(std::string const &prompt, bool confirm)
 {
 	boost::optional<std::string> password;
 	while(!password)
 	{
-		password.emplace(singlePasswordPrompt("Password: "));
+		password.emplace(singlePasswordPrompt(prompt));
 		if(confirm)
 		{
 			std::string confirmPassword{

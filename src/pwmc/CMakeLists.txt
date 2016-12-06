@@ -21,6 +21,8 @@ set(pwmc_SOURCES
 	fs/Util.cpp
 	fs/Util.hpp
 
+	repository/buildMasterKey.cpp
+	repository/buildMasterKey.hpp
 	repository/EncryptionHeader.cpp
 	repository/EncryptionHeader.hpp
 	repository/IO.cpp
