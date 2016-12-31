@@ -14,22 +14,5 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-extern crate backtrace;
-extern crate byteorder;
-extern crate sodiumoxide;
-
-pub mod crypto;
-pub mod error;
-
 #[cfg(test)]
-mod tests;
-
-pub fn init() -> ::error::Result<()> {
-    if !sodiumoxide::init() {
-        return Err(error::Error::new(error::ErrorKind::Initialization {
-            cause: "sodiumoxide initialization failed".to_owned(),
-        }));
-    }
-
-    Ok(())
-}
+mod padding;

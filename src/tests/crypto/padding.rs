@@ -14,22 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-extern crate backtrace;
-extern crate byteorder;
-extern crate sodiumoxide;
+use ::crypto::padding::*;
+use sodiumoxide::randombytes::randombytes;
 
-pub mod crypto;
-pub mod error;
+#[test]
+fn test_padding_round_trip() {
+    let mut data = randombytes(123);
+    let original_data = data.clone();
+    pad(&mut data);
+    assert!(data.len() > original_data.len());
+    unpad(&mut data).unwrap();
+    assert_eq!(original_data, data);
+}
 
-#[cfg(test)]
-mod tests;
-
-pub fn init() -> ::error::Result<()> {
-    if !sodiumoxide::init() {
-        return Err(error::Error::new(error::ErrorKind::Initialization {
-            cause: "sodiumoxide initialization failed".to_owned(),
-        }));
-    }
-
-    Ok(())
+#[test]
+fn test_unpadding_invalid_size() {
+    let mut data: Vec<u8> = vec![];
+    assert!(unpad(&mut data).is_err());
 }
