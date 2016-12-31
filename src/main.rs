@@ -26,6 +26,8 @@ use ::bdrck_params::command::ExecutableCommand;
 use ::bdrck_params::main_impl::main_impl_multiple_commands;
 use ::bdrck_params::option::Option;
 
+extern crate pwm;
+
 fn config(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
 
 fn init(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
@@ -35,6 +37,8 @@ fn ls(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<
 fn pw(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
 
 fn main() {
+    pwm::init().ok().unwrap();
+
     let commands = vec![
         Command::new("config".to_owned(), "Get or set a configuration value".to_owned(),
             vec![
