@@ -22,6 +22,7 @@ use std::result;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
+    Padding { cause: String },
     Initialization { cause: String },
 }
 
@@ -50,6 +51,7 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
             ErrorKind::Initialization { cause: _ } => "Library initialization error",
+            ErrorKind::Padding { cause: _ } => "Padding / unpadding error",
         }
     }
 }
@@ -59,6 +61,9 @@ impl fmt::Display for Error {
         use std::error::Error;
         match self.kind {
             ErrorKind::Initialization { cause: ref c } => {
+                f.write_str(format!("{}: {}", self.description(), c).as_str())
+            },
+            ErrorKind::Padding { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
         }
