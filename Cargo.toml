@@ -4,4 +4,6 @@ version = "0.1.0"
 authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 
 [dependencies]
+backtrace = "0.2"
 bdrck_params = { path = "/home/ajr/workshop/rust/bdrck/bdrck_params", version = "0.1" }
+sodiumoxide = "0.0.12"
