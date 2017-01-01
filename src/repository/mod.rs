@@ -14,28 +14,4 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#![feature(proc_macro)]
-
-extern crate backtrace;
-extern crate byteorder;
-#[macro_use]
-extern crate serde_derive;
-extern crate sodiumoxide;
-
-pub mod crypto;
-pub mod error;
-pub mod repository;
-pub mod util;
-
-#[cfg(test)]
-mod tests;
-
-pub fn init() -> ::error::Result<()> {
-    if !sodiumoxide::init() {
-        return Err(error::Error::new(error::ErrorKind::Initialization {
-            cause: "sodiumoxide initialization failed".to_owned(),
-        }));
-    }
-
-    Ok(())
-}
+pub mod cryptoconfiguration;

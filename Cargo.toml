@@ -7,4 +7,6 @@ authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 backtrace = "0.2"
 bdrck_params = { path = "/home/ajr/workshop/rust/bdrck/bdrck_params", version = "0.1" }
 byteorder = "1.0"
+serde = "0.8"
+serde_derive = "0.8"
 sodiumoxide = "0.0.12"
