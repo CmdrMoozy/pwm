@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use backtrace::Backtrace;
+use git2;
 use std::cmp::{Eq, PartialEq};
 use std::error;
 use std::fmt;
@@ -24,6 +25,7 @@ use std::result;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
     Crypto { cause: String },
+    Git { cause: String },
     Initialization { cause: String },
     Io { cause: String },
     Key { cause: String },
@@ -51,6 +53,10 @@ impl PartialEq for Error {
 
 impl Eq for Error {}
 
+impl From<git2::Error> for Error {
+    fn from(e: git2::Error) -> Error { Error::new(ErrorKind::Git { cause: e.to_string() }) }
+}
+
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Error { Error::new(ErrorKind::Io { cause: e.to_string() }) }
 }
@@ -59,6 +65,7 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
             ErrorKind::Crypto { cause: _ } => "Cryptographic error",
+            ErrorKind::Git { cause: _ } => "Git error",
             ErrorKind::Initialization { cause: _ } => "Library initialization error",
             ErrorKind::Io { cause: _ } => "Input / output error",
             ErrorKind::Key { cause: _ } => "Key derivation error",
@@ -72,6 +79,9 @@ impl fmt::Display for Error {
         use std::error::Error;
         match self.kind {
             ErrorKind::Crypto { cause: ref c } => {
+                f.write_str(format!("{}: {}", self.description(), c).as_str())
+            },
+            ErrorKind::Git { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
             ErrorKind::Initialization { cause: ref c } => {
