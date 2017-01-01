@@ -19,6 +19,7 @@ use ::error::{Error, ErrorKind, Result};
 use sodiumoxide::randombytes::randombytes;
 use std::io::Cursor;
 use std::mem;
+use ::util::data::SensitiveData;
 
 const PAD_BLOCK_SIZE_BYTES: usize = 1024;
 
@@ -33,7 +34,7 @@ fn get_padded_size(original_size: usize) -> usize {
     blocks * PAD_BLOCK_SIZE_BYTES
 }
 
-fn read_original_size(data: &Vec<u8>) -> Result<usize> {
+fn read_original_size(data: &SensitiveData) -> Result<usize> {
     if data.len() < mem::size_of::<u64>() {
         return Err(Error::new(ErrorKind::Padding {
             cause: "Cannot unpad data with invalid length".to_owned(),
@@ -45,20 +46,19 @@ fn read_original_size(data: &Vec<u8>) -> Result<usize> {
     Ok(reader.read_u64::<BigEndian>().unwrap() as usize)
 }
 
-pub fn pad(data: &mut Vec<u8>) {
+pub fn pad(data: SensitiveData) -> SensitiveData {
     let original_size: usize = data.len();
     let padded_size = get_padded_size(original_size);
     let padding_bytes = padded_size - original_size - mem::size_of::<u64>();
 
-    data.append(&mut randombytes(padding_bytes));
-
     let mut original_size_encoded: Vec<u8> = vec![];
     original_size_encoded.write_u64::<BigEndian>(original_size as u64).unwrap();
-    data.append(&mut original_size_encoded);
+
+    data.concat(SensitiveData::from(randombytes(padding_bytes)))
+        .concat(SensitiveData::from(original_size_encoded))
 }
 
-pub fn unpad(data: &mut Vec<u8>) -> Result<()> {
-    let original_size = try!(read_original_size(data));
-    data.truncate(original_size);
-    Ok(())
+pub fn unpad(data: SensitiveData) -> Result<SensitiveData> {
+    let original_size = try!(read_original_size(&data));
+    Ok(data.truncate(original_size))
 }
