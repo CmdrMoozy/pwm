@@ -15,3 +15,17 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pub mod data;
+
+use ::error::Result;
+use rpassword;
+
+pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::SensitiveData> {
+    loop {
+        let password = data::SensitiveData::from(try!(rpassword::prompt_password_stdout(prompt)));
+        if !confirm ||
+           data::SensitiveData::from(try!(rpassword::prompt_password_stdout("Confirm: "))) ==
+           password {
+            return Ok(password);
+        }
+    }
+}
