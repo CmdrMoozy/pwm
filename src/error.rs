@@ -18,12 +18,14 @@ use backtrace::Backtrace;
 use std::cmp::{Eq, PartialEq};
 use std::error;
 use std::fmt;
+use std::io;
 use std::result;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
     Crypto { cause: String },
     Initialization { cause: String },
+    Io { cause: String },
     Key { cause: String },
     Padding { cause: String },
 }
@@ -49,11 +51,16 @@ impl PartialEq for Error {
 
 impl Eq for Error {}
 
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Error { Error::new(ErrorKind::Io { cause: e.to_string() }) }
+}
+
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
             ErrorKind::Crypto { cause: _ } => "Cryptographic error",
             ErrorKind::Initialization { cause: _ } => "Library initialization error",
+            ErrorKind::Io { cause: _ } => "Input / output error",
             ErrorKind::Key { cause: _ } => "Key derivation error",
             ErrorKind::Padding { cause: _ } => "Padding / unpadding error",
         }
@@ -68,6 +75,9 @@ impl fmt::Display for Error {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
             ErrorKind::Initialization { cause: ref c } => {
+                f.write_str(format!("{}: {}", self.description(), c).as_str())
+            },
+            ErrorKind::Io { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
             ErrorKind::Key { cause: ref c } => {
