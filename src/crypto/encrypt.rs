@@ -14,7 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod decrypt;
-pub mod encrypt;
-pub mod key;
-pub mod padding;
+use ::crypto::key::Key;
+use ::error::Result;
+use sodiumoxide::crypto::secretbox;
+use ::util::data::SensitiveData;
+
+pub fn encrypt(plaintext: SensitiveData, key: &Key) -> Result<(secretbox::Nonce, Vec<u8>)> {
+    let nonce = secretbox::gen_nonce();
+    let ciphertext = secretbox::seal(&plaintext[..], &nonce, &key.get_key());
+    Ok((nonce, ciphertext))
+}
