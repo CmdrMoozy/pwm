@@ -20,6 +20,7 @@ extern crate sodiumoxide;
 
 pub mod crypto;
 pub mod error;
+pub mod util;
 
 #[cfg(test)]
 mod tests;
