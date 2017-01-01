@@ -14,7 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod decrypt;
-pub mod encrypt;
-pub mod key;
-pub mod padding;
+use ::crypto::decrypt::*;
+use ::crypto::encrypt::*;
+use ::crypto::key::Key;
+use sodiumoxide::randombytes::randombytes;
+use ::util::data::SensitiveData;
+
+#[test]
+fn test_encryption_roundtrip() {
+    let key = Key::new(SensitiveData::from("foobar"), None, None, None).unwrap();
+    let plaintext = SensitiveData::from(randombytes(1024));
+    let (nonce, ciphertext) = encrypt(plaintext.clone(), &key).ok().unwrap();
+    let decrypted = decrypt(ciphertext.as_slice(), &nonce, &key).unwrap();
+    assert_eq!(plaintext, decrypted);
+}

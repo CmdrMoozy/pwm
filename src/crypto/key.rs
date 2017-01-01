@@ -52,4 +52,8 @@ impl Key {
             key: key,
         })
     }
+
+    pub fn get_salt(&self) -> &Salt { &self.salt }
+
+    pub fn get_key(&self) -> &secretbox::Key { &self.key }
 }

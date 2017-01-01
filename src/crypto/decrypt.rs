@@ -14,7 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod decrypt;
-pub mod encrypt;
-pub mod key;
-pub mod padding;
+use ::crypto::key::Key;
+use ::error::{Error, ErrorKind, Result};
+use sodiumoxide::crypto::secretbox;
+use ::util::data::SensitiveData;
+
+pub fn decrypt(ciphertext: &[u8], nonce: &secretbox::Nonce, key: &Key) -> Result<SensitiveData> {
+    let result = secretbox::open(ciphertext, nonce, key.get_key());
+    if result.is_err() {
+        return Err(Error::new(ErrorKind::Crypto {
+            cause: "Ciphertext failed key verification".to_owned(),
+        }));
+    }
+    Ok(SensitiveData::from(result.ok().unwrap()))
+}

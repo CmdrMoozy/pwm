@@ -22,6 +22,7 @@ use std::result;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
+    Crypto { cause: String },
     Initialization { cause: String },
     Key { cause: String },
     Padding { cause: String },
@@ -51,6 +52,7 @@ impl Eq for Error {}
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
+            ErrorKind::Crypto { cause: _ } => "Cryptographic error",
             ErrorKind::Initialization { cause: _ } => "Library initialization error",
             ErrorKind::Key { cause: _ } => "Key derivation error",
             ErrorKind::Padding { cause: _ } => "Padding / unpadding error",
@@ -62,6 +64,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use std::error::Error;
         match self.kind {
+            ErrorKind::Crypto { cause: ref c } => {
+                f.write_str(format!("{}: {}", self.description(), c).as_str())
+            },
             ErrorKind::Initialization { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },

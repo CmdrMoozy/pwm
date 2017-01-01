@@ -30,6 +30,14 @@ impl From<Vec<u8>> for SensitiveData {
     fn from(data: Vec<u8>) -> SensitiveData { SensitiveData { data: data.into_boxed_slice() } }
 }
 
+impl From<String> for SensitiveData {
+    fn from(data: String) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
+}
+
+impl<'a> From<&'a str> for SensitiveData {
+    fn from(data: &'a str) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
+}
+
 impl SensitiveData {
     fn as_slice(&self) -> &[u8] { &self.data }
 
