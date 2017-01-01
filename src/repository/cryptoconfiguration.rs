@@ -14,28 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#![feature(proc_macro)]
+use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt, SALTBYTES};
 
-extern crate backtrace;
-extern crate byteorder;
-#[macro_use]
-extern crate serde_derive;
-extern crate sodiumoxide;
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CryptoConfiguration {
+    salt: [u8; SALTBYTES],
+    mem_limit: usize,
+    ops_limit: usize,
+}
 
-pub mod crypto;
-pub mod error;
-pub mod repository;
-pub mod util;
+impl CryptoConfiguration {
+    pub fn get_salt(&self) -> Salt { Salt(self.salt.clone()) }
 
-#[cfg(test)]
-mod tests;
+    pub fn get_mem_limit(&self) -> MemLimit { MemLimit(self.mem_limit) }
 
-pub fn init() -> ::error::Result<()> {
-    if !sodiumoxide::init() {
-        return Err(error::Error::new(error::ErrorKind::Initialization {
-            cause: "sodiumoxide initialization failed".to_owned(),
-        }));
-    }
-
-    Ok(())
+    pub fn get_ops_limit(&self) -> OpsLimit { OpsLimit(self.ops_limit) }
 }
