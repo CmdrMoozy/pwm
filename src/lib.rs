@@ -18,6 +18,7 @@
 
 extern crate backtrace;
 extern crate byteorder;
+extern crate git2;
 extern crate rpassword;
 #[macro_use]
 extern crate serde_derive;

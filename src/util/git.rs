@@ -14,19 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod cryptoconfiguration;
-
-use ::error::Result;
-use git2;
+use ::error::{Error, Result};
+use git2::{ErrorClass, ErrorCode, Repository};
 use std::path::Path;
-use ::util::git;
 
-pub struct Repository {
-    repository: git2::Repository,
-}
-
-impl Repository {
-    pub fn new<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
-        Ok(Repository { repository: try!(git::open_repository(path, create)) })
+pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
+    let path = path.as_ref();
+    match Repository::open(path) {
+        Ok(repository) => Ok(repository),
+        Err(error) => {
+            match create && error.class() == ErrorClass::Repository &&
+                  error.code() == ErrorCode::NotFound {
+                false => Err(Error::from(error)),
+                true => Ok(try!(Repository::init(path))),
+            }
+        },
     }
 }
