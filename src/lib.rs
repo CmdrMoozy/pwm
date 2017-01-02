@@ -18,10 +18,13 @@
 
 extern crate backtrace;
 extern crate bdrck_config;
+extern crate bdrck_log;
 extern crate byteorder;
 extern crate git2;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate log;
 extern crate rpassword;
 #[macro_use]
 extern crate serde_derive;
@@ -42,6 +45,8 @@ pub fn init() -> ::error::Result<()> {
             cause: "sodiumoxide initialization failed".to_owned(),
         }));
     }
+
+    try!(bdrck_log::debug::init_debug_logger());
 
     Ok(())
 }

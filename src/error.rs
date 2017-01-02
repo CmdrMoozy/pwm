@@ -17,6 +17,7 @@
 use backtrace::Backtrace;
 use bdrck_config;
 use git2;
+use log;
 use std::cmp::{Eq, PartialEq};
 use std::error;
 use std::fmt;
@@ -67,6 +68,12 @@ impl From<git2::Error> for Error {
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Error { Error::new(ErrorKind::Io { cause: e.to_string() }) }
+}
+
+impl From<log::SetLoggerError> for Error {
+    fn from(e: log::SetLoggerError) -> Error {
+        Error::new(ErrorKind::Initialization { cause: e.to_string() })
+    }
 }
 
 impl error::Error for Error {

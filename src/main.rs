@@ -14,10 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::boxed::Box;
 use std::collections::HashMap;
-use std::string::String;
-use std::vec::Vec;
+use std::option::Option as Optional;
 
 extern crate bdrck_params;
 use ::bdrck_params::argument::Argument;
@@ -26,9 +24,48 @@ use ::bdrck_params::command::ExecutableCommand;
 use ::bdrck_params::main_impl::main_impl_multiple_commands;
 use ::bdrck_params::option::Option;
 
-extern crate pwm;
+#[macro_use]
+extern crate log;
 
-fn config(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
+extern crate pwm;
+use pwm::configuration;
+use pwm::error::Result;
+
+extern crate serde_json;
+
+fn init_pwm() -> Result<configuration::SingletonHandle> {
+    try!(pwm::init());
+    Ok(try!(configuration::SingletonHandle::new()))
+}
+
+fn config(options: &HashMap<&str, String>,
+          _: &HashMap<&str, bool>,
+          _: &HashMap<&str, Vec<String>>) {
+    let _handle = init_pwm().unwrap();
+
+    let k: Optional<&String> = options.get("key");
+    let s: Optional<&String> = options.get("set");
+
+    if k.is_none() {
+        if s.is_some() {
+            error!("A 'key' must be provided when 'set'ting a configuration value.");
+            return;
+        }
+
+        info!("{}",
+              serde_json::to_string_pretty(&configuration::get().unwrap()).unwrap());
+        return;
+    }
+
+    let key = k.unwrap();
+    if let Some(set) = s {
+        configuration::set(key.as_str(), set.as_str()).unwrap();
+    }
+
+    info!("{} = {}",
+          key,
+          configuration::get_value_as_str(key.as_str()).unwrap());
+}
 
 fn init(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
 
@@ -37,8 +74,6 @@ fn ls(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<
 fn pw(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
 
 fn main() {
-    pwm::init().ok().unwrap();
-
     let commands = vec![
         Command::new("config".to_owned(), "Get or set a configuration value".to_owned(),
             vec![

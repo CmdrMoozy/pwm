@@ -17,6 +17,8 @@
 use bdrck_config::configuration as bdrck_config;
 use ::error::{Error, ErrorKind, Result};
 
+static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
     pub default_repository: Option<String>,
@@ -50,12 +52,13 @@ pub fn set(key: &str, value: &str) -> Result<()> {
     let err = try!(bdrck_config::instance_apply_mut(&IDENTIFIER,
         |instance: &mut bdrck_config::Configuration<Configuration>| -> Option<Error> {
         let mut config = instance.get().clone();
-        match key {
-            "default_repository" => config.default_repository = Some(value.to_owned()),
-            _ => return Some(Error::new(ErrorKind::Configuration {
+        if key == DEFAULT_REPOSITORY_KEY {
+            config.default_repository = Some(value.to_owned());
+        } else {
+            return Some(Error::new(ErrorKind::Configuration {
                 cause: format!("Invalid configuration key '{}'", key)
-            })),
-        };
+            }));
+        }
         instance.set(config);
         None
     }));
@@ -66,6 +69,20 @@ pub fn set(key: &str, value: &str) -> Result<()> {
     }
 }
 
-pub fn get() -> Result<Configuration> { Ok(try!(bdrck_config::get(&IDENTIFIER))) }
+pub fn get() -> Result<Configuration> { Ok(try!(bdrck_config::get::<Configuration>(&IDENTIFIER))) }
+
+pub fn get_value_as_str(key: &str) -> Result<String> {
+    let config = try!(get());
+    if key == DEFAULT_REPOSITORY_KEY {
+        Ok(match config.default_repository {
+            Some(v) => v.clone(),
+            None => String::new(),
+        })
+    } else {
+        Err(Error::new(ErrorKind::Configuration {
+            cause: format!("Invalid configuration key '{}'", key),
+        }))
+    }
+}
 
 pub fn reset() -> Result<()> { Ok(try!(bdrck_config::reset::<Configuration>(&IDENTIFIER))) }
