@@ -17,13 +17,17 @@
 #![feature(proc_macro)]
 
 extern crate backtrace;
+extern crate bdrck_config;
 extern crate byteorder;
 extern crate git2;
+#[macro_use]
+extern crate lazy_static;
 extern crate rpassword;
 #[macro_use]
 extern crate serde_derive;
 extern crate sodiumoxide;
 
+pub mod configuration;
 pub mod crypto;
 pub mod error;
 pub mod repository;
