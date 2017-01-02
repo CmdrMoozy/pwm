@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use backtrace::Backtrace;
+use bdrck_config;
 use git2;
 use std::cmp::{Eq, PartialEq};
 use std::error;
@@ -24,6 +25,7 @@ use std::result;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
+    Configuration { cause: String },
     Crypto { cause: String },
     Git { cause: String },
     Initialization { cause: String },
@@ -53,6 +55,12 @@ impl PartialEq for Error {
 
 impl Eq for Error {}
 
+impl From<bdrck_config::error::Error> for Error {
+    fn from(e: bdrck_config::error::Error) -> Error {
+        Error::new(ErrorKind::Configuration { cause: e.to_string() })
+    }
+}
+
 impl From<git2::Error> for Error {
     fn from(e: git2::Error) -> Error { Error::new(ErrorKind::Git { cause: e.to_string() }) }
 }
@@ -64,6 +72,7 @@ impl From<io::Error> for Error {
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
+            ErrorKind::Configuration { cause: _ } => "Configuration error",
             ErrorKind::Crypto { cause: _ } => "Cryptographic error",
             ErrorKind::Git { cause: _ } => "Git error",
             ErrorKind::Initialization { cause: _ } => "Library initialization error",
@@ -78,6 +87,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use std::error::Error;
         match self.kind {
+            ErrorKind::Configuration { cause: ref c } => {
+                f.write_str(format!("{}: {}", self.description(), c).as_str())
+            },
             ErrorKind::Crypto { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
