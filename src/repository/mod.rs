@@ -29,4 +29,6 @@ impl Repository {
     pub fn new<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
         Ok(Repository { repository: try!(git::open_repository(path, create)) })
     }
+
+    pub fn workdir(&self) -> Option<&Path> { self.repository.workdir() }
 }
