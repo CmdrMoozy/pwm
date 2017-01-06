@@ -14,8 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod cryptoconfiguration;
+use ::error::Result;
+use git2;
+use std::path::Path;
+use ::util::git;
 
-mod repository;
+pub struct Repository {
+    repository: git2::Repository,
+}
 
-pub use ::repository::repository::Repository;
+impl Repository {
+    pub fn new<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
+        Ok(Repository { repository: try!(git::open_repository(path, create)) })
+    }
+
+    pub fn workdir(&self) -> Option<&Path> { self.repository.workdir() }
+}
