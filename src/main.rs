@@ -30,12 +30,26 @@ extern crate log;
 extern crate pwm;
 use pwm::configuration;
 use pwm::error::{Error, ErrorKind, Result};
+use pwm::repository::Repository;
 
 extern crate serde_json;
 
 fn init_pwm() -> Result<configuration::SingletonHandle> {
     try!(pwm::init());
     Ok(try!(configuration::SingletonHandle::new()))
+}
+
+fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
+    match options.get("repository").or(try!(configuration::get()).default_repository.as_ref()) {
+        Some(p) => Ok(p.clone()),
+        None => {
+            Err(Error::new(ErrorKind::Parameters {
+                description: "No repository path specified. Try the 'repository' command option, \
+                              or setting the 'default_repository' configuration key."
+                    .to_owned(),
+            }))
+        },
+    }
 }
 
 fn config(options: HashMap<String, String>,
@@ -72,10 +86,16 @@ fn config(options: HashMap<String, String>,
     Ok(())
 }
 
-fn init(_: HashMap<String, String>,
+fn init(options: HashMap<String, String>,
         _: HashMap<String, bool>,
         _: HashMap<String, Vec<String>>)
         -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), true));
+    info!("Initialized repository: {}",
+          repository.workdir().unwrap().display());
+
     Ok(())
 }
 

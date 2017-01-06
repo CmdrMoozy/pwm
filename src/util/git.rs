@@ -23,8 +23,7 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
     match Repository::open(path) {
         Ok(repository) => Ok(repository),
         Err(error) => {
-            match create && error.class() == ErrorClass::Repository &&
-                  error.code() == ErrorCode::NotFound {
+            match create && error.class() == ErrorClass::Os && error.code() == ErrorCode::NotFound {
                 false => Err(Error::from(error)),
                 true => Ok(try!(Repository::init(path))),
             }
