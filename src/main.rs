@@ -29,7 +29,7 @@ extern crate log;
 
 extern crate pwm;
 use pwm::configuration;
-use pwm::error::Result;
+use pwm::error::{Error, ErrorKind, Result};
 
 extern crate serde_json;
 
@@ -38,23 +38,26 @@ fn init_pwm() -> Result<configuration::SingletonHandle> {
     Ok(try!(configuration::SingletonHandle::new()))
 }
 
-fn config(options: &HashMap<&str, String>,
-          _: &HashMap<&str, bool>,
-          _: &HashMap<&str, Vec<String>>) {
-    let _handle = init_pwm().unwrap();
+fn config(options: HashMap<String, String>,
+          _: HashMap<String, bool>,
+          _: HashMap<String, Vec<String>>)
+          -> Result<()> {
+    let _handle = try!(init_pwm());
 
     let k: Optional<&String> = options.get("key");
     let s: Optional<&String> = options.get("set");
 
     if k.is_none() {
         if s.is_some() {
-            error!("A 'key' must be provided when 'set'ting a configuration value.");
-            return;
+            return Err(Error::new(ErrorKind::Parameters {
+                description: "A 'key' must be provided when 'set'ting a configuration value."
+                    .to_owned(),
+            }));
         }
 
         info!("{}",
               serde_json::to_string_pretty(&configuration::get().unwrap()).unwrap());
-        return;
+        return Ok(());
     }
 
     let key = k.unwrap();
@@ -64,45 +67,60 @@ fn config(options: &HashMap<&str, String>,
 
     info!("{} = {}",
           key,
-          configuration::get_value_as_str(key.as_str()).unwrap());
+          try!(configuration::get_value_as_str(key.as_str())));
+
+    Ok(())
 }
 
-fn init(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
+fn init(_: HashMap<String, String>,
+        _: HashMap<String, bool>,
+        _: HashMap<String, Vec<String>>)
+        -> Result<()> {
+    Ok(())
+}
 
-fn ls(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
+fn ls(_: HashMap<String, String>,
+      _: HashMap<String, bool>,
+      _: HashMap<String, Vec<String>>)
+      -> Result<()> {
+    Ok(())
+}
 
-fn pw(_: &HashMap<&str, String>, _: &HashMap<&str, bool>, _: &HashMap<&str, Vec<String>>) {}
+fn pw(_: HashMap<String, String>,
+      _: HashMap<String, bool>,
+      _: HashMap<String, Vec<String>>)
+      -> Result<()> {
+    Ok(())
+}
 
 fn main() {
-    let commands = vec![
-        Command::new("config".to_owned(), "Get or set a configuration value".to_owned(),
+    main_impl_multiple_commands(vec![
+        ExecutableCommand::new(Command::new("config", "Get or set a configuration value",
             vec![
                 Option::optional("set", "Set the key to this new value", Some('s')),
                 Option::optional("key", "The specific key to view / set", Some('k')),
             ],
             vec![],
-            false).unwrap(),
-        Command::new("init".to_owned(), "Initialize a new pwm repository".to_owned(),
+            false).unwrap(), Box::new(config)),
+        ExecutableCommand::new(Command::new("init", "Initialize a new pwm repository",
             vec![
                 Option::optional("repository",
                     "The path to the repository to initialize", Some('r')),
             ],
             vec![],
-            false).unwrap(),
-        Command::new("ls".to_owned(), "List passwords stored in a pwm repository".to_owned(),
+            false).unwrap(), Box::new(init)),
+        ExecutableCommand::new(Command::new("ls", "List passwords stored in a pwm repository",
             vec![
                 Option::optional("repository",
                     "The path to the repository to initialize", Some('r')),
             ],
             vec![
-                Argument {
-                    name: "path".to_owned(),
-                    help: "The path to list, relative to the repository's root".to_owned(),
-                    default_value: Some(vec!["/".to_owned()]),
-                },
+                Argument::new("path",
+                              "The path to list, relative to the repository's root",
+                              Some(vec!["/".to_owned()])),
             ],
-            false).unwrap(),
-        Command::new("pw".to_owned(), "Get or set a password from a pwm repository".to_owned(),
+            false).unwrap(), Box::new(ls)),
+        ExecutableCommand::new(Command::new("pw", "Get or set a password from a pwm repository",
             vec![
                 Option::optional("repository",
                     "The path to the repository to initialize", Some('r')),
@@ -110,26 +128,10 @@ fn main() {
                 Option::optional("key", "Set this password using a key file", Some('k')),
             ],
             vec![
-                Argument {
-                    name: "path".to_owned(),
-                    help: "The path to get / set, relative to the repository's root".to_owned(),
-                    default_value: None,
-                },
+                Argument::new("path",
+                              "The path to get / set, relative to the repository's root",
+                              None),
             ],
-            false).unwrap(),
-    ];
-
-    let callbacks: Vec<Box<FnMut(&HashMap<&str, String>,
-                                 &HashMap<&str, bool>,
-                                 &HashMap<&str, Vec<String>>)>> = vec![
-        Box::new(config),
-        Box::new(init),
-        Box::new(ls),
-        Box::new(pw),
-    ];
-
-    main_impl_multiple_commands(commands.iter()
-        .zip(callbacks.into_iter())
-        .map(|cp| ExecutableCommand::new(&cp.0, cp.1))
-        .collect());
+            false).unwrap(), Box::new(pw)),
+    ]);
 }

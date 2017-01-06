@@ -33,6 +33,7 @@ pub enum ErrorKind {
     Io { cause: String },
     Key { cause: String },
     Padding { cause: String },
+    Parameters { description: String },
 }
 
 #[derive(Debug)]
@@ -86,6 +87,7 @@ impl error::Error for Error {
             ErrorKind::Io { cause: _ } => "Input / output error",
             ErrorKind::Key { cause: _ } => "Key derivation error",
             ErrorKind::Padding { cause: _ } => "Padding / unpadding error",
+            ErrorKind::Parameters { description: _ } => "Invalid parameters",
         }
     }
 }
@@ -114,6 +116,9 @@ impl fmt::Display for Error {
             },
             ErrorKind::Padding { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
+            },
+            ErrorKind::Parameters { description: ref d } => {
+                f.write_str(format!("{}: {}", self.description(), d).as_str())
             },
         }
     }
