@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod cryptoconfiguration;
-
+mod cryptoconfiguration;
 mod repository;
 
+pub use ::repository::cryptoconfiguration::{CryptoConfiguration, CryptoConfigurationInstance};
 pub use ::repository::repository::Repository;
