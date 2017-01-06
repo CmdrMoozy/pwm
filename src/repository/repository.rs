@@ -16,17 +16,49 @@
 
 use ::error::Result;
 use git2;
-use std::path::Path;
+use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
+use std::path::{Path, PathBuf};
 use ::util::git;
 
 pub struct Repository {
     repository: git2::Repository,
+    crypto_configuration: Option<CryptoConfigurationInstance>,
 }
 
 impl Repository {
     pub fn new<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
-        Ok(Repository { repository: try!(git::open_repository(path, create)) })
+        let repository = try!(git::open_repository(path, create));
+
+        let mut crypto_configuration_path = PathBuf::from(repository.workdir().unwrap());
+        crypto_configuration_path.push("crypto_configuration.mp");
+
+        Ok(Repository {
+            repository: repository,
+            crypto_configuration:
+                Some(try!(CryptoConfigurationInstance::new(crypto_configuration_path.as_path()))),
+        })
+    }
+
+    pub fn get_crypto_configuration(&self) -> Result<CryptoConfiguration> {
+        self.crypto_configuration.as_ref().unwrap().get()
+    }
+
+    pub fn set_crypto_configuration(&self, config: CryptoConfiguration) -> Result<()> {
+        self.crypto_configuration.as_ref().unwrap().set(config)
+        // TODO: Persist config, update all encrypted data to match, commit the result.
+    }
+
+    pub fn reset_crypto_configuration(&self) -> Result<()> {
+        self.crypto_configuration.as_ref().unwrap().reset()
+        // TODO: Persist config, update all encrypted data to match, commit the result.
     }
 
     pub fn workdir(&self) -> Option<&Path> { self.repository.workdir() }
+}
+
+impl Drop for Repository {
+    fn drop(&mut self) {
+        self.crypto_configuration.take().unwrap().close().unwrap();
+        // TODO: Commit the result.
+    }
 }
