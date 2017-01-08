@@ -14,12 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use ::crypto::decrypt::decrypt;
 use ::crypto::encrypt::encrypt;
 use ::crypto::key::Key;
 use ::error::{Error, ErrorKind, Result};
 use git2;
 use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
 use ::repository::Path as RepositoryPath;
+use sodiumoxide::crypto::secretbox;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use ::util::data::SensitiveData;
@@ -104,6 +106,23 @@ impl Repository {
                                STORED_PASSWORD_UPDATE_MESSAGE,
                                &[PathBuf::from(path.relative_path()).as_path()]));
         Ok(())
+    }
+
+    pub fn read_decrypt(&self,
+                        path: &RepositoryPath,
+                        key_password: SensitiveData)
+                        -> Result<SensitiveData> {
+        use std::io::Read;
+
+        let key = try!(self.build_key(key_password));
+
+        let mut file = try!(File::open(path.relative_path()));
+        let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
+        let mut data: Vec<u8> = vec![];
+        try!(file.read_exact(&mut nonce.0));
+        try!(file.read_to_end(&mut data));
+
+        decrypt(data.as_slice(), &nonce, &key)
     }
 }
 
