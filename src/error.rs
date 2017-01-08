@@ -34,6 +34,7 @@ pub enum ErrorKind {
     Key { cause: String },
     Padding { cause: String },
     Parameters { description: String },
+    Repository { description: String },
 }
 
 #[derive(Debug)]
@@ -88,6 +89,7 @@ impl error::Error for Error {
             ErrorKind::Key { cause: _ } => "Key derivation error",
             ErrorKind::Padding { cause: _ } => "Padding / unpadding error",
             ErrorKind::Parameters { description: _ } => "Invalid parameters",
+            ErrorKind::Repository { description: _ } => "Repository error",
         }
     }
 }
@@ -118,6 +120,9 @@ impl fmt::Display for Error {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
             ErrorKind::Parameters { description: ref d } => {
+                f.write_str(format!("{}: {}", self.description(), d).as_str())
+            },
+            ErrorKind::Repository { description: ref d } => {
                 f.write_str(format!("{}: {}", self.description(), d).as_str())
             },
         }
