@@ -20,6 +20,9 @@ use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
 use std::path::{Path, PathBuf};
 use ::util::git;
 
+static CRYPTO_CONFIGURATION_PATH: &'static str = "crypto_configuration.mp";
+static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
+
 pub struct Repository {
     repository: git2::Repository,
     crypto_configuration: Option<CryptoConfigurationInstance>,
@@ -30,7 +33,7 @@ impl Repository {
         let repository = try!(git::open_repository(path, create));
 
         let mut crypto_configuration_path = PathBuf::from(repository.workdir().unwrap());
-        crypto_configuration_path.push("crypto_configuration.mp");
+        crypto_configuration_path.push(CRYPTO_CONFIGURATION_PATH);
 
         Ok(Repository {
             repository: repository,
@@ -59,6 +62,11 @@ impl Repository {
 impl Drop for Repository {
     fn drop(&mut self) {
         self.crypto_configuration.take().unwrap().close().unwrap();
-        // TODO: Commit the result.
+        git::commit_paths(&self.repository,
+                          None,
+                          None,
+                          CRYPTO_CONFIGURATION_UPDATE_MESSAGE,
+                          &[PathBuf::from(CRYPTO_CONFIGURATION_PATH).as_path()])
+            .unwrap();
     }
 }
