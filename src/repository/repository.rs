@@ -14,14 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use ::crypto::encrypt::encrypt;
+use ::crypto::key::Key;
 use ::error::{Error, ErrorKind, Result};
 use git2;
 use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
+use ::repository::Path as RepositoryPath;
+use std::fs::File;
 use std::path::{Path, PathBuf};
+use ::util::data::SensitiveData;
 use ::util::git;
 
 static CRYPTO_CONFIGURATION_PATH: &'static str = "crypto_configuration.mp";
+
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
+static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 
 pub struct Repository {
     repository: git2::Repository,
@@ -65,6 +72,38 @@ impl Repository {
                 }))
             },
         }
+    }
+
+    fn build_key(&self, password: SensitiveData) -> Result<Key> {
+        let config = try!(self.get_crypto_configuration());
+        Key::new(password,
+                 Some(config.get_salt()),
+                 Some(config.get_ops_limit()),
+                 Some(config.get_mem_limit()))
+    }
+
+    pub fn write_encrypt(&self,
+                         path: &RepositoryPath,
+                         plaintext: SensitiveData,
+                         key_password: SensitiveData)
+                         -> Result<()> {
+        let key = try!(self.build_key(key_password));
+        let (nonce, data) = try!(encrypt(plaintext, &key));
+
+        {
+            use std::io::Write;
+            let mut file = try!(File::create(path.absolute_path()));
+            try!(file.write_all(&nonce.0));
+            try!(file.write_all(data.as_slice()));
+            try!(file.flush());
+        }
+
+        try!(git::commit_paths(&self.repository,
+                               None,
+                               None,
+                               STORED_PASSWORD_UPDATE_MESSAGE,
+                               &[PathBuf::from(path.relative_path()).as_path()]));
+        Ok(())
     }
 }
 
