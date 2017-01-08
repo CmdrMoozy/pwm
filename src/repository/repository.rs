@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::error::Result;
+use ::error::{Error, ErrorKind, Result};
 use git2;
 use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
 use std::path::{Path, PathBuf};
@@ -56,7 +56,16 @@ impl Repository {
         // TODO: Persist config, update all encrypted data to match, commit the result.
     }
 
-    pub fn workdir(&self) -> Option<&Path> { self.repository.workdir() }
+    pub fn workdir(&self) -> Result<&Path> {
+        match self.repository.workdir() {
+            Some(path) => Ok(path),
+            None => {
+                Err(Error::new(ErrorKind::Repository {
+                    description: "Repository has no workdir".to_owned(),
+                }))
+            },
+        }
+    }
 }
 
 impl Drop for Repository {

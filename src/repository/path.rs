@@ -14,10 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-mod cryptoconfiguration;
-mod path;
-mod repository;
+use ::error::Result;
+use ::repository::Repository;
+use std::path::Path as StdPath;
+use std::path::PathBuf;
 
-pub use ::repository::cryptoconfiguration::{CryptoConfiguration, CryptoConfigurationInstance};
-pub use ::repository::path::Path;
-pub use ::repository::repository::Repository;
+#[derive(Clone, Debug)]
+pub struct Path {
+    relative_path: PathBuf,
+    absolute_path: PathBuf,
+}
+
+impl Path {
+    pub fn new<P: AsRef<StdPath>>(repository: &Repository, path: P) -> Result<Path> {
+        let mut absolute_path = PathBuf::from(try!(repository.workdir()));
+        absolute_path.push(path.as_ref());
+        Ok(Path {
+            relative_path: PathBuf::from(path.as_ref()),
+            absolute_path: absolute_path,
+        })
+    }
+
+    pub fn relative_path(&self) -> &StdPath { self.relative_path.as_path() }
+
+    pub fn absolute_path(&self) -> &StdPath { self.absolute_path.as_path() }
+}
