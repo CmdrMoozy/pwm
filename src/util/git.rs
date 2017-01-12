@@ -18,6 +18,8 @@ use ::error::{Error, Result};
 use git2::{Commit, ErrorClass, ErrorCode, Index, Oid, Repository, ResetType, Signature, Tree};
 use std::path::Path;
 
+static EMPTY_TREE_OID: &'static str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+
 pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
     let path = path.as_ref();
     match Repository::open(path) {
@@ -70,6 +72,14 @@ pub fn commit_tree(repository: &Repository,
         None => vec![],
     };
     let parent_refs = parents.iter().collect::<Vec<&Commit>>();
+    let parent_tree_id: Oid = parent_refs.get(0)
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| p.tree_id());
+
+    // If this commit is empty (e.g., its tree is identical to its parent's), don't
+    // create a new commit.
+    if tree.id() == parent_tree_id {
+        return Ok(parent_tree_id);
+    }
 
     let oid = try!(repository.commit(Some("HEAD"),
                                      &try!(get_signature_or_default(repository, author)),
@@ -102,6 +112,7 @@ pub fn commit_paths(repository: &Repository,
                     paths: &[&Path])
                     -> Result<Oid> {
     let mut index: Index = try!(repository.index());
+    try!(index.clear());
     for path in paths {
         try!(index.add_path(path));
     }
