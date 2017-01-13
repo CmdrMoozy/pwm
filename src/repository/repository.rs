@@ -17,11 +17,13 @@
 use ::crypto::decrypt::decrypt;
 use ::crypto::encrypt::encrypt;
 use ::crypto::key::Key;
+use ::crypto::padding;
 use ::error::{Error, ErrorKind, Result};
 use git2;
 use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
 use ::repository::Path as RepositoryPath;
 use sodiumoxide::crypto::secretbox;
+use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use ::util::data::SensitiveData;
@@ -90,7 +92,11 @@ impl Repository {
                          key_password: SensitiveData)
                          -> Result<()> {
         let key = try!(self.build_key(key_password));
-        let (nonce, data) = try!(encrypt(plaintext, &key));
+        let (nonce, data) = try!(encrypt(padding::pad(plaintext), &key));
+
+        if let Some(parent) = path.absolute_path().parent() {
+            try!(fs::create_dir_all(parent));
+        }
 
         {
             use std::io::Write;
@@ -116,13 +122,13 @@ impl Repository {
 
         let key = try!(self.build_key(key_password));
 
-        let mut file = try!(File::open(path.relative_path()));
+        let mut file = try!(File::open(path.absolute_path()));
         let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
         let mut data: Vec<u8> = vec![];
         try!(file.read_exact(&mut nonce.0));
         try!(file.read_to_end(&mut data));
 
-        decrypt(data.as_slice(), &nonce, &key)
+        padding::unpad(try!(decrypt(data.as_slice(), &nonce, &key)))
     }
 }
 

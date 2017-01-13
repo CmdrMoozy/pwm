@@ -14,31 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use ::error::Result;
 use sodiumoxide::utils::memzero;
+use std::fmt;
+use std::fs::File;
 use std::ops::{Index, Range, RangeFrom, RangeFull, RangeTo};
+use std::path::Path;
+use std::str;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SensitiveData {
     data: Box<[u8]>,
 }
 
-impl Drop for SensitiveData {
-    fn drop(&mut self) { memzero(&mut self.data); }
-}
-
-impl From<Vec<u8>> for SensitiveData {
-    fn from(data: Vec<u8>) -> SensitiveData { SensitiveData { data: data.into_boxed_slice() } }
-}
-
-impl From<String> for SensitiveData {
-    fn from(data: String) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
-}
-
-impl<'a> From<&'a str> for SensitiveData {
-    fn from(data: &'a str) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
-}
-
 impl SensitiveData {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<SensitiveData> {
+        use std::io::Read;
+        let mut file = try!(File::open(path));
+        let mut data: Vec<u8> = vec![];
+        try!(file.read_to_end(&mut data));
+        Ok(SensitiveData::from(data))
+    }
+
     fn as_slice(&self) -> &[u8] { &self.data }
 
     pub fn len(&self) -> usize { self.data.len() }
@@ -63,6 +60,30 @@ impl SensitiveData {
 
         SensitiveData { data: data.into_boxed_slice() }
     }
+}
+
+impl Drop for SensitiveData {
+    fn drop(&mut self) { memzero(&mut self.data); }
+}
+
+impl fmt::Display for SensitiveData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "{}",
+               try!(str::from_utf8(&self.data).or(Err(fmt::Error {}))))
+    }
+}
+
+impl From<Vec<u8>> for SensitiveData {
+    fn from(data: Vec<u8>) -> SensitiveData { SensitiveData { data: data.into_boxed_slice() } }
+}
+
+impl From<String> for SensitiveData {
+    fn from(data: String) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
+}
+
+impl<'a> From<&'a str> for SensitiveData {
+    fn from(data: &'a str) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
 }
 
 impl Index<usize> for SensitiveData {
