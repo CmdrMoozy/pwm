@@ -15,7 +15,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ::error::{Error, Result};
-use git2::{Commit, ErrorClass, ErrorCode, Index, Oid, Repository, ResetType, Signature, Tree};
+use git2;
+use git2::{Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree};
 use std::path::Path;
 
 static EMPTY_TREE_OID: &'static str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
@@ -45,10 +46,10 @@ fn get_signature_or_default(repository: &Repository,
 fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
     match repository.head() {
         Ok(r) => {
-            match r.target() {
-                Some(oid) => Ok(Some(try!(repository.find_commit(oid)))),
-                None => Ok(None),
-            }
+            let resolved = try!(r.resolve());
+            let object = try!(resolved.peel(ObjectType::Commit));
+            Ok(Some(try!(object.into_commit()
+                .map_err(|_| git2::Error::from_str("Resolving head commit failed.")))))
         },
         Err(e) => {
             if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
@@ -60,17 +61,18 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
     }
 }
 
-pub fn commit_tree(repository: &Repository,
-                   author: Option<&Signature>,
-                   committer: Option<&Signature>,
-                   message: &str,
-                   tree: &Tree)
-                   -> Result<Oid> {
+fn commit_tree(repository: &Repository,
+               author: Option<&Signature>,
+               committer: Option<&Signature>,
+               message: &str,
+               tree: Tree)
+               -> Result<Oid> {
     let head = try!(get_head_commit(repository));
     let parents = match head {
         Some(h) => vec![h],
         None => vec![],
     };
+
     let parent_refs = parents.iter().collect::<Vec<&Commit>>();
     let parent_tree_id: Oid = parent_refs.get(0)
         .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| p.tree_id());
@@ -85,24 +87,10 @@ pub fn commit_tree(repository: &Repository,
                                      &try!(get_signature_or_default(repository, author)),
                                      &try!(get_signature_or_default(repository, committer)),
                                      message,
-                                     tree,
+                                     &tree,
                                      parent_refs.as_slice()));
 
-    try!(repository.reset(&try!(repository.find_object(oid.clone(), None)),
-                          ResetType::Hard,
-                          None));
-
     Ok(oid)
-}
-
-pub fn commit_index(repository: &Repository,
-                    author: Option<&Signature>,
-                    committer: Option<&Signature>,
-                    message: &str)
-                    -> Result<Oid> {
-    let mut index: Index = try!(repository.index());
-    let tree = try!(repository.find_tree(try!(index.write_tree())));
-    commit_tree(repository, author, committer, message, &tree)
 }
 
 pub fn commit_paths(repository: &Repository,
@@ -112,9 +100,18 @@ pub fn commit_paths(repository: &Repository,
                     paths: &[&Path])
                     -> Result<Oid> {
     let mut index: Index = try!(repository.index());
-    try!(index.clear());
+
     for path in paths {
         try!(index.add_path(path));
     }
-    commit_index(repository, author, committer, message)
+
+    // Commit our changes to the index to disk. This prevents a bug where, e.g.
+    // when committing a newly added file, the index will show the newly added file
+    // as deleted + untracked.
+    try!(index.write());
+    // Write the index out as a tree so we can commit the tree.
+    let oid = try!(index.write_tree());
+    let tree = try!(repository.find_tree(oid));
+
+    commit_tree(repository, author, committer, message, tree)
 }
