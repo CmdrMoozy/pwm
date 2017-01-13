@@ -30,9 +30,14 @@ extern crate log;
 extern crate pwm;
 use pwm::configuration;
 use pwm::error::{Error, ErrorKind, Result};
-use pwm::repository::Repository;
+use pwm::repository::{Path, Repository};
+use pwm::util::data::SensitiveData;
+use pwm::util::password_prompt;
 
 extern crate serde_json;
+
+static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
+static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 
 fn init_pwm() -> Result<configuration::SingletonHandle> {
     try!(pwm::init());
@@ -106,10 +111,36 @@ fn ls(_: HashMap<String, String>,
     Ok(())
 }
 
-fn pw(_: HashMap<String, String>,
-      _: HashMap<String, bool>,
-      _: HashMap<String, Vec<String>>)
+fn pw(options: HashMap<String, String>,
+      flags: HashMap<String, bool>,
+      arguments: HashMap<String, Vec<String>>)
       -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false));
+    let path = try!(Path::new(&repository, &arguments.get("path").unwrap()[0]));
+
+    let set: bool = flags.get("set").cloned().unwrap_or(false);
+    let k = options.get("key");
+
+    if set && k.is_none() {
+        // The user wants to set the password, but no key file was given, so prompt for
+        // the password interactively.
+        try!(repository.write_encrypt(&path,
+                                      try!(password_prompt(NEW_PASSWORD_PROMPT, true)),
+                                      try!(password_prompt(MASTER_PASSWORD_PROMPT, false))));
+    } else if let Some(key) = k {
+        // The user wants to set the password using a key file.
+        try!(repository.write_encrypt(&path,
+                                      try!(SensitiveData::from_file(key)),
+                                      try!(password_prompt(MASTER_PASSWORD_PROMPT, false))));
+    } else {
+        // The user wants to retrieve the password, instead of set it.
+        info!("{}",
+              try!(repository.read_decrypt(
+            &path, try!(password_prompt(MASTER_PASSWORD_PROMPT, false)))));
+    }
+
     Ok(())
 }
 
