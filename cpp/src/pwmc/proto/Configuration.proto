@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package pwm.proto;
-
-message Configuration {
-	string default_repository = 1;
-}

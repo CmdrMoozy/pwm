@@ -1,9 +1,0 @@
-[submodule "cpp/3rdparty/catch"]
-	path = cpp/3rdparty/catch
-	url = https://github.com/philsquared/Catch.git
-[submodule "cpp/3rdparty/cmu"]
-	path = cpp/3rdparty/cmu
-	url = https://github.com/CmdrMoozy/cmu.git
-[submodule "cpp/3rdparty/bdrck"]
-	path = cpp/3rdparty/bdrck
-	url = https://github.com/CmdrMoozy/bdrck.git
