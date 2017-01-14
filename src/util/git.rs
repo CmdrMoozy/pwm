@@ -17,7 +17,8 @@
 use ::error::{Error, Result};
 use git2;
 use git2::{Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree};
-use std::path::Path;
+use std::collections::vec_deque::VecDeque;
+use std::path::{Path, PathBuf};
 
 static EMPTY_TREE_OID: &'static str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
 
@@ -59,6 +60,45 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
             }
         },
     }
+}
+
+fn get_head_tree(repository: &Repository) -> Result<Tree> {
+    let tree_id = try!(get_head_commit(repository))
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| c.tree_id());
+    Ok(try!(repository.find_tree(tree_id)))
+}
+
+pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Result<Vec<PathBuf>> {
+    let mut listing: Vec<PathBuf> = vec![];
+
+    let mut pending_trees: VecDeque<(Tree, PathBuf)> = VecDeque::new();
+    pending_trees.push_back((try!(get_head_tree(repository)), PathBuf::new()));
+    while !pending_trees.is_empty() {
+        let (tree, prefix) = pending_trees.pop_front().unwrap();
+
+        let mut subtrees: VecDeque<(Tree, PathBuf)> = tree.iter()
+            .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) == ObjectType::Tree)
+            .map(|entry| {
+                let mut path: PathBuf = prefix.clone();
+                path.push(entry.name().unwrap());
+                (entry.to_object(repository).unwrap().into_tree().ok().unwrap(), path)
+            })
+            .collect();
+        pending_trees.append(&mut subtrees);
+
+        let mut entries: Vec<PathBuf> = tree.iter()
+            .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) != ObjectType::Tree)
+            .map(|entry| {
+                let mut path: PathBuf = prefix.clone();
+                path.push(entry.name().unwrap());
+                path
+            })
+            .filter(|entry| entry.starts_with(path_filter))
+            .collect();
+        listing.append(&mut entries);
+    }
+
+    Ok(listing)
 }
 
 fn commit_tree(repository: &Repository,

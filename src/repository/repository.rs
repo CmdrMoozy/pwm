@@ -29,7 +29,9 @@ use std::path::{Path, PathBuf};
 use ::util::data::SensitiveData;
 use ::util::git;
 
-static CRYPTO_CONFIGURATION_PATH: &'static str = "crypto_configuration.mp";
+lazy_static! {
+    static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
+}
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
@@ -44,7 +46,7 @@ impl Repository {
         let repository = try!(git::open_repository(path, create));
 
         let mut crypto_configuration_path = PathBuf::from(repository.workdir().unwrap());
-        crypto_configuration_path.push(CRYPTO_CONFIGURATION_PATH);
+        crypto_configuration_path.push(CRYPTO_CONFIGURATION_PATH.as_path());
 
         Ok(Repository {
             repository: repository,
@@ -84,6 +86,14 @@ impl Repository {
                  Some(config.get_salt()),
                  Some(config.get_ops_limit()),
                  Some(config.get_mem_limit()))
+    }
+
+    pub fn list(&self, path_filter: &RepositoryPath) -> Result<Vec<PathBuf>> {
+        let entries = try!(git::get_repository_listing(&self.repository,
+                                                       path_filter.relative_path()));
+        Ok(entries.into_iter()
+            .filter(|entry| entry != CRYPTO_CONFIGURATION_PATH.as_path())
+            .collect())
     }
 
     pub fn write_encrypt(&self,
@@ -139,7 +149,7 @@ impl Drop for Repository {
                           None,
                           None,
                           CRYPTO_CONFIGURATION_UPDATE_MESSAGE,
-                          &[PathBuf::from(CRYPTO_CONFIGURATION_PATH).as_path()])
+                          &[CRYPTO_CONFIGURATION_PATH.as_path()])
             .unwrap();
     }
 }
