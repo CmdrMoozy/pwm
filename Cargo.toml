@@ -17,3 +17,6 @@ serde = "0.8"
 serde_derive = "0.8"
 serde_json = "0.8"
 sodiumoxide = "0.0.12"
+
+[dev-dependencies]
+tempfile = "2.1"

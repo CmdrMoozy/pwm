@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
+use std::fs::File;
 use std::option::Option as Optional;
 
 extern crate bdrck_params;
@@ -139,8 +140,9 @@ fn pw(options: HashMap<String, String>,
                                       try!(password_prompt(MASTER_PASSWORD_PROMPT, false))));
     } else if let Some(key) = k {
         // The user wants to set the password using a key file.
+        let mut key_file = try!(File::open(key));
         try!(repository.write_encrypt(&path,
-                                      try!(SensitiveData::from_file(key)),
+                                      try!(SensitiveData::from_file(&mut key_file)),
                                       try!(password_prompt(MASTER_PASSWORD_PROMPT, false))));
     } else {
         // The user wants to retrieve the password, instead of set it.
