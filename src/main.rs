@@ -104,10 +104,18 @@ fn init(options: HashMap<String, String>,
     Ok(())
 }
 
-fn ls(_: HashMap<String, String>,
+fn ls(options: HashMap<String, String>,
       _: HashMap<String, bool>,
-      _: HashMap<String, Vec<String>>)
+      arguments: HashMap<String, Vec<String>>)
       -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false));
+    let path = try!(Path::new(&repository, &arguments.get("path").unwrap()[0]));
+    for entry in try!(repository.list(&path)).iter() {
+        info!("{}", entry.to_str().unwrap());
+    }
+
     Ok(())
 }
 
@@ -168,7 +176,7 @@ fn main() {
             vec![
                 Argument::new("path",
                               "The path to list, relative to the repository's root",
-                              Some(vec!["/".to_owned()])),
+                              Some(vec!["".to_owned()])),
             ],
             false).unwrap(), Box::new(ls)),
         ExecutableCommand::new(Command::new("pw", "Get or set a password from a pwm repository",
