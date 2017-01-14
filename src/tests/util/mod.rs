@@ -16,3 +16,5 @@
 
 #[cfg(test)]
 mod data;
+#[cfg(test)]
+mod git;

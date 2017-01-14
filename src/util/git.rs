@@ -22,12 +22,18 @@ use std::path::{Path, PathBuf};
 
 static EMPTY_TREE_OID: &'static str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
 
+/// Open a typical, non-bare Git repository. The given path is used for
+/// discovery, so this will work as expected even if the provided path is a
+/// subdirectory of the real repository. The repository can optionally be
+/// created, at the exact directory specified, if one does not already exist.
 pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
     let path = path.as_ref();
     match Repository::open(path) {
         Ok(repository) => Ok(repository),
         Err(error) => {
-            match create && error.class() == ErrorClass::Os && error.code() == ErrorCode::NotFound {
+            match create &&
+                  (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository) &&
+                  error.code() == ErrorCode::NotFound {
                 false => Err(Error::from(error)),
                 true => Ok(try!(Repository::init(path))),
             }
@@ -68,6 +74,8 @@ fn get_head_tree(repository: &Repository) -> Result<Tree> {
     Ok(try!(repository.find_tree(tree_id)))
 }
 
+/// Recursively list all of the contents of the given repository's HEAD tree,
+/// returning the listing as a vector of paths.
 pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Result<Vec<PathBuf>> {
     let mut listing: Vec<PathBuf> = vec![];
 
@@ -133,6 +141,11 @@ fn commit_tree(repository: &Repository,
     Ok(oid)
 }
 
+/// Commit any changes to the files at the given relative paths in the given
+/// repository. If no author and comitter Signatures are provided, default
+/// Signatures will be used instead from Git's configuration. Empty commits
+/// will not be created; if there were no changes to the given paths, the
+/// existing HEAD OID will be returned instead.
 pub fn commit_paths(repository: &Repository,
                     author: Option<&Signature>,
                     committer: Option<&Signature>,
