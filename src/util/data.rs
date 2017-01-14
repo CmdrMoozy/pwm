@@ -19,18 +19,38 @@ use sodiumoxide::utils::memzero;
 use std::fmt;
 use std::fs::File;
 use std::ops::{Index, Range, RangeFrom, RangeFull, RangeTo};
-use std::path::Path;
 use std::str;
 
+/// SensitiveData is, essentially, a vector of bytes which attempts to treat
+/// its contents as particularly sensitive. In particular, when Drop'ed a
+/// SensitiveData will zero out the memory holding its contents to avoid
+/// leaking them. Additionally, the API tries to prevent callers from doing
+/// things which would leak its contents.
+///
+/// However, this is really only "defense-in-depth". Fundamentally, it is not
+/// possible to really guarantee that a) the contents will only ever be stored
+/// in one place in memory, and that b) they will be zero'ed out when this
+/// struct is Drop'ed. Consider, for example, that some or all of the contents
+/// of this struct may end up in CPU cache, for example. Also, although in
+/// general we want to treat unencrypted data carefully, consider also that the
+/// main use case of a password manager is to display unencrypted saved
+/// passwords to the user, e.g. on a terminal or even in a GUI.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SensitiveData {
     data: Box<[u8]>,
 }
 
 impl SensitiveData {
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<SensitiveData> {
+    /// Load the contents of the given file into a new SensitiveData instance.
+    ///
+    /// The file is read using the Rust standard library's typical file reading
+    /// tooling, so it is possible that the contents of the file will be leaked
+    /// e.g. in buffers, for example. In general this is not considered too
+    /// concerning, because a) the contents of the file are already persisted
+    /// to a block device, and b) there is like no sane way to guarantee that
+    /// no buffering or copying happens e.g. inside the kernel.
+    pub fn from_file(file: &mut File) -> Result<SensitiveData> {
         use std::io::Read;
-        let mut file = try!(File::open(path));
         let mut data: Vec<u8> = vec![];
         try!(file.read_to_end(&mut data));
         Ok(SensitiveData::from(data))
@@ -40,6 +60,8 @@ impl SensitiveData {
 
     pub fn len(&self) -> usize { self.data.len() }
 
+    /// Return a new SensitiveData which contains the concatenation of the
+    /// contents of this struct and the given other struct.
     pub fn concat(self, other: SensitiveData) -> SensitiveData {
         SensitiveData {
             data: self.data
@@ -51,6 +73,9 @@ impl SensitiveData {
         }
     }
 
+    /// Return a new SensitiveData which contains a copy of this struct's data,
+    /// but truncated to the given length. If the given length is longer than
+    /// len(), the resulting struct will be an exact duplicate.
     pub fn truncate(self, len: usize) -> SensitiveData {
         let mut data: Vec<u8> = self.data.to_vec();
         if len < data.len() {
