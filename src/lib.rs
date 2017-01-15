@@ -46,7 +46,7 @@ pub fn init() -> ::error::Result<()> {
         }));
     }
 
-    try!(bdrck_log::debug::init_debug_logger());
+    try!(bdrck_log::init_cli_logger());
 
     Ok(())
 }

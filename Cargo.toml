@@ -6,7 +6,7 @@ authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 [dependencies]
 backtrace = "0.2"
 bdrck_config = { path = "/home/ajr/workshop/rust/bdrck/bdrck_config", version = "0.1" }
-bdrck_log = { path = "/home/ajr/workshop/rust/bdrck/bdrck_log", version = "0.1" }
+bdrck_log = { path = "/home/ajr/workshop/rust/bdrck/bdrck_log", version = "0.2" }
 bdrck_params = { path = "/home/ajr/workshop/rust/bdrck/bdrck_params", version = "0.2" }
 byteorder = "1.0"
 git2 = "0.6"
