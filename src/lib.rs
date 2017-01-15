@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#![feature(proc_macro)]
-
 extern crate backtrace;
 extern crate bdrck_config;
 extern crate bdrck_log;
