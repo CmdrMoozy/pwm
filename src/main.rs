@@ -37,7 +37,6 @@ use pwm::util::password_prompt;
 
 extern crate serde_json;
 
-static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 
 fn init_pwm() -> Result<configuration::SingletonHandle> {
@@ -98,7 +97,7 @@ fn init(options: HashMap<String, String>,
         -> Result<()> {
     let _handle = try!(init_pwm());
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), true));
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), true, None));
     info!("Initialized repository: {}",
           repository.workdir().unwrap().display());
 
@@ -111,7 +110,7 @@ fn ls(options: HashMap<String, String>,
       -> Result<()> {
     let _handle = try!(init_pwm());
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false));
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(Path::new(&repository, &arguments.get("path").unwrap()[0]));
     for entry in try!(repository.list(&path)).iter() {
         info!("{}", entry.to_str().unwrap());
@@ -126,7 +125,7 @@ fn pw(options: HashMap<String, String>,
       -> Result<()> {
     let _handle = try!(init_pwm());
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false));
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(Path::new(&repository, &arguments.get("path").unwrap()[0]));
 
     let set: bool = flags.get("set").cloned().unwrap_or(false);
@@ -135,20 +134,14 @@ fn pw(options: HashMap<String, String>,
     if set && k.is_none() {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
-        try!(repository.write_encrypt(&path,
-                                      try!(password_prompt(NEW_PASSWORD_PROMPT, true)),
-                                      try!(password_prompt(MASTER_PASSWORD_PROMPT, false))));
+        try!(repository.write_encrypt(&path, try!(password_prompt(NEW_PASSWORD_PROMPT, true))));
     } else if let Some(key) = k {
         // The user wants to set the password using a key file.
         let mut key_file = try!(File::open(key));
-        try!(repository.write_encrypt(&path,
-                                      try!(SensitiveData::from_file(&mut key_file)),
-                                      try!(password_prompt(MASTER_PASSWORD_PROMPT, false))));
+        try!(repository.write_encrypt(&path, try!(SensitiveData::from_file(&mut key_file))));
     } else {
         // The user wants to retrieve the password, instead of set it.
-        info!("{}",
-              try!(repository.read_decrypt(
-            &path, try!(password_prompt(MASTER_PASSWORD_PROMPT, false)))));
+        info!("{}", try!(repository.read_decrypt(&path)));
     }
 
     Ok(())

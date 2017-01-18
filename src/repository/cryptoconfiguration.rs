@@ -15,10 +15,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use bdrck_config::configuration as bdrck_config;
+use ::crypto::key::Key;
 use ::error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt, SALTBYTES};
 use std::path::Path;
+use ::util::data::SensitiveData;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CryptoConfiguration {
@@ -33,6 +35,13 @@ impl CryptoConfiguration {
     pub fn get_mem_limit(&self) -> MemLimit { MemLimit(self.mem_limit) }
 
     pub fn get_ops_limit(&self) -> OpsLimit { OpsLimit(self.ops_limit) }
+
+    pub fn build_key(&self, password: SensitiveData) -> Result<Key> {
+        Key::new(password,
+                 Some(self.get_salt()),
+                 Some(self.get_ops_limit()),
+                 Some(self.get_mem_limit()))
+    }
 }
 
 lazy_static! {

@@ -28,10 +28,13 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use ::util::data::SensitiveData;
 use ::util::git;
+use ::util::password_prompt;
 
 lazy_static! {
     static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
 }
+
+static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
@@ -46,16 +49,26 @@ pub struct Repository {
     repository: git2::Repository,
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<CryptoConfigurationInstance>,
+    master_key: Key,
 }
 
 impl Repository {
-    pub fn new<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
+    /// Construct a new Repository handle. If the repository doesn't exist, and
+    /// create = true, then a new repository will be initialized. If no master
+    /// password is provided, we will prompt for one on stdin.
+    pub fn new<P: AsRef<Path>>(path: P,
+                               create: bool,
+                               password: Option<SensitiveData>)
+                               -> Result<Repository> {
         let repository = try!(git::open_repository(path, create));
         let crypto_configuration = try!(open_crypto_configuration(&repository));
+        let master_key = try!(try!(crypto_configuration.get())
+            .build_key(password.unwrap_or(try!(password_prompt(MASTER_PASSWORD_PROMPT, false)))));
 
         Ok(Repository {
             repository: repository,
             crypto_configuration: Some(crypto_configuration),
+            master_key: master_key,
         })
     }
 
@@ -75,14 +88,6 @@ impl Repository {
 
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
-    fn build_key(&self, password: SensitiveData) -> Result<Key> {
-        let config = try!(self.get_crypto_configuration());
-        Key::new(password,
-                 Some(config.get_salt()),
-                 Some(config.get_ops_limit()),
-                 Some(config.get_mem_limit()))
-    }
-
     pub fn list(&self, path_filter: &RepositoryPath) -> Result<Vec<PathBuf>> {
         let entries = try!(git::get_repository_listing(&self.repository,
                                                        path_filter.relative_path()));
@@ -91,13 +96,8 @@ impl Repository {
             .collect())
     }
 
-    pub fn write_encrypt(&self,
-                         path: &RepositoryPath,
-                         plaintext: SensitiveData,
-                         key_password: SensitiveData)
-                         -> Result<()> {
-        let key = try!(self.build_key(key_password));
-        let (nonce, data) = try!(encrypt(padding::pad(plaintext), &key));
+    pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
+        let (nonce, data) = try!(encrypt(padding::pad(plaintext), &self.master_key));
 
         if let Some(parent) = path.absolute_path().parent() {
             try!(fs::create_dir_all(parent));
@@ -119,13 +119,8 @@ impl Repository {
         Ok(())
     }
 
-    pub fn read_decrypt(&self,
-                        path: &RepositoryPath,
-                        key_password: SensitiveData)
-                        -> Result<SensitiveData> {
+    pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
         use std::io::Read;
-
-        let key = try!(self.build_key(key_password));
 
         let mut file = try!(File::open(path.absolute_path()));
         let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
@@ -133,7 +128,7 @@ impl Repository {
         try!(file.read_exact(&mut nonce.0));
         try!(file.read_to_end(&mut data));
 
-        padding::unpad(try!(decrypt(data.as_slice(), &nonce, &key)))
+        padding::unpad(try!(decrypt(data.as_slice(), &nonce, &self.master_key)))
     }
 }
 
