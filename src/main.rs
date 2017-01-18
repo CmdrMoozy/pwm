@@ -28,19 +28,19 @@ use ::bdrck_params::option::Option;
 #[macro_use]
 extern crate log;
 
-extern crate pwm;
-use pwm::configuration;
-use pwm::error::{Error, ErrorKind, Result};
-use pwm::repository::{Path, Repository};
-use pwm::util::data::SensitiveData;
-use pwm::util::password_prompt;
+extern crate pwm_lib;
+use pwm_lib::configuration;
+use pwm_lib::error::{Error, ErrorKind, Result};
+use pwm_lib::repository::{Path, Repository};
+use pwm_lib::util::data::SensitiveData;
+use pwm_lib::util::password_prompt;
 
 extern crate serde_json;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 
 fn init_pwm() -> Result<configuration::SingletonHandle> {
-    try!(pwm::init());
+    try!(pwm_lib::init());
     Ok(try!(configuration::SingletonHandle::new()))
 }
 
