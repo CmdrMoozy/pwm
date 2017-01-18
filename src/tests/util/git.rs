@@ -64,11 +64,9 @@ fn test_commit_paths_and_listing() {
 
     let path_filter = PathBuf::new();
     let listing = get_repository_listing(&repository, path_filter.as_path()).unwrap();
-    assert_eq!(vec![
-        PathBuf::from("baz.txt"),
-        PathBuf::from("foo.txt"),
-        PathBuf::from("a/b/bar.txt"),
-    ],
+    assert_eq!(vec![PathBuf::from("baz.txt"),
+                    PathBuf::from("foo.txt"),
+                    PathBuf::from("a/b/bar.txt")],
                listing);
 
 }
