@@ -26,13 +26,18 @@ pub struct Path {
 }
 
 impl Path {
-    pub fn new<P: AsRef<StdPath>>(repository: &Repository, path: P) -> Result<Path> {
-        let mut absolute_path = PathBuf::from(try!(repository.workdir()));
-        absolute_path.push(path.as_ref());
+    pub fn new<WorkdirPath: AsRef<StdPath>, RelativePath: AsRef<StdPath>>(
+        workdir_path: WorkdirPath, relative_path: RelativePath) -> Result<Path> {
+        let mut absolute_path = PathBuf::from(workdir_path.as_ref());
+        absolute_path.push(relative_path.as_ref());
         Ok(Path {
-            relative_path: PathBuf::from(path.as_ref()),
+            relative_path: PathBuf::from(relative_path.as_ref()),
             absolute_path: absolute_path,
         })
+    }
+
+    pub fn from_repository<P: AsRef<StdPath>>(repository: &Repository, path: P) -> Result<Path> {
+        Path::new(try!(repository.workdir()), path)
     }
 
     pub fn relative_path(&self) -> &StdPath { self.relative_path.as_path() }
