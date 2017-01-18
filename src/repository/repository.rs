@@ -18,7 +18,7 @@ use ::crypto::decrypt::decrypt;
 use ::crypto::encrypt::encrypt;
 use ::crypto::key::Key;
 use ::crypto::padding;
-use ::error::Result;
+use ::error::{Error, ErrorKind, Result};
 use git2;
 use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
 use ::repository::Path as RepositoryPath;
@@ -32,6 +32,10 @@ use ::util::password_prompt;
 
 lazy_static! {
     static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
+    static ref AUTH_TOKEN_PATH: PathBuf = PathBuf::from(".auth_token");
+
+    static ref AUTH_TOKEN_CONTENTS: Vec<u8> =
+        "3c017f717b39247c351154a41d2850e4187284da4b928f13c723d54440ba2dfe".bytes().collect();
 }
 
 static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
@@ -43,6 +47,73 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<CryptoConf
     let mut path = PathBuf::from(try!(git::get_repository_workdir(repository)));
     path.push(CRYPTO_CONFIGURATION_PATH.as_path());
     CryptoConfigurationInstance::new(path.as_path())
+}
+
+fn write_encrypt(repository: &git2::Repository,
+                 path: &RepositoryPath,
+                 plaintext: SensitiveData,
+                 master_key: &Key)
+                 -> Result<()> {
+    let (nonce, data) = try!(encrypt(padding::pad(plaintext), &master_key));
+
+    if let Some(parent) = path.absolute_path().parent() {
+        try!(fs::create_dir_all(parent));
+    }
+
+    {
+        use std::io::Write;
+        let mut file = try!(File::create(path.absolute_path()));
+        try!(file.write_all(&nonce.0));
+        try!(file.write_all(data.as_slice()));
+        try!(file.flush());
+    }
+
+    try!(git::commit_paths(&repository,
+                           None,
+                           None,
+                           STORED_PASSWORD_UPDATE_MESSAGE,
+                           &[PathBuf::from(path.relative_path()).as_path()]));
+    Ok(())
+}
+
+fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData> {
+    use std::io::Read;
+
+    let mut file = try!(File::open(path.absolute_path()));
+    let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
+    let mut data: Vec<u8> = vec![];
+    try!(file.read_exact(&mut nonce.0));
+    try!(file.read_to_end(&mut data));
+
+    padding::unpad(try!(decrypt(data.as_slice(), &nonce, &master_key)))
+}
+
+fn write_auth_token(repository: &git2::Repository, master_key: &Key) -> Result<()> {
+    write_encrypt(repository,
+                  &try!(RepositoryPath::new(try!(git::get_repository_workdir(repository)),
+                                            AUTH_TOKEN_PATH.as_path())),
+                  SensitiveData::from(AUTH_TOKEN_CONTENTS.clone()),
+                  master_key)
+}
+
+fn verify_auth_token(repository: &git2::Repository, create: bool, master_key: &Key) -> Result<()> {
+    let mut path = PathBuf::from(try!(git::get_repository_workdir(repository)));
+    path.push(AUTH_TOKEN_PATH.as_path());
+
+    if create && !path.exists() {
+        try!(write_auth_token(repository, master_key));
+    }
+
+    if let Ok(token) =
+        read_decrypt(&try!(RepositoryPath::new(try!(git::get_repository_workdir(repository)),
+                                               AUTH_TOKEN_PATH.as_path())),
+                     master_key) {
+        if &token[..] == &AUTH_TOKEN_CONTENTS[..] {
+            return Ok(());
+        }
+    }
+
+    Err(Error::new(ErrorKind::Crypto { cause: "Incorrect master password".to_owned() }))
 }
 
 pub struct Repository {
@@ -64,6 +135,8 @@ impl Repository {
         let crypto_configuration = try!(open_crypto_configuration(&repository));
         let master_key = try!(try!(crypto_configuration.get())
             .build_key(password.unwrap_or(try!(password_prompt(MASTER_PASSWORD_PROMPT, false)))));
+
+        try!(verify_auth_token(&repository, create, &master_key));
 
         Ok(Repository {
             repository: repository,
@@ -93,42 +166,16 @@ impl Repository {
                                                        path_filter.relative_path()));
         Ok(entries.into_iter()
             .filter(|entry| entry != CRYPTO_CONFIGURATION_PATH.as_path())
+            .filter(|entry| entry != AUTH_TOKEN_PATH.as_path())
             .collect())
     }
 
     pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
-        let (nonce, data) = try!(encrypt(padding::pad(plaintext), &self.master_key));
-
-        if let Some(parent) = path.absolute_path().parent() {
-            try!(fs::create_dir_all(parent));
-        }
-
-        {
-            use std::io::Write;
-            let mut file = try!(File::create(path.absolute_path()));
-            try!(file.write_all(&nonce.0));
-            try!(file.write_all(data.as_slice()));
-            try!(file.flush());
-        }
-
-        try!(git::commit_paths(&self.repository,
-                               None,
-                               None,
-                               STORED_PASSWORD_UPDATE_MESSAGE,
-                               &[PathBuf::from(path.relative_path()).as_path()]));
-        Ok(())
+        write_encrypt(&self.repository, path, plaintext, &self.master_key)
     }
 
     pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
-        use std::io::Read;
-
-        let mut file = try!(File::open(path.absolute_path()));
-        let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
-        let mut data: Vec<u8> = vec![];
-        try!(file.read_exact(&mut nonce.0));
-        try!(file.read_to_end(&mut data));
-
-        padding::unpad(try!(decrypt(data.as_slice(), &nonce, &self.master_key)))
+        read_decrypt(path, &self.master_key)
     }
 }
 

@@ -111,7 +111,7 @@ fn ls(options: HashMap<String, String>,
     let _handle = try!(init_pwm());
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(Path::new(&repository, &arguments.get("path").unwrap()[0]));
+    let path = try!(Path::from_repository(&repository, &arguments.get("path").unwrap()[0]));
     for entry in try!(repository.list(&path)).iter() {
         info!("{}", entry.to_str().unwrap());
     }
@@ -126,7 +126,7 @@ fn pw(options: HashMap<String, String>,
     let _handle = try!(init_pwm());
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(Path::new(&repository, &arguments.get("path").unwrap()[0]));
+    let path = try!(Path::from_repository(&repository, &arguments.get("path").unwrap()[0]));
 
     let set: bool = flags.get("set").cloned().unwrap_or(false);
     let k = options.get("key");
