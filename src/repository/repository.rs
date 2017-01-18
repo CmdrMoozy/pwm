@@ -18,7 +18,7 @@ use ::crypto::decrypt::decrypt;
 use ::crypto::encrypt::encrypt;
 use ::crypto::key::Key;
 use ::crypto::padding;
-use ::error::{Error, ErrorKind, Result};
+use ::error::Result;
 use git2;
 use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
 use ::repository::Path as RepositoryPath;
@@ -36,22 +36,26 @@ lazy_static! {
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 
+fn open_crypto_configuration(repository: &git2::Repository) -> Result<CryptoConfigurationInstance> {
+    let mut path = PathBuf::from(try!(git::get_repository_workdir(repository)));
+    path.push(CRYPTO_CONFIGURATION_PATH.as_path());
+    CryptoConfigurationInstance::new(path.as_path())
+}
+
 pub struct Repository {
     repository: git2::Repository,
+    // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<CryptoConfigurationInstance>,
 }
 
 impl Repository {
     pub fn new<P: AsRef<Path>>(path: P, create: bool) -> Result<Repository> {
         let repository = try!(git::open_repository(path, create));
-
-        let mut crypto_configuration_path = PathBuf::from(repository.workdir().unwrap());
-        crypto_configuration_path.push(CRYPTO_CONFIGURATION_PATH.as_path());
+        let crypto_configuration = try!(open_crypto_configuration(&repository));
 
         Ok(Repository {
             repository: repository,
-            crypto_configuration:
-                Some(try!(CryptoConfigurationInstance::new(crypto_configuration_path.as_path()))),
+            crypto_configuration: Some(crypto_configuration),
         })
     }
 
@@ -69,16 +73,7 @@ impl Repository {
         // TODO: Persist config, update all encrypted data to match, commit the result.
     }
 
-    pub fn workdir(&self) -> Result<&Path> {
-        match self.repository.workdir() {
-            Some(path) => Ok(path),
-            None => {
-                Err(Error::new(ErrorKind::Repository {
-                    description: "Repository has no workdir".to_owned(),
-                }))
-            },
-        }
-    }
+    pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
     fn build_key(&self, password: SensitiveData) -> Result<Key> {
         let config = try!(self.get_crypto_configuration());
