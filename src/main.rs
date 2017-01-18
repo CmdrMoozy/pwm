@@ -155,44 +155,60 @@ fn pw(options: HashMap<String, String>,
 }
 
 fn main() {
-    main_impl_multiple_commands(vec![
-        ExecutableCommand::new(Command::new("config", "Get or set a configuration value",
-            vec![
+    main_impl_multiple_commands(vec![ExecutableCommand::new(Command::new("config",
+                                                                         "Get or set a \
+                                                                          configuration value",
+                                                                         vec![
                 Option::optional("set", "Set the key to this new value", Some('s')),
                 Option::optional("key", "The specific key to view / set", Some('k')),
             ],
-            vec![],
-            false).unwrap(), Box::new(config)),
-        ExecutableCommand::new(Command::new("init", "Initialize a new pwm repository",
-            vec![
+                                                                         vec![],
+                                                                         false)
+                                                                .unwrap(),
+                                                            Box::new(config)),
+                                     ExecutableCommand::new(Command::new("init",
+                                                                         "Initialize a new \
+                                                                          pwm repository",
+                                                                         vec![
                 Option::optional("repository",
                     "The path to the repository to initialize", Some('r')),
             ],
-            vec![],
-            false).unwrap(), Box::new(init)),
-        ExecutableCommand::new(Command::new("ls", "List passwords stored in a pwm repository",
-            vec![
+                                                                         vec![],
+                                                                         false)
+                                                                .unwrap(),
+                                                            Box::new(init)),
+                                     ExecutableCommand::new(Command::new("ls",
+                                                                         "List passwords \
+                                                                          stored in a pwm \
+                                                                          repository",
+                                                                         vec![
                 Option::optional("repository",
                     "The path to the repository to initialize", Some('r')),
             ],
-            vec![
+                                                                         vec![
                 Argument::new("path",
                               "The path to list, relative to the repository's root",
                               Some(vec!["".to_owned()])),
             ],
-            false).unwrap(), Box::new(ls)),
-        ExecutableCommand::new(Command::new("pw", "Get or set a password from a pwm repository",
-            vec![
+                                                                         false)
+                                                                .unwrap(),
+                                                            Box::new(ls)),
+                                     ExecutableCommand::new(Command::new("pw",
+                                                                         "Get or set a \
+                                                                          password from a pwm \
+                                                                          repository",
+                                                                         vec![
                 Option::optional("repository",
                     "The path to the repository to initialize", Some('r')),
                 Option::flag("set", "Set this password using a command-line prompt", Some('s')),
                 Option::optional("key", "Set this password using a key file", Some('k')),
             ],
-            vec![
+                                                                         vec![
                 Argument::new("path",
                               "The path to get / set, relative to the repository's root",
                               None),
             ],
-            false).unwrap(), Box::new(pw)),
-    ]);
+                                                                         false)
+                                                                .unwrap(),
+                                                            Box::new(pw))]);
 }
