@@ -18,6 +18,11 @@ rust:
   - beta
   - nightly
 
+env:
+  global:
+    # Do not use a separate feature flag for builds on the nightly compiler.
+    - TRAVIS_CARGO_NIGHTLY_FEATURE=""
+
 install:
 - wget https://github.com/jedisct1/libsodium/releases/download/1.0.8/libsodium-1.0.8.tar.gz
 - tar xvfz libsodium-1.0.8.tar.gz
