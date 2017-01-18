@@ -4,6 +4,13 @@ rust:
   - beta
   - nightly
 
+addons:
+  apt:
+    sources:
+      - kalakris-cmake
+    packages:
+      - cmake
+
 install:
 - wget https://github.com/jedisct1/libsodium/releases/download/1.0.8/libsodium-1.0.8.tar.gz
 - tar xvfz libsodium-1.0.8.tar.gz
