@@ -20,4 +20,6 @@ extern crate tempfile;
 #[cfg(test)]
 mod crypto;
 #[cfg(test)]
+mod repository;
+#[cfg(test)]
 mod util;
