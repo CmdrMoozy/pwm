@@ -4,6 +4,22 @@
 
 A simple password manager for Linux.
 
+## Installing
+
+Installation requires a working Rust installation. pwm is developed and tested against nightly Rust, but other versions may as well (Travis build status may be a useful indicator here). Rust is most easily installed with [rustup](https://rustup.rs/):
+
+```
+$ curl https://sh.rustup.rs -sSf | sh
+```
+
+### From HEAD
+
+```
+$ git clone https://github.com/CmdrMoozy/pwm.git
+$ cd pwm
+$ cargo install
+```
+
 ## Notes on Security
 
 ### Zeroing Sensitive Memory
