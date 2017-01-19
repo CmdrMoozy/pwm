@@ -43,6 +43,10 @@ static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 
+fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
+    repository.signature().unwrap_or(git2::Signature::now("pwm", "pwm@nowhere.com").unwrap())
+}
+
 fn open_crypto_configuration(repository: &git2::Repository) -> Result<CryptoConfigurationInstance> {
     let mut path = PathBuf::from(try!(git::get_repository_workdir(repository)));
     path.push(CRYPTO_CONFIGURATION_PATH.as_path());
@@ -69,8 +73,8 @@ fn write_encrypt(repository: &git2::Repository,
     }
 
     try!(git::commit_paths(&repository,
-                           None,
-                           None,
+                           Some(&get_commit_signature(repository)),
+                           Some(&get_commit_signature(repository)),
                            STORED_PASSWORD_UPDATE_MESSAGE,
                            &[PathBuf::from(path.relative_path()).as_path()]));
     Ok(())
@@ -187,8 +191,8 @@ impl Drop for Repository {
     fn drop(&mut self) {
         self.crypto_configuration.take().unwrap().close().unwrap();
         git::commit_paths(&self.repository,
-                          None,
-                          None,
+                          Some(&get_commit_signature(&self.repository)),
+                          Some(&get_commit_signature(&self.repository)),
                           CRYPTO_CONFIGURATION_UPDATE_MESSAGE,
                           &[CRYPTO_CONFIGURATION_PATH.as_path()])
             .unwrap();
