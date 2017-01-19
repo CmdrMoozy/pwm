@@ -133,8 +133,12 @@ impl Repository {
                                -> Result<Repository> {
         let repository = try!(git::open_repository(path, create));
         let crypto_configuration = try!(open_crypto_configuration(&repository));
-        let master_key = try!(try!(crypto_configuration.get())
-            .build_key(password.unwrap_or(try!(password_prompt(MASTER_PASSWORD_PROMPT, false)))));
+        let master_password: SensitiveData = if let Some(p) = password {
+            p
+        } else {
+            try!(password_prompt(MASTER_PASSWORD_PROMPT, false))
+        };
+        let master_key = try!(try!(crypto_configuration.get()).build_key(master_password));
 
         try!(verify_auth_token(&repository, create, &master_key));
 

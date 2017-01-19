@@ -14,9 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#[cfg(test)]
-mod decrypt;
-#[cfg(test)]
-mod encrypt;
-#[cfg(test)]
-mod padding;
+use ::crypto::decrypt::*;
+use ::crypto::encrypt::*;
+use ::crypto::key::Key;
+use sodiumoxide::randombytes::randombytes;
+use ::util::data::SensitiveData;
+
+#[test]
+fn test_decrypting_with_wrong_key_fails() {
+    let key = Key::new(SensitiveData::from("foobar"), None, None, None).unwrap();
+    let plaintext = SensitiveData::from(randombytes(1024));
+    let (nonce, ciphertext) = encrypt(plaintext, &key).ok().unwrap();
+
+    let wrong_key = Key::new(SensitiveData::from("raboof"), None, None, None).unwrap();
+    let decrypted_result = decrypt(ciphertext.as_slice(), &nonce, &wrong_key);
+    assert!(decrypted_result.is_err());
+}
