@@ -30,6 +30,14 @@ pub struct CryptoConfiguration {
 }
 
 impl CryptoConfiguration {
+    pub fn new(salt: Salt, mem_limit: MemLimit, ops_limit: OpsLimit) -> CryptoConfiguration {
+        CryptoConfiguration {
+            salt: salt.0,
+            mem_limit: mem_limit.0,
+            ops_limit: ops_limit.0,
+        }
+    }
+
     pub fn get_salt(&self) -> Salt { Salt(self.salt.clone()) }
 
     pub fn get_mem_limit(&self) -> MemLimit { MemLimit(self.mem_limit) }
@@ -43,6 +51,15 @@ impl CryptoConfiguration {
                  Some(self.get_mem_limit()))
     }
 }
+
+impl PartialEq for CryptoConfiguration {
+    fn eq(&self, other: &CryptoConfiguration) -> bool {
+        self.salt == other.salt && self.mem_limit == other.mem_limit &&
+        self.ops_limit == other.ops_limit
+    }
+}
+
+impl Eq for CryptoConfiguration {}
 
 lazy_static! {
     static ref DEFAULT_CRYPTO_CONFIGURATION: CryptoConfiguration = CryptoConfiguration {
