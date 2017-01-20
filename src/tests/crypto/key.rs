@@ -14,11 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#[cfg(test)]
-mod decrypt;
-#[cfg(test)]
-mod encrypt;
-#[cfg(test)]
-mod key;
-#[cfg(test)]
-mod padding;
+use ::crypto::key::*;
+use sodiumoxide::crypto::pwhash::Salt;
+use sodiumoxide::randombytes::randombytes;
+use ::util::data::SensitiveData;
+
+#[test]
+fn test_predefined_salt() {
+    let salt: Salt = Salt::from_slice(&randombytes(32)[..]).unwrap();
+    let key = Key::new(SensitiveData::from("foobar"),
+                       Some(salt.clone()),
+                       None,
+                       None)
+        .unwrap();
+    assert_eq!(&salt[..], &key.get_salt()[..]);
+}

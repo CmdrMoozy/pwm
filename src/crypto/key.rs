@@ -41,6 +41,9 @@ impl Key {
                                             ops.unwrap_or(pwhash::OPSLIMIT_INTERACTIVE),
                                             mem.unwrap_or(pwhash::MEMLIMIT_INTERACTIVE));
             if result.is_err() {
+                // NOTE: We handle this error gracefully, but in reality (by inspecting the
+                // libsodium source code) the only way this can actually fail is if the input
+                // password is *enormous*. So, this won't really fail in practice.
                 return Err(Error::new(ErrorKind::Key {
                     cause: "Deriving key from password failed".to_owned(),
                 }));
