@@ -120,10 +120,26 @@ fn verify_auth_token(repository: &git2::Repository, create: bool, master_key: &K
     Err(Error::new(ErrorKind::Crypto { cause: "Incorrect master password".to_owned() }))
 }
 
+fn reencrypt_all(repository: &git2::Repository,
+                 listing: &Vec<RepositoryPath>,
+                 old_master_key: &Key,
+                 new_master_key: &Key)
+                 -> Result<()> {
+    for path in listing {
+        try!(write_encrypt(repository,
+                           path,
+                           try!(read_decrypt(path, old_master_key)),
+                           new_master_key));
+    }
+    try!(write_auth_token(repository, new_master_key));
+    Ok(())
+}
+
 pub struct Repository {
     repository: git2::Repository,
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<CryptoConfigurationInstance>,
+    master_password: SensitiveData,
     master_key: Key,
 }
 
@@ -142,13 +158,14 @@ impl Repository {
         } else {
             try!(password_prompt(MASTER_PASSWORD_PROMPT, false))
         };
-        let master_key = try!(try!(crypto_configuration.get()).build_key(master_password));
+        let master_key = try!(try!(crypto_configuration.get()).build_key(master_password.clone()));
 
         try!(verify_auth_token(&repository, create, &master_key));
 
         Ok(Repository {
             repository: repository,
             crypto_configuration: Some(crypto_configuration),
+            master_password: master_password,
             master_key: master_key,
         })
     }
@@ -157,14 +174,17 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    pub fn set_crypto_configuration(&self, config: CryptoConfiguration) -> Result<()> {
-        self.crypto_configuration.as_ref().unwrap().set(config)
-        // TODO: Persist config, update all encrypted data to match, commit the result.
+    pub fn set_crypto_configuration(&mut self, config: CryptoConfiguration) -> Result<()> {
+        try!(self.crypto_configuration.as_ref().unwrap().set(config.clone()));
+        let master_password = self.master_password.clone();
+        self.reencrypt(try!(config.build_key(master_password)))
     }
 
-    pub fn reset_crypto_configuration(&self) -> Result<()> {
-        self.crypto_configuration.as_ref().unwrap().reset()
-        // TODO: Persist config, update all encrypted data to match, commit the result.
+    pub fn reset_crypto_configuration(&mut self) -> Result<()> {
+        try!(self.crypto_configuration.as_ref().unwrap().reset());
+        let crypto_configuration = try!(self.get_crypto_configuration());
+        let master_password = self.master_password.clone();
+        self.reencrypt(try!(crypto_configuration.build_key(master_password)))
     }
 
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
@@ -184,6 +204,21 @@ impl Repository {
 
     pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
         read_decrypt(path, &self.master_key)
+    }
+
+    fn reencrypt(&mut self, new_master_key: Key) -> Result<()> {
+        {
+            let old_master_key = &self.master_key;
+            let path_filter = try!(RepositoryPath::from_repository(&self, ""));
+            let paths: Vec<RepositoryPath> = try!(self.list(&path_filter))
+                .iter()
+                .map(|p| RepositoryPath::from_repository(&self, p.as_path()).unwrap())
+                .collect();
+            try!(reencrypt_all(&self.repository, &paths, old_master_key, &new_master_key));
+        }
+
+        self.master_key = new_master_key;
+        Ok(())
     }
 }
 
