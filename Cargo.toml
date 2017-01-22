@@ -9,7 +9,6 @@ bdrck_config = "0.1"
 bdrck_log = "0.2"
 bdrck_params = "0.2"
 byteorder = "1.0"
-git2 = "0.6"
 lazy_static = "0.2"
 log = "0.3"
 rpassword = "0.3"
@@ -17,6 +16,11 @@ serde = "0.8"
 serde_derive = "0.8"
 serde_json = "0.8"
 sodiumoxide = "0.0.12"
+
+[dependencies.git2]
+version = "0.6"
+default-features = false
+features = []
 
 [dev-dependencies]
 tempdir = "0.3"
