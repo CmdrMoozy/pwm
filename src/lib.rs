@@ -26,6 +26,7 @@ extern crate log;
 extern crate rpassword;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 extern crate sodiumoxide;
 
 pub mod configuration;
