@@ -18,6 +18,7 @@ use backtrace::Backtrace;
 use bdrck_config;
 use git2;
 use log;
+use serde_json;
 use std::cmp::{Eq, PartialEq};
 use std::error;
 use std::fmt;
@@ -35,6 +36,7 @@ pub enum ErrorKind {
     Padding { cause: String },
     Parameters { description: String },
     Repository { description: String },
+    Serialization { cause: String },
 }
 
 #[derive(Debug)]
@@ -78,6 +80,12 @@ impl From<log::SetLoggerError> for Error {
     }
 }
 
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Error {
+        Error::new(ErrorKind::Serialization { cause: e.to_string() })
+    }
+}
+
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
@@ -90,6 +98,7 @@ impl error::Error for Error {
             ErrorKind::Padding { cause: _ } => "Padding / unpadding error",
             ErrorKind::Parameters { description: _ } => "Invalid parameters",
             ErrorKind::Repository { description: _ } => "Repository error",
+            ErrorKind::Serialization { cause: _ } => "Serialization error",
         }
     }
 }
@@ -124,6 +133,9 @@ impl fmt::Display for Error {
             },
             ErrorKind::Repository { description: ref d } => {
                 f.write_str(format!("{}: {}", self.description(), d).as_str())
+            },
+            ErrorKind::Serialization { cause: ref c } => {
+                f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
         }
     }

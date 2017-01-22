@@ -35,6 +35,9 @@ use pwm_lib::repository::{Path, Repository};
 use pwm_lib::util::data::SensitiveData;
 use pwm_lib::util::password_prompt;
 
+#[macro_use]
+extern crate serde_derive;
+
 extern crate serde_json;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
@@ -147,6 +150,32 @@ fn pw(options: HashMap<String, String>,
     Ok(())
 }
 
+#[derive(Clone, Debug, Serialize)]
+struct ExportData {
+    pub data: HashMap<String, String>,
+}
+
+fn export(options: HashMap<String, String>,
+          _: HashMap<String, bool>,
+          _: HashMap<String, Vec<String>>)
+          -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
+
+    let mut data = ExportData { data: HashMap::new() };
+    for path in try!(repository.list(&try!(Path::from_repository(&repository, "")))) {
+        let path: Path = try!(Path::from_repository(&repository, path.to_str().unwrap()));
+        let plaintext: String = try!(repository.read_decrypt(&path)).to_string();
+
+        data.data.insert(path.relative_path().to_str().unwrap().to_owned(), plaintext);
+    }
+
+    info!("{}", try!(serde_json::to_string_pretty(&data)));
+
+    Ok(())
+}
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 fn main() {
     main_impl_multiple_commands(vec![
@@ -207,5 +236,16 @@ fn main() {
                 ],
                 false).unwrap(),
             Box::new(pw)),
+        ExecutableCommand::new(
+            Command::new(
+                "export",
+                "Export all stored passwords as plaintext JSON for backup purposes",
+                vec![
+                    Option::optional(
+                        "repository", "The path to the repository to initialize", Some('r')),
+                ],
+                vec![],
+                false).unwrap(),
+            Box::new(export)),
     ]);
 }
