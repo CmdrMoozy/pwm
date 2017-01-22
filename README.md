@@ -24,11 +24,14 @@ cargo install
 
 ```sh
 # Set a default repository path to avoid having to retype it, and initialize the repository:
-pwm config -s -k default_repository $HOME/pwm_repository
+pwm config -k default_repository -s $HOME/pwm_repository
 pwm init
 
 # Store a password:
 pwm pw -s personal/email
+
+# List stored passwords:
+pwm ls
 
 # Retrieve a stored password:
 pwm pw personal/email
