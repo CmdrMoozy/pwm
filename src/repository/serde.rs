@@ -16,8 +16,9 @@
 
 use ::error::Result;
 use ::repository::Repository;
-use serde_json::to_string_pretty;
+use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;
+use ::util::data::SensitiveData;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Contents {
@@ -37,4 +38,16 @@ pub fn export(repository: &Repository) -> Result<Contents> {
 
 pub fn export_serialize(repository: &Repository) -> Result<String> {
     Ok(try!(to_string_pretty(&try!(export(repository)))))
+}
+
+pub fn import(repository: &Repository, contents: Contents) -> Result<()> {
+    for (path, plaintext) in contents.contents {
+        let path = try!(repository.path(path));
+        try!(repository.write_encrypt(&path, try!(SensitiveData::from_string(plaintext))));
+    }
+    Ok(())
+}
+
+pub fn import_deserialize(repository: &Repository, s: &str) -> Result<()> {
+    import(repository, try!(from_str(s)))
 }
