@@ -32,7 +32,7 @@ extern crate pwm_lib;
 use pwm_lib::configuration;
 use pwm_lib::error::{Error, ErrorKind, Result};
 use pwm_lib::repository::Repository;
-use pwm_lib::repository::serde::export_serialize;
+use pwm_lib::repository::serde::{export_serialize, import_deserialize};
 use pwm_lib::util::data::SensitiveData;
 use pwm_lib::util::password_prompt;
 
@@ -159,6 +159,26 @@ fn export(options: HashMap<String, String>,
     Ok(())
 }
 
+fn import(options: HashMap<String, String>,
+          _: HashMap<String, bool>,
+          _: HashMap<String, Vec<String>>)
+          -> Result<()> {
+    use std::io::Read;
+
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
+
+    let input_path = options.get("input").unwrap();
+    let mut input = String::new();
+    let mut f = try!(File::open(&input_path));
+    try!(f.read_to_string(&mut input));
+
+    try!(import_deserialize(&repository, input.as_str()));
+
+    Ok(())
+}
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 fn main() {
     main_impl_multiple_commands(vec![
@@ -230,5 +250,18 @@ fn main() {
                 vec![],
                 false).unwrap(),
             Box::new(export)),
+        ExecutableCommand::new(
+            Command::new(
+                "import",
+                "Import stored passwords previously 'export'ed",
+                vec![
+                    Option::optional(
+                        "repository", "The path to the repository to initialize", Some('r')),
+                    Option::required(
+                        "input", "The input file to import from", Some('i'), None),
+                ],
+                vec![],
+                false).unwrap(),
+            Box::new(import)),
     ]);
 }
