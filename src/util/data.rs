@@ -42,6 +42,13 @@ pub struct SensitiveData {
 }
 
 impl SensitiveData {
+    /// Load the given string into a new SensitiveData instance. The given
+    /// string must be in a format as returned by SensitiveData.to_string(), or
+    /// the behavior is undefined (most likely an error will be returned).
+    pub fn from_string(s: String) -> Result<SensitiveData> {
+        Ok(SensitiveData::from(try!(base64::decode(&s.into_bytes()[..]))))
+    }
+
     /// Load the contents of the given file into a new SensitiveData instance.
     ///
     /// The file is read using the Rust standard library's typical file reading
@@ -100,14 +107,6 @@ impl fmt::Display for SensitiveData {
 
 impl From<Vec<u8>> for SensitiveData {
     fn from(data: Vec<u8>) -> SensitiveData { SensitiveData { data: data.into_boxed_slice() } }
-}
-
-impl From<String> for SensitiveData {
-    fn from(data: String) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
-}
-
-impl<'a> From<&'a str> for SensitiveData {
-    fn from(data: &'a str) -> SensitiveData { SensitiveData::from(Vec::from(data)) }
 }
 
 impl Index<usize> for SensitiveData {
