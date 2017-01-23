@@ -22,10 +22,11 @@ use rpassword;
 
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::SensitiveData> {
     loop {
-        let password = data::SensitiveData::from(try!(rpassword::prompt_password_stdout(prompt)));
+        let password = data::SensitiveData::from(try!(rpassword::prompt_password_stdout(prompt))
+            .into_bytes());
         if !confirm ||
-           data::SensitiveData::from(try!(rpassword::prompt_password_stdout("Confirm: "))) ==
-           password {
+           data::SensitiveData::from(try!(rpassword::prompt_password_stdout("Confirm: "))
+            .into_bytes()) == password {
             return Ok(password);
         }
     }

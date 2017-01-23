@@ -22,7 +22,11 @@ use ::util::data::SensitiveData;
 
 #[test]
 fn test_encryption_roundtrip() {
-    let key = Key::new(SensitiveData::from("foobar"), None, None, None).unwrap();
+    let key = Key::new(SensitiveData::from("foobar".as_bytes().to_vec()),
+                       None,
+                       None,
+                       None)
+        .unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
     let (nonce, ciphertext) = encrypt(plaintext.clone(), &key).ok().unwrap();
     let decrypted = decrypt(ciphertext.as_slice(), &nonce, &key).unwrap();
