@@ -31,7 +31,8 @@ extern crate log;
 extern crate pwm_lib;
 use pwm_lib::configuration;
 use pwm_lib::error::{Error, ErrorKind, Result};
-use pwm_lib::repository::{Path, Repository};
+use pwm_lib::repository::Repository;
+use pwm_lib::repository::path::Path;
 use pwm_lib::util::data::SensitiveData;
 use pwm_lib::util::password_prompt;
 

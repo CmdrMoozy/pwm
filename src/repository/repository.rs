@@ -20,8 +20,8 @@ use ::crypto::key::Key;
 use ::crypto::padding;
 use ::error::{Error, ErrorKind, Result};
 use git2;
-use ::repository::{CryptoConfiguration, CryptoConfigurationInstance};
-use ::repository::Path as RepositoryPath;
+use ::repository::configuration::{Configuration, ConfigurationInstance};
+use ::repository::path::Path as RepositoryPath;
 use sodiumoxide::crypto::secretbox;
 use std::fs;
 use std::fs::File;
@@ -47,10 +47,10 @@ fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'stati
     repository.signature().unwrap_or(git2::Signature::now("pwm", "pwm@nowhere.com").unwrap())
 }
 
-fn open_crypto_configuration(repository: &git2::Repository) -> Result<CryptoConfigurationInstance> {
+fn open_crypto_configuration(repository: &git2::Repository) -> Result<ConfigurationInstance> {
     let mut path = PathBuf::from(try!(git::get_repository_workdir(repository)));
     path.push(CRYPTO_CONFIGURATION_PATH.as_path());
-    CryptoConfigurationInstance::new(path.as_path())
+    ConfigurationInstance::new(path.as_path())
 }
 
 fn write_encrypt(repository: &git2::Repository,
@@ -138,7 +138,7 @@ fn reencrypt_all(repository: &git2::Repository,
 pub struct Repository {
     repository: git2::Repository,
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
-    crypto_configuration: Option<CryptoConfigurationInstance>,
+    crypto_configuration: Option<ConfigurationInstance>,
     master_password: SensitiveData,
     master_key: Key,
 }
@@ -170,11 +170,11 @@ impl Repository {
         })
     }
 
-    pub fn get_crypto_configuration(&self) -> Result<CryptoConfiguration> {
+    pub fn get_crypto_configuration(&self) -> Result<Configuration> {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    pub fn set_crypto_configuration(&mut self, config: CryptoConfiguration) -> Result<()> {
+    pub fn set_crypto_configuration(&mut self, config: Configuration) -> Result<()> {
         try!(self.crypto_configuration.as_ref().unwrap().set(config.clone()));
         let master_password = self.master_password.clone();
         self.reencrypt(try!(config.build_key(master_password)))
