@@ -23,15 +23,15 @@ use std::path::Path;
 use ::util::data::SensitiveData;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CryptoConfiguration {
+pub struct Configuration {
     salt: [u8; SALTBYTES],
     mem_limit: usize,
     ops_limit: usize,
 }
 
-impl CryptoConfiguration {
-    pub fn new(salt: Salt, mem_limit: MemLimit, ops_limit: OpsLimit) -> CryptoConfiguration {
-        CryptoConfiguration {
+impl Configuration {
+    pub fn new(salt: Salt, mem_limit: MemLimit, ops_limit: OpsLimit) -> Configuration {
+        Configuration {
             salt: salt.0,
             mem_limit: mem_limit.0,
             ops_limit: ops_limit.0,
@@ -52,55 +52,55 @@ impl CryptoConfiguration {
     }
 }
 
-impl PartialEq for CryptoConfiguration {
-    fn eq(&self, other: &CryptoConfiguration) -> bool {
+impl PartialEq for Configuration {
+    fn eq(&self, other: &Configuration) -> bool {
         self.salt == other.salt && self.mem_limit == other.mem_limit &&
         self.ops_limit == other.ops_limit
     }
 }
 
-impl Eq for CryptoConfiguration {}
+impl Eq for Configuration {}
 
 lazy_static! {
-    static ref DEFAULT_CRYPTO_CONFIGURATION: CryptoConfiguration = CryptoConfiguration {
+    static ref DEFAULT_CONFIGURATION: Configuration = Configuration {
         salt: pwhash::gen_salt().0,
         mem_limit: pwhash::MEMLIMIT_INTERACTIVE.0,
         ops_limit: pwhash::OPSLIMIT_INTERACTIVE.0,
     };
 }
 
-pub struct CryptoConfigurationInstance {
+pub struct ConfigurationInstance {
     identifier: bdrck_config::Identifier,
 }
 
-impl CryptoConfigurationInstance {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<CryptoConfigurationInstance> {
-        let instance = CryptoConfigurationInstance {
+impl ConfigurationInstance {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<ConfigurationInstance> {
+        let instance = ConfigurationInstance {
             identifier: bdrck_config::Identifier {
                 application: "pwm".to_owned(),
                 name: path.as_ref().to_string_lossy().into_owned(),
             },
         };
         try!(bdrck_config::new(instance.identifier.clone(),
-                               DEFAULT_CRYPTO_CONFIGURATION.clone(),
+                               DEFAULT_CONFIGURATION.clone(),
                                Some(path.as_ref())));
         Ok(instance)
     }
 
     pub fn close(self) -> Result<()> {
-        try!(bdrck_config::remove::<CryptoConfiguration>(&self.identifier));
+        try!(bdrck_config::remove::<Configuration>(&self.identifier));
         Ok(())
     }
 
-    pub fn get(&self) -> Result<CryptoConfiguration> {
-        Ok(try!(bdrck_config::get::<CryptoConfiguration>(&self.identifier)))
+    pub fn get(&self) -> Result<Configuration> {
+        Ok(try!(bdrck_config::get::<Configuration>(&self.identifier)))
     }
 
-    pub fn set(&self, config: CryptoConfiguration) -> Result<()> {
+    pub fn set(&self, config: Configuration) -> Result<()> {
         Ok(try!(bdrck_config::set(&self.identifier, config)))
     }
 
     pub fn reset(&self) -> Result<()> {
-        Ok(try!(bdrck_config::reset::<CryptoConfiguration>(&self.identifier)))
+        Ok(try!(bdrck_config::reset::<Configuration>(&self.identifier)))
     }
 }
