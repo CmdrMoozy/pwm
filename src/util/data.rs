@@ -17,10 +17,8 @@
 use data_encoding::base64;
 use ::error::Result;
 use sodiumoxide::utils::memzero;
-use std::fmt;
 use std::fs::File;
 use std::ops::{Index, Range, RangeFrom, RangeFull, RangeTo};
-use std::str;
 
 /// SensitiveData is, essentially, a vector of bytes which attempts to treat
 /// its contents as particularly sensitive. In particular, when Drop'ed a
@@ -48,6 +46,16 @@ impl SensitiveData {
     pub fn from_string(s: String) -> Result<SensitiveData> {
         Ok(SensitiveData::from(try!(base64::decode(&s.into_bytes()[..]))))
     }
+
+    /// Convert this SensitiveData to a string. The resulting string is an
+    /// encoded representation of this structure's bytes, so it is not
+    /// human-readable. However, it *is* suitable for use with from_string.
+    pub fn to_string(&self) -> String { base64::encode(&self.data) }
+
+    /// Try to return a String which interprets this structure's bytes as a
+    /// UTF8-encoded string. If decoding is not possible, an error is returned
+    /// instead.
+    pub fn to_utf8(&self) -> Result<String> { Ok(try!(String::from_utf8((&self[..]).to_vec()))) }
 
     /// Load the contents of the given file into a new SensitiveData instance.
     ///
@@ -97,12 +105,6 @@ impl SensitiveData {
 
 impl Drop for SensitiveData {
     fn drop(&mut self) { memzero(&mut self.data); }
-}
-
-impl fmt::Display for SensitiveData {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", base64::encode(&self.data))
-    }
 }
 
 impl From<Vec<u8>> for SensitiveData {
