@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::error::Result;
+use ::error::*;
 use std::path::Path as StdPath;
 use std::path::PathBuf;
 
@@ -39,5 +39,14 @@ impl Path {
 
     pub fn absolute_path(&self) -> &StdPath { self.absolute_path.as_path() }
 
-    pub fn to_str(&self) -> Option<&str> { self.relative_path.to_str() }
+    pub fn to_str(&self) -> Result<&str> {
+        match self.relative_path.to_str() {
+            Some(s) => Ok(s),
+            None => {
+                Err(Error::new(ErrorKind::Path {
+                    description: "Path contains non-unicode characters.".to_owned(),
+                }))
+            },
+        }
+    }
 }

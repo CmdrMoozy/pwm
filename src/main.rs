@@ -32,11 +32,9 @@ extern crate pwm_lib;
 use pwm_lib::configuration;
 use pwm_lib::error::{Error, ErrorKind, Result};
 use pwm_lib::repository::Repository;
+use pwm_lib::repository::serde::export_serialize;
 use pwm_lib::util::data::SensitiveData;
 use pwm_lib::util::password_prompt;
-
-#[macro_use]
-extern crate serde_derive;
 
 extern crate serde_json;
 
@@ -150,11 +148,6 @@ fn pw(options: HashMap<String, String>,
     Ok(())
 }
 
-#[derive(Clone, Debug, Serialize)]
-struct ExportData {
-    pub data: HashMap<String, String>,
-}
-
 fn export(options: HashMap<String, String>,
           _: HashMap<String, bool>,
           _: HashMap<String, Vec<String>>)
@@ -162,15 +155,7 @@ fn export(options: HashMap<String, String>,
     let _handle = try!(init_pwm());
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-
-    let mut data = ExportData { data: HashMap::new() };
-    for path in try!(repository.list(None)) {
-        let plaintext: String = try!(repository.read_decrypt(&path)).to_string();
-        data.data.insert(path.relative_path().to_str().unwrap().to_owned(), plaintext);
-    }
-
-    info!("{}", try!(serde_json::to_string_pretty(&data)));
-
+    info!("{}", try!(export_serialize(&repository)));
     Ok(())
 }
 
