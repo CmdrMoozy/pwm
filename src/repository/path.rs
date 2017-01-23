@@ -15,7 +15,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ::error::Result;
-use ::repository::Repository;
 use std::path::Path as StdPath;
 use std::path::PathBuf;
 
@@ -34,10 +33,6 @@ impl Path {
             relative_path: PathBuf::from(relative_path.as_ref()),
             absolute_path: absolute_path,
         })
-    }
-
-    pub fn from_repository<P: AsRef<StdPath>>(repository: &Repository, path: P) -> Result<Path> {
-        Path::new(try!(repository.workdir()), path)
     }
 
     pub fn relative_path(&self) -> &StdPath { self.relative_path.as_path() }
