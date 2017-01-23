@@ -53,7 +53,7 @@ fn test_crypto_configuration_modification() {
                                              true,
                                              Some(SensitiveData::from("foobar")))
             .unwrap();
-        initial_config = Some(repository.get_crypto_configuration().unwrap());
+        initial_config = Some(repository.get_crypto_configuration());
         repository.set_crypto_configuration(new_config.clone()).unwrap();
     }
 
@@ -74,7 +74,7 @@ fn test_crypto_configuration_modification() {
                                              false,
                                              Some(SensitiveData::from("foobar")))
             .unwrap();
-        let loaded_config = repository.get_crypto_configuration().unwrap();
+        let loaded_config = repository.get_crypto_configuration();
 
         assert_eq!(new_config, loaded_config);
 
@@ -87,7 +87,7 @@ fn test_crypto_configuration_modification() {
                                          false,
                                          Some(SensitiveData::from("foobar")))
             .unwrap();
-        let loaded_config = repository.get_crypto_configuration().unwrap();
+        let loaded_config = repository.get_crypto_configuration();
 
         // NOTE: In real use, the salt would probably have changed since a new one is
         // generated each time pwm is executed (the "default crypto configuration" is

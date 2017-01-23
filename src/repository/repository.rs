@@ -158,7 +158,7 @@ impl Repository {
         } else {
             try!(password_prompt(MASTER_PASSWORD_PROMPT, create))
         };
-        let master_key = try!(try!(crypto_configuration.get()).build_key(master_password.clone()));
+        let master_key = try!(crypto_configuration.get().build_key(master_password.clone()));
 
         try!(verify_auth_token(&repository, create, &master_key));
 
@@ -170,19 +170,19 @@ impl Repository {
         })
     }
 
-    pub fn get_crypto_configuration(&self) -> Result<Configuration> {
+    pub fn get_crypto_configuration(&self) -> Configuration {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
     pub fn set_crypto_configuration(&mut self, config: Configuration) -> Result<()> {
-        try!(self.crypto_configuration.as_ref().unwrap().set(config.clone()));
+        self.crypto_configuration.as_ref().unwrap().set(config.clone());
         let master_password = self.master_password.clone();
         self.reencrypt(try!(config.build_key(master_password)))
     }
 
     pub fn reset_crypto_configuration(&mut self) -> Result<()> {
-        try!(self.crypto_configuration.as_ref().unwrap().reset());
-        let crypto_configuration = try!(self.get_crypto_configuration());
+        self.crypto_configuration.as_ref().unwrap().reset();
+        let crypto_configuration = self.get_crypto_configuration();
         let master_password = self.master_password.clone();
         self.reencrypt(try!(crypto_configuration.build_key(master_password)))
     }

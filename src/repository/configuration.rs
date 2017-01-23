@@ -92,15 +92,13 @@ impl ConfigurationInstance {
         Ok(())
     }
 
-    pub fn get(&self) -> Result<Configuration> {
-        Ok(try!(bdrck_config::get::<Configuration>(&self.identifier)))
+    pub fn get(&self) -> Configuration {
+        bdrck_config::get::<Configuration>(&self.identifier).unwrap()
     }
 
-    pub fn set(&self, config: Configuration) -> Result<()> {
-        Ok(try!(bdrck_config::set(&self.identifier, config)))
+    pub fn set(&self, config: Configuration) {
+        bdrck_config::set(&self.identifier, config).unwrap()
     }
 
-    pub fn reset(&self) -> Result<()> {
-        Ok(try!(bdrck_config::reset::<Configuration>(&self.identifier)))
-    }
+    pub fn reset(&self) { bdrck_config::reset::<Configuration>(&self.identifier).unwrap() }
 }
