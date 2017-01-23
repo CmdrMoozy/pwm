@@ -142,7 +142,7 @@ fn pw(options: HashMap<String, String>,
         try!(repository.write_encrypt(&path, try!(SensitiveData::from_file(&mut key_file))));
     } else {
         // The user wants to retrieve the password, instead of set it.
-        info!("{}", try!(repository.read_decrypt(&path)));
+        info!("{}", try!(try!(repository.read_decrypt(&path)).to_utf8()));
     }
 
     Ok(())
