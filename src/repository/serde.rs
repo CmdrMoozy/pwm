@@ -14,9 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod configuration;
-pub mod path;
-mod repository;
-pub mod serde;
+use ::error::Result;
+use ::repository::Repository;
+use serde_json::to_string_pretty;
+use std::collections::HashMap;
 
-pub use ::repository::repository::*;
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Contents {
+    pub contents: HashMap<String, String>,
+}
+
+pub fn export(repository: &Repository) -> Result<Contents> {
+    let mut contents: Contents = Contents { contents: HashMap::new() };
+
+    for path in try!(repository.list(None)) {
+        let plaintext: String = try!(repository.read_decrypt(&path)).to_string();
+        contents.contents.insert(try!(path.to_str()).to_owned(), plaintext);
+    }
+
+    Ok(contents)
+}
+
+pub fn export_serialize(repository: &Repository) -> Result<String> {
+    Ok(try!(to_string_pretty(&try!(export(repository)))))
+}
