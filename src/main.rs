@@ -116,7 +116,7 @@ fn ls(options: HashMap<String, String>,
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(Path::from_repository(&repository, &arguments.get("path").unwrap()[0]));
-    for entry in try!(repository.list(&path)).iter() {
+    for entry in try!(repository.list(Some(&path))).iter() {
         info!("{}", entry.to_str().unwrap());
     }
 
@@ -165,7 +165,7 @@ fn export(options: HashMap<String, String>,
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
 
     let mut data = ExportData { data: HashMap::new() };
-    for path in try!(repository.list(&try!(Path::from_repository(&repository, "")))) {
+    for path in try!(repository.list(None)) {
         let path: Path = try!(Path::from_repository(&repository, path.to_str().unwrap()));
         let plaintext: String = try!(repository.read_decrypt(&path)).to_string();
 

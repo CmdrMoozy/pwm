@@ -189,13 +189,17 @@ impl Repository {
 
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
-    pub fn list(&self, path_filter: &RepositoryPath) -> Result<Vec<PathBuf>> {
+    pub fn list(&self, path_filter: Option<&RepositoryPath>) -> Result<Vec<RepositoryPath>> {
+        let default_path_filter = try!(RepositoryPath::from_repository(self, ""));
+        let path_filter: &RepositoryPath = path_filter.unwrap_or(&default_path_filter);
         let entries = try!(git::get_repository_listing(&self.repository,
                                                        path_filter.relative_path()));
-        Ok(entries.into_iter()
+        let entries: Result<Vec<RepositoryPath>> = entries.into_iter()
             .filter(|entry| entry != CRYPTO_CONFIGURATION_PATH.as_path())
             .filter(|entry| entry != AUTH_TOKEN_PATH.as_path())
-            .collect())
+            .map(|entry| RepositoryPath::from_repository(self, entry))
+            .collect();
+        entries
     }
 
     pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
@@ -209,12 +213,10 @@ impl Repository {
     fn reencrypt(&mut self, new_master_key: Key) -> Result<()> {
         {
             let old_master_key = &self.master_key;
-            let path_filter = try!(RepositoryPath::from_repository(&self, ""));
-            let paths: Vec<RepositoryPath> = try!(self.list(&path_filter))
-                .iter()
-                .map(|p| RepositoryPath::from_repository(&self, p.as_path()).unwrap())
-                .collect();
-            try!(reencrypt_all(&self.repository, &paths, old_master_key, &new_master_key));
+            try!(reencrypt_all(&self.repository,
+                               &try!(self.list(None)),
+                               old_master_key,
+                               &new_master_key));
         }
 
         self.master_key = new_master_key;
