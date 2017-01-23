@@ -16,7 +16,6 @@
 
 use ::repository::*;
 use ::repository::configuration::*;
-use ::repository::path::*;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::randombytes::randombytes;
 use ::tests::tempdir::TempDir;
@@ -110,8 +109,7 @@ fn test_write_read_round_trip() {
                                          true,
                                          Some(SensitiveData::from("foobar")))
             .unwrap();
-        let path = Path::from_repository(&repository, "test").unwrap();
-        repository.write_encrypt(&path, plaintext.clone()).unwrap();
+        repository.write_encrypt(&repository.path("test").unwrap(), plaintext.clone()).unwrap();
     }
 
     {
@@ -119,8 +117,7 @@ fn test_write_read_round_trip() {
                                          false,
                                          Some(SensitiveData::from("foobar")))
             .unwrap();
-        let path = Path::from_repository(&repository, "test").unwrap();
-        let output_plaintext = repository.read_decrypt(&path).unwrap();
+        let output_plaintext = repository.read_decrypt(&repository.path("test").unwrap()).unwrap();
         assert_eq!(&plaintext[..], &output_plaintext[..]);
     }
 }
@@ -134,18 +131,10 @@ fn test_repository_listing() {
         .unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
 
-    repository.write_encrypt(&Path::from_repository(&repository, "foo/1").unwrap(),
-                       plaintext.clone())
-        .unwrap();
-    repository.write_encrypt(&Path::from_repository(&repository, "bar/2").unwrap(),
-                       plaintext.clone())
-        .unwrap();
-    repository.write_encrypt(&Path::from_repository(&repository, "3").unwrap(),
-                       plaintext.clone())
-        .unwrap();
-    repository.write_encrypt(&Path::from_repository(&repository, "foo/bar/4").unwrap(),
-                       plaintext.clone())
-        .unwrap();
+    repository.write_encrypt(&repository.path("foo/1").unwrap(), plaintext.clone()).unwrap();
+    repository.write_encrypt(&repository.path("bar/2").unwrap(), plaintext.clone()).unwrap();
+    repository.write_encrypt(&repository.path("3").unwrap(), plaintext.clone()).unwrap();
+    repository.write_encrypt(&repository.path("foo/bar/4").unwrap(), plaintext.clone()).unwrap();
 
     let listing: Vec<String> =
         repository.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();

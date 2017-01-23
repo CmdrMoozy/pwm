@@ -32,7 +32,6 @@ extern crate pwm_lib;
 use pwm_lib::configuration;
 use pwm_lib::error::{Error, ErrorKind, Result};
 use pwm_lib::repository::Repository;
-use pwm_lib::repository::path::Path;
 use pwm_lib::util::data::SensitiveData;
 use pwm_lib::util::password_prompt;
 
@@ -115,7 +114,7 @@ fn ls(options: HashMap<String, String>,
     let _handle = try!(init_pwm());
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(Path::from_repository(&repository, &arguments.get("path").unwrap()[0]));
+    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
     for entry in try!(repository.list(Some(&path))).iter() {
         info!("{}", entry.to_str().unwrap());
     }
@@ -130,7 +129,7 @@ fn pw(options: HashMap<String, String>,
     let _handle = try!(init_pwm());
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(Path::from_repository(&repository, &arguments.get("path").unwrap()[0]));
+    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
 
     let set: bool = flags.get("set").cloned().unwrap_or(false);
     let k = options.get("key");
@@ -166,9 +165,7 @@ fn export(options: HashMap<String, String>,
 
     let mut data = ExportData { data: HashMap::new() };
     for path in try!(repository.list(None)) {
-        let path: Path = try!(Path::from_repository(&repository, path.to_str().unwrap()));
         let plaintext: String = try!(repository.read_decrypt(&path)).to_string();
-
         data.data.insert(path.relative_path().to_str().unwrap().to_owned(), plaintext);
     }
 
