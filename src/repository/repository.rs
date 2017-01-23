@@ -170,6 +170,10 @@ impl Repository {
         })
     }
 
+    pub fn path<P: AsRef<Path>>(&self, path: P) -> Result<RepositoryPath> {
+        RepositoryPath::new(try!(self.workdir()), path)
+    }
+
     pub fn get_crypto_configuration(&self) -> Configuration {
         self.crypto_configuration.as_ref().unwrap().get()
     }
@@ -190,14 +194,14 @@ impl Repository {
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
     pub fn list(&self, path_filter: Option<&RepositoryPath>) -> Result<Vec<RepositoryPath>> {
-        let default_path_filter = try!(RepositoryPath::from_repository(self, ""));
+        let default_path_filter = try!(self.path(""));
         let path_filter: &RepositoryPath = path_filter.unwrap_or(&default_path_filter);
         let entries = try!(git::get_repository_listing(&self.repository,
                                                        path_filter.relative_path()));
         let entries: Result<Vec<RepositoryPath>> = entries.into_iter()
             .filter(|entry| entry != CRYPTO_CONFIGURATION_PATH.as_path())
             .filter(|entry| entry != AUTH_TOKEN_PATH.as_path())
-            .map(|entry| RepositoryPath::from_repository(self, entry))
+            .map(|entry| self.path(entry))
             .collect();
         entries
     }
