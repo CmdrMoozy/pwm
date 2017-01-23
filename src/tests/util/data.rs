@@ -63,9 +63,12 @@ fn test_truncate() {
 
 #[test]
 fn test_from_string() {
-    let src: Vec<u8> = "Some arbitrary test string.".as_bytes().to_vec();
-    let sd = SensitiveData::from(src.clone());
-    assert_eq!(src.as_slice(), &sd[..]);
+    let src: String = "Some arbitrary test string.".to_owned();
+    let sd_from_bytes = SensitiveData::from(src.as_bytes().to_vec());
+    let sd_to_string = sd_from_bytes.to_string();
+    assert_ne!(src, sd_to_string);
+    let sd_from_string = SensitiveData::from_string(sd_to_string).unwrap();
+    assert_eq!(src.as_bytes(), &sd_from_string[..]);
 }
 
 #[test]
