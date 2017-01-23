@@ -25,6 +25,7 @@ use std::error;
 use std::fmt;
 use std::io;
 use std::result;
+use std::string;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
@@ -39,6 +40,7 @@ pub enum ErrorKind {
     Path { description: String },
     Repository { description: String },
     Serialization { cause: String },
+    Utf8 { cause: String },
 }
 
 #[derive(Debug)]
@@ -94,6 +96,12 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+impl From<string::FromUtf8Error> for Error {
+    fn from(e: string::FromUtf8Error) -> Error {
+        Error::new(ErrorKind::Utf8 { cause: e.to_string() })
+    }
+}
+
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
@@ -108,6 +116,7 @@ impl error::Error for Error {
             ErrorKind::Path { description: _ } => "Invalid path",
             ErrorKind::Repository { description: _ } => "Repository error",
             ErrorKind::Serialization { cause: _ } => "Serialization error",
+            ErrorKind::Utf8 { cause: _ } => "UTF-8 encoding error",
         }
     }
 }
@@ -147,6 +156,9 @@ impl fmt::Display for Error {
                 f.write_str(format!("{}: {}", self.description(), d).as_str())
             },
             ErrorKind::Serialization { cause: ref c } => {
+                f.write_str(format!("{}: {}", self.description(), c).as_str())
+            },
+            ErrorKind::Utf8 { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
         }
