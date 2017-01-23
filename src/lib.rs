@@ -18,6 +18,7 @@ extern crate backtrace;
 extern crate bdrck_config;
 extern crate bdrck_log;
 extern crate byteorder;
+extern crate data_encoding;
 extern crate git2;
 #[macro_use]
 extern crate lazy_static;
