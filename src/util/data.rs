@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use data_encoding::base64;
 use ::error::Result;
 use sodiumoxide::utils::memzero;
 use std::fmt;
@@ -93,9 +94,7 @@ impl Drop for SensitiveData {
 
 impl fmt::Display for SensitiveData {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}",
-               try!(str::from_utf8(&self.data).or(Err(fmt::Error {}))))
+        write!(f, "{}", base64::encode(&self.data))
     }
 }
 

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use sodiumoxide::randombytes::randombytes;
 use std::io::SeekFrom;
-
 use ::tests::tempfile::tempfile;
 use ::util::data::*;
 
@@ -71,6 +71,12 @@ fn test_from_string() {
 
     assert_eq!(data.as_slice(), &str_sensitive_data[..]);
     assert_eq!(data.as_slice(), &string_sensitive_data[..]);
+}
+
+#[test]
+fn test_to_string() {
+    let data = SensitiveData::from(randombytes(1024));
+    assert!(data.to_string().len() > 0);
 }
 
 #[test]
