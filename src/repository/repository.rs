@@ -156,7 +156,7 @@ impl Repository {
         let master_password: SensitiveData = if let Some(p) = password {
             p
         } else {
-            try!(password_prompt(MASTER_PASSWORD_PROMPT, false))
+            try!(password_prompt(MASTER_PASSWORD_PROMPT, create))
         };
         let master_key = try!(try!(crypto_configuration.get()).build_key(master_password.clone()));
 
