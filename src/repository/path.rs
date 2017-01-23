@@ -43,4 +43,6 @@ impl Path {
     pub fn relative_path(&self) -> &StdPath { self.relative_path.as_path() }
 
     pub fn absolute_path(&self) -> &StdPath { self.absolute_path.as_path() }
+
+    pub fn to_str(&self) -> Option<&str> { self.relative_path.to_str() }
 }

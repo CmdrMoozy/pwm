@@ -147,11 +147,8 @@ fn test_repository_listing() {
                        plaintext.clone())
         .unwrap();
 
-    let listing: Vec<String> = repository.list(&Path::from_repository(&repository, "").unwrap())
-        .unwrap()
-        .iter()
-        .map(|p| p.to_str().unwrap().to_owned())
-        .collect();
+    let listing: Vec<String> =
+        repository.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();
 
     assert_eq!(vec!["3".to_owned(),
                     "bar/2".to_owned(),
