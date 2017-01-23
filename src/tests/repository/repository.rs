@@ -28,13 +28,14 @@ fn test_wrong_master_password_fails() {
     {
         let _repository = Repository::new(repository_dir.path(),
                                           true,
-                                          Some(SensitiveData::from("foobar")))
+                                          Some(SensitiveData::from("foobar".as_bytes().to_vec())))
             .unwrap();
     }
 
-    let repository_result = Repository::new(repository_dir.path(),
-                                            false,
-                                            Some(SensitiveData::from("barbaz")));
+    let repository_result =
+        Repository::new(repository_dir.path(),
+                        false,
+                        Some(SensitiveData::from("barbaz".as_bytes().to_vec())));
     assert!(repository_result.is_err());
 }
 
@@ -48,10 +49,11 @@ fn test_crypto_configuration_modification() {
 
     // Save the default configuration, and change to our new configuration.
     {
-        let mut repository = Repository::new(repository_dir.path(),
-                                             true,
-                                             Some(SensitiveData::from("foobar")))
-            .unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(),
+                            true,
+                            Some(SensitiveData::from("foobar".as_bytes().to_vec())))
+                .unwrap();
         initial_config = Some(repository.get_crypto_configuration());
         repository.set_crypto_configuration(new_config.clone()).unwrap();
     }
@@ -69,10 +71,11 @@ fn test_crypto_configuration_modification() {
     // Try re-opening the repository, and checking that we get the same
     // configuration we set. Then, reset the configuration.
     {
-        let mut repository = Repository::new(repository_dir.path(),
-                                             false,
-                                             Some(SensitiveData::from("foobar")))
-            .unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(),
+                            false,
+                            Some(SensitiveData::from("foobar".as_bytes().to_vec())))
+                .unwrap();
         let loaded_config = repository.get_crypto_configuration();
 
         assert_eq!(new_config, loaded_config);
@@ -84,7 +87,7 @@ fn test_crypto_configuration_modification() {
     {
         let repository = Repository::new(repository_dir.path(),
                                          false,
-                                         Some(SensitiveData::from("foobar")))
+                                         Some(SensitiveData::from("foobar".as_bytes().to_vec())))
             .unwrap();
         let loaded_config = repository.get_crypto_configuration();
 
@@ -107,7 +110,7 @@ fn test_write_read_round_trip() {
     {
         let repository = Repository::new(repository_dir.path(),
                                          true,
-                                         Some(SensitiveData::from("foobar")))
+                                         Some(SensitiveData::from("foobar".as_bytes().to_vec())))
             .unwrap();
         repository.write_encrypt(&repository.path("test").unwrap(), plaintext.clone()).unwrap();
     }
@@ -115,7 +118,7 @@ fn test_write_read_round_trip() {
     {
         let repository = Repository::new(repository_dir.path(),
                                          false,
-                                         Some(SensitiveData::from("foobar")))
+                                         Some(SensitiveData::from("foobar".as_bytes().to_vec())))
             .unwrap();
         let output_plaintext = repository.read_decrypt(&repository.path("test").unwrap()).unwrap();
         assert_eq!(&plaintext[..], &output_plaintext[..]);
@@ -127,7 +130,7 @@ fn test_repository_listing() {
     let repository_dir = TempDir::new("pwm-test").unwrap();
     let repository = Repository::new(repository_dir.path(),
                                      true,
-                                     Some(SensitiveData::from("foobar")))
+                                     Some(SensitiveData::from("foobar".as_bytes().to_vec())))
         .unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
 

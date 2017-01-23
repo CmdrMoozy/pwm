@@ -16,6 +16,7 @@
 
 use backtrace::Backtrace;
 use bdrck_config;
+use data_encoding;
 use git2;
 use log;
 use serde_json;
@@ -64,6 +65,12 @@ impl Eq for Error {}
 impl From<bdrck_config::error::Error> for Error {
     fn from(e: bdrck_config::error::Error) -> Error {
         Error::new(ErrorKind::Configuration { cause: e.to_string() })
+    }
+}
+
+impl From<data_encoding::decode::Error> for Error {
+    fn from(e: data_encoding::decode::Error) -> Error {
+        Error::new(ErrorKind::Serialization { cause: e.to_string() })
     }
 }
 
