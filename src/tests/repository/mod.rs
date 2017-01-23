@@ -15,6 +15,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ::repository::*;
+use ::repository::configuration::*;
+use ::repository::path::*;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::randombytes::randombytes;
 use ::tests::tempdir::TempDir;
@@ -40,10 +42,10 @@ fn test_wrong_master_password_fails() {
 #[test]
 fn test_crypto_configuration_modification() {
     let repository_dir = TempDir::new("pwm-test").unwrap();
-    let initial_config: Option<CryptoConfiguration>;
-    let new_config = CryptoConfiguration::new(pwhash::gen_salt(),
-                                              pwhash::MemLimit(123),
-                                              pwhash::OpsLimit(234));
+    let initial_config: Option<Configuration>;
+    let new_config = Configuration::new(pwhash::gen_salt(),
+                                        pwhash::MemLimit(123),
+                                        pwhash::OpsLimit(234));
 
     // Save the default configuration, and change to our new configuration.
     {
