@@ -20,6 +20,7 @@ extern crate bdrck_log;
 extern crate byteorder;
 extern crate data_encoding;
 extern crate git2;
+extern crate isatty;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
