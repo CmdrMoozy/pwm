@@ -17,15 +17,15 @@
 pub mod data;
 pub mod git;
 
-use ::error::Result;
+use error::Result;
 use rpassword;
 
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::SensitiveData> {
     loop {
-        let password = data::SensitiveData::from(try!(rpassword::prompt_password_stdout(prompt))
+        let password = data::SensitiveData::from(try!(rpassword::prompt_password_stderr(prompt))
             .into_bytes());
         if !confirm ||
-           data::SensitiveData::from(try!(rpassword::prompt_password_stdout("Confirm: "))
+           data::SensitiveData::from(try!(rpassword::prompt_password_stderr("Confirm: "))
             .into_bytes()) == password {
             return Ok(password);
         }
