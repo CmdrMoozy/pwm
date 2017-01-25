@@ -16,6 +16,7 @@
 
 use std::collections::HashMap;
 use std::fs::File;
+use std::io;
 use std::option::Option as Optional;
 
 extern crate bdrck_params;
@@ -24,6 +25,8 @@ use bdrck_params::command::Command;
 use bdrck_params::command::ExecutableCommand;
 use bdrck_params::main_impl::main_impl_multiple_commands;
 use bdrck_params::option::Option;
+
+extern crate isatty;
 
 #[macro_use]
 extern crate log;
@@ -121,7 +124,7 @@ fn ls(options: HashMap<String, String>,
 }
 
 fn get(options: HashMap<String, String>,
-       _: HashMap<String, bool>,
+       flags: HashMap<String, bool>,
        arguments: HashMap<String, Vec<String>>)
        -> Result<()> {
     let _handle = try!(init_pwm());
@@ -129,7 +132,26 @@ fn get(options: HashMap<String, String>,
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
 
-    info!("{}", try!(try!(repository.read_decrypt(&path)).to_utf8()));
+    let retrieved = try!(repository.read_decrypt(&path));
+    let as_utf8 = retrieved.to_utf8();
+    let binary = *flags.get("binary").unwrap() || as_utf8.is_err();
+
+    if !binary {
+        info!("{}", try!(as_utf8));
+    } else {
+        if isatty::stdout_isatty() {
+            // The stored password is binary, but stdout is an interactive terminal so we
+            // can't really write binary output. Display the password in Base64.
+            info!("{}", retrieved.to_string());
+        } else {
+            use std::io::Write;
+
+            // The stored password is binary, and stdout is a file / pipe / whatever. Write
+            // the raw bytes.
+            let mut stdout = io::stdout();
+            try!(stdout.write_all(&retrieved[..]));
+        }
+    }
 
     Ok(())
 }
@@ -236,6 +258,8 @@ fn main() {
                  vec![
                     Option::optional(
                         "repository", "The path to the repository to initialize", Some('r')),
+                    Option::flag(
+                        "binary", "Treat the retrieved password or key as binary", Some('b')),
                 ],
                 vec![
                     Argument::new(
