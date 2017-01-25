@@ -120,29 +120,38 @@ fn ls(options: HashMap<String, String>,
     Ok(())
 }
 
-fn pw(options: HashMap<String, String>,
-      flags: HashMap<String, bool>,
-      arguments: HashMap<String, Vec<String>>)
-      -> Result<()> {
+fn get(options: HashMap<String, String>,
+       _: HashMap<String, bool>,
+       arguments: HashMap<String, Vec<String>>)
+       -> Result<()> {
     let _handle = try!(init_pwm());
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
 
-    let set: bool = flags.get("set").cloned().unwrap_or(false);
-    let k = options.get("key");
+    info!("{}", try!(try!(repository.read_decrypt(&path)).to_utf8()));
 
-    if set && k.is_none() {
+    Ok(())
+}
+
+fn set(options: HashMap<String, String>,
+       _: HashMap<String, bool>,
+       arguments: HashMap<String, Vec<String>>)
+       -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
+    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
+    let key_file = options.get("key_file");
+
+    if let Some(key_file) = key_file {
+        // The user wants to set the password using a key file.
+        let mut key_file = try!(File::open(key_file));
+        try!(repository.write_encrypt(&path, try!(SensitiveData::from_file(&mut key_file))));
+    } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
         try!(repository.write_encrypt(&path, try!(password_prompt(NEW_PASSWORD_PROMPT, true))));
-    } else if let Some(key) = k {
-        // The user wants to set the password using a key file.
-        let mut key_file = try!(File::open(key));
-        try!(repository.write_encrypt(&path, try!(SensitiveData::from_file(&mut key_file))));
-    } else {
-        // The user wants to retrieve the password, instead of set it.
-        info!("{}", try!(try!(repository.read_decrypt(&path)).to_utf8()));
     }
 
     Ok(())
@@ -222,14 +231,11 @@ fn main() {
             Box::new(ls)),
         ExecutableCommand::new(
             Command::new(
-                "pw",
-                "Get or set a password from a pwm repository",
+                "get",
+                "Retrieve a password or key from a pwm repository",
                  vec![
                     Option::optional(
                         "repository", "The path to the repository to initialize", Some('r')),
-                    Option::flag(
-                        "set", "Set this password using a command-line prompt", Some('s')),
-                    Option::optional("key", "Set this password using a key file", Some('k')),
                 ],
                 vec![
                     Argument::new(
@@ -238,7 +244,25 @@ fn main() {
                         None),
                 ],
                 false).unwrap(),
-            Box::new(pw)),
+            Box::new(get)),
+        ExecutableCommand::new(
+            Command::new(
+                "set",
+                "Store a password or key in a pwm repository",
+                vec![
+                    Option::optional(
+                        "repository", "The path to the repository to initialize", Some('r')),
+                    Option::optional(
+                        "key_file", "Store a key file instead of a password", Some('k')),
+                ],
+                vec![
+                    Argument::new(
+                        "path",
+                        "The path to get / set, relative to the repository's root",
+                        None),
+                ],
+                false).unwrap(),
+            Box::new(set)),
         ExecutableCommand::new(
             Command::new(
                 "export",
