@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use data_encoding::base64;
-use ::error::Result;
+use error::Result;
 use sodiumoxide::utils::memzero;
 use std::fs::File;
 use std::ops::{Index, Range, RangeFrom, RangeFull, RangeTo};

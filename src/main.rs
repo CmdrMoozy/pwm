@@ -19,11 +19,11 @@ use std::fs::File;
 use std::option::Option as Optional;
 
 extern crate bdrck_params;
-use ::bdrck_params::argument::Argument;
-use ::bdrck_params::command::Command;
-use ::bdrck_params::command::ExecutableCommand;
-use ::bdrck_params::main_impl::main_impl_multiple_commands;
-use ::bdrck_params::option::Option;
+use bdrck_params::argument::Argument;
+use bdrck_params::command::Command;
+use bdrck_params::command::ExecutableCommand;
+use bdrck_params::main_impl::main_impl_multiple_commands;
+use bdrck_params::option::Option;
 
 #[macro_use]
 extern crate log;

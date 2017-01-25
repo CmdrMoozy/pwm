@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::crypto::key::Key;
-use ::error::Result;
+use crypto::key::Key;
+use error::Result;
 use sodiumoxide::crypto::secretbox;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 pub fn encrypt(plaintext: SensitiveData, key: &Key) -> Result<(secretbox::Nonce, Vec<u8>)> {
     let nonce = secretbox::gen_nonce();

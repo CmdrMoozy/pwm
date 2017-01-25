@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::error::{Error, ErrorKind, Result};
+use error::{Error, ErrorKind, Result};
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt};
 use sodiumoxide::crypto::secretbox;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 pub struct Key {
     salt: Salt,

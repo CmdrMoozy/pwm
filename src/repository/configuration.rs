@@ -15,12 +15,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use bdrck_config::configuration as bdrck_config;
-use ::crypto::key::Key;
-use ::error::Result;
+use crypto::key::Key;
+use error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt, SALTBYTES};
 use std::path::Path;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {

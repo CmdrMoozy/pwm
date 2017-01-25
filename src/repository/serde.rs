@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::error::Result;
-use ::repository::Repository;
+use error::Result;
+use repository::Repository;
 use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Contents {
