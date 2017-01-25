@@ -16,7 +16,7 @@
 
 use ::crypto::padding::*;
 use sodiumoxide::randombytes::randombytes;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 #[test]
 fn test_padding_round_trip() {

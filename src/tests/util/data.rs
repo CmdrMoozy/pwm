@@ -16,7 +16,7 @@
 
 use sodiumoxide::randombytes::randombytes;
 use std::io::SeekFrom;
-use ::tests::tempfile::tempfile;
+use tests::tempfile::tempfile;
 use ::util::data::*;
 
 #[test]

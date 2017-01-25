@@ -18,7 +18,7 @@ use git2::{Oid, Repository, Signature};
 use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
-use ::tests::tempdir::TempDir;
+use tests::tempdir::TempDir;
 use ::util::git::*;
 
 fn get_test_signature() -> Signature<'static> { Signature::now("test", "test@test.com").unwrap() }

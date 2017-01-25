@@ -17,7 +17,7 @@
 use ::crypto::key::*;
 use sodiumoxide::crypto::pwhash::Salt;
 use sodiumoxide::randombytes::randombytes;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 #[test]
 fn test_predefined_salt() {

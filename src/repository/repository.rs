@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::crypto::decrypt::decrypt;
-use ::crypto::encrypt::encrypt;
-use ::crypto::key::Key;
-use ::crypto::padding;
-use ::error::{Error, ErrorKind, Result};
+use crypto::decrypt::decrypt;
+use crypto::encrypt::encrypt;
+use crypto::key::Key;
+use crypto::padding;
+use error::{Error, ErrorKind, Result};
 use git2;
-use ::repository::configuration::{Configuration, ConfigurationInstance};
-use ::repository::path::Path as RepositoryPath;
+use repository::configuration::{Configuration, ConfigurationInstance};
+use repository::path::Path as RepositoryPath;
 use sodiumoxide::crypto::secretbox;
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use ::util::data::SensitiveData;
-use ::util::git;
-use ::util::password_prompt;
+use util::data::SensitiveData;
+use util::git;
+use util::password_prompt;
 
 lazy_static! {
     static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");

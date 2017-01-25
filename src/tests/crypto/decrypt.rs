@@ -16,9 +16,9 @@
 
 use ::crypto::decrypt::*;
 use ::crypto::encrypt::*;
-use ::crypto::key::Key;
+use crypto::key::Key;
 use sodiumoxide::randombytes::randombytes;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 #[test]
 fn test_decrypting_with_wrong_key_fails() {

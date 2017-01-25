@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use bdrck_config::configuration as bdrck_config;
-use ::error::{Error, ErrorKind, Result};
+use error::{Error, ErrorKind, Result};
 
 static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
 
