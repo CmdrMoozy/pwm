@@ -6,7 +6,7 @@ authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 [dependencies]
 backtrace = "0.2"
 bdrck_config = "0.1"
-bdrck_log = "0.2"
+bdrck_log = "0.3"
 bdrck_params = "0.2"
 byteorder = "1.0"
 data-encoding = "1.1"
