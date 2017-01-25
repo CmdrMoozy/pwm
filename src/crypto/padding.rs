@@ -15,11 +15,11 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use ::error::{Error, ErrorKind, Result};
+use error::{Error, ErrorKind, Result};
 use sodiumoxide::randombytes::randombytes;
 use std::io::Cursor;
 use std::mem;
-use ::util::data::SensitiveData;
+use util::data::SensitiveData;
 
 const PAD_BLOCK_SIZE_BYTES: usize = 1024;
 

@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::repository::Repository;
+use repository::Repository;
 use ::repository::serde::*;
 use sodiumoxide::randombytes::randombytes;
-use ::tests::tempdir::TempDir;
-use ::util::data::SensitiveData;
+use tests::tempdir::TempDir;
+use util::data::SensitiveData;
 
 #[test]
 fn test_export_import_round_trip_ascii() {

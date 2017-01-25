@@ -18,8 +18,8 @@ use ::repository::*;
 use ::repository::configuration::*;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::randombytes::randombytes;
-use ::tests::tempdir::TempDir;
-use ::util::data::SensitiveData;
+use tests::tempdir::TempDir;
+use util::data::SensitiveData;
 
 #[test]
 fn test_wrong_master_password_fails() {
