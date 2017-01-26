@@ -179,6 +179,18 @@ fn set(options: HashMap<String, String>,
     Ok(())
 }
 
+fn rm(options: HashMap<String, String>,
+      _: HashMap<String, bool>,
+      arguments: HashMap<String, Vec<String>>)
+      -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
+    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
+    try!(repository.remove(&path));
+    Ok(())
+}
+
 fn export(options: HashMap<String, String>,
           _: HashMap<String, bool>,
           _: HashMap<String, Vec<String>>)
@@ -287,6 +299,22 @@ fn main() {
                 ],
                 false).unwrap(),
             Box::new(set)),
+        ExecutableCommand::new(
+            Command::new(
+                "rm",
+                "Remove a password or key from a pwm repository",
+                vec![
+                    Option::optional(
+                        "repository", "The path to the repository to modify", Some('r')),
+                ],
+                vec![
+                    Argument::new(
+                        "path",
+                        "The path to remove, relative to the repository's root",
+                        None),
+                ],
+                false).unwrap(),
+            Box::new(rm)),
         ExecutableCommand::new(
             Command::new(
                 "export",
