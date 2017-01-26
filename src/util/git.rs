@@ -168,8 +168,16 @@ pub fn commit_paths(repository: &Repository,
                     -> Result<Oid> {
     let mut index: Index = try!(repository.index());
 
+    let workdir: PathBuf = PathBuf::from(try!(get_repository_workdir(repository)));
     for path in paths {
-        try!(index.add_path(path));
+        let mut absolute_path = workdir.clone();
+        absolute_path.push(path);
+
+        if absolute_path.exists() {
+            try!(index.add_path(path));
+        } else {
+            try!(index.remove_path(path));
+        }
     }
 
     // Commit our changes to the index to disk. This prevents a bug where, e.g.
