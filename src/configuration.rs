@@ -25,31 +25,48 @@ pub struct Configuration {
 }
 
 lazy_static! {
-    static ref IDENTIFIER: bdrck_config::Identifier = bdrck_config::Identifier {
-        application: "pwm".to_owned(),
-        name: "pwm".to_owned(),
-    };
-
     static ref DEFAULT_CONFIGURATION: Configuration = Configuration {
         default_repository: None,
     };
+}
+
+fn get_identifier() -> &'static bdrck_config::Identifier {
+    lazy_static! {
+        static ref IDENTIFIER: bdrck_config::Identifier = bdrck_config::Identifier {
+            application: "pwm".to_owned(),
+            name: "pwm".to_owned(),
+        };
+
+        static ref DEBUG_IDENTIFIER: bdrck_config::Identifier = bdrck_config::Identifier {
+            application: "pwm".to_owned(),
+            name: "pwm-debug".to_owned(),
+        };
+    }
+
+    if cfg!(debug_assertions) {
+        &DEBUG_IDENTIFIER
+    } else {
+        &IDENTIFIER
+    }
 }
 
 pub struct SingletonHandle;
 
 impl SingletonHandle {
     pub fn new() -> Result<SingletonHandle> {
-        try!(bdrck_config::new(IDENTIFIER.clone(), DEFAULT_CONFIGURATION.clone(), None));
+        try!(bdrck_config::new(get_identifier().clone(),
+                               DEFAULT_CONFIGURATION.clone(),
+                               None));
         Ok(SingletonHandle {})
     }
 }
 
 impl Drop for SingletonHandle {
-    fn drop(&mut self) { let _ = bdrck_config::remove::<Configuration>(&IDENTIFIER); }
+    fn drop(&mut self) { let _ = bdrck_config::remove::<Configuration>(get_identifier()); }
 }
 
 pub fn set(key: &str, value: &str) -> Result<()> {
-    let err = try!(bdrck_config::instance_apply_mut(&IDENTIFIER,
+    let err = try!(bdrck_config::instance_apply_mut(get_identifier(),
         |instance: &mut bdrck_config::Configuration<Configuration>| -> Option<Error> {
         let mut config = instance.get().clone();
         if key == DEFAULT_REPOSITORY_KEY {
@@ -69,7 +86,9 @@ pub fn set(key: &str, value: &str) -> Result<()> {
     }
 }
 
-pub fn get() -> Result<Configuration> { Ok(try!(bdrck_config::get::<Configuration>(&IDENTIFIER))) }
+pub fn get() -> Result<Configuration> {
+    Ok(try!(bdrck_config::get::<Configuration>(get_identifier())))
+}
 
 pub fn get_value_as_str(key: &str) -> Result<String> {
     let config = try!(get());
@@ -85,4 +104,4 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
     }
 }
 
-pub fn reset() -> Result<()> { Ok(try!(bdrck_config::reset::<Configuration>(&IDENTIFIER))) }
+pub fn reset() -> Result<()> { Ok(try!(bdrck_config::reset::<Configuration>(get_identifier()))) }
