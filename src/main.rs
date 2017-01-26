@@ -269,14 +269,14 @@ fn main() {
                 "Retrieve a password or key from a pwm repository",
                  vec![
                     Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
+                        "repository", "The path to the repository to read from", Some('r')),
                     Option::flag(
                         "binary", "Treat the retrieved password or key as binary", Some('b')),
                 ],
                 vec![
                     Argument::new(
                         "path",
-                        "The path to get / set, relative to the repository's root",
+                        "The path to retrieve, relative to the repository's root",
                         None),
                 ],
                 false).unwrap(),
@@ -287,14 +287,14 @@ fn main() {
                 "Store a password or key in a pwm repository",
                 vec![
                     Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
+                        "repository", "The path to the repository to modify", Some('r')),
                     Option::optional(
                         "key_file", "Store a key file instead of a password", Some('k')),
                 ],
                 vec![
                     Argument::new(
                         "path",
-                        "The path to get / set, relative to the repository's root",
+                        "The path to set, relative to the repository's root",
                         None),
                 ],
                 false).unwrap(),
@@ -321,7 +321,7 @@ fn main() {
                 "Export all stored passwords as plaintext JSON for backup purposes",
                 vec![
                     Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
+                        "repository", "The path to the repository to export from", Some('r')),
                 ],
                 vec![],
                 false).unwrap(),
@@ -332,7 +332,7 @@ fn main() {
                 "Import stored passwords previously 'export'ed",
                 vec![
                     Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
+                        "repository", "The path to the repository to import into", Some('r')),
                     Option::required(
                         "input", "The input file to import from", Some('i'), None),
                 ],
