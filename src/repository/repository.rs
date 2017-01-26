@@ -42,6 +42,7 @@ static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
+static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
 
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
     repository.signature().unwrap_or(git2::Signature::now("pwm", "pwm@nowhere.com").unwrap())
@@ -212,6 +213,16 @@ impl Repository {
 
     pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
         read_decrypt(path, &self.master_key)
+    }
+
+    pub fn remove(&self, path: &RepositoryPath) -> Result<()> {
+        try!(fs::remove_file(path.absolute_path()));
+        try!(git::commit_paths(&self.repository,
+                               Some(&get_commit_signature(&self.repository)),
+                               Some(&get_commit_signature(&self.repository)),
+                               STORED_PASSWORD_REMOVE_MESSAGE,
+                               &[path.relative_path()]));
+        Ok(())
     }
 
     fn reencrypt(&mut self, new_master_key: Key) -> Result<()> {

@@ -148,3 +148,25 @@ fn test_repository_listing() {
                     "foo/bar/4".to_owned()],
                listing);
 }
+
+#[test]
+fn test_remove() {
+    let repository_dir = TempDir::new("pwm-test").unwrap();
+
+    let repository = Repository::new(repository_dir.path(),
+                                     true,
+                                     Some(SensitiveData::from("foobar".as_bytes().to_vec())))
+        .unwrap();
+    repository.write_encrypt(&repository.path("test").unwrap(),
+                       SensitiveData::from(randombytes(1024)))
+        .unwrap();
+
+    let listing: Vec<String> =
+        repository.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();
+    assert_eq!(vec!["test".to_owned()], listing);
+
+    repository.remove(&repository.path("test").unwrap()).unwrap();
+    let listing: Vec<String> =
+        repository.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();
+    assert!(listing.is_empty());
+}
