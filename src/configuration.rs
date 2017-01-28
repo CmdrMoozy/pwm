@@ -63,7 +63,11 @@ impl SingletonHandle {
 }
 
 impl Drop for SingletonHandle {
-    fn drop(&mut self) { let _ = bdrck_config::remove::<Configuration>(get_identifier()); }
+    fn drop(&mut self) {
+        if let Err(e) = bdrck_config::remove::<Configuration>(get_identifier()) {
+            error!("Persisting configuration failed: {}", e);
+        }
+    }
 }
 
 pub fn set(key: &str, value: &str) -> Result<()> {
