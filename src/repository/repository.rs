@@ -84,6 +84,13 @@ fn write_encrypt(repository: &git2::Repository,
 fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData> {
     use std::io::Read;
 
+    if !path.absolute_path().exists() {
+        return Err(Error::new(ErrorKind::Path {
+            description: format!("No stored password at path '{}'",
+                                 path.relative_path().display()),
+        }));
+    }
+
     let mut file = try!(File::open(path.absolute_path()));
     let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
     let mut data: Vec<u8> = vec![];
