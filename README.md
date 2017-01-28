@@ -28,13 +28,13 @@ pwm config -k default_repository -s $HOME/pwm_repository
 pwm init
 
 # Store a password:
-pwm pw -s personal/email
+pwm set personal/email
 
 # List stored passwords:
 pwm ls
 
 # Retrieve a stored password:
-pwm pw personal/email
+pwm get personal/email
 ```
 
 ## Notes on Security
