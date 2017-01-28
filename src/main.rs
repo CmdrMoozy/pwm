@@ -19,6 +19,8 @@ use std::fs::File;
 use std::io;
 use std::option::Option as Optional;
 
+extern crate bdrck_log;
+
 extern crate bdrck_params;
 use bdrck_params::argument::Argument;
 use bdrck_params::command::Command;
@@ -224,6 +226,8 @@ fn import(options: HashMap<String, String>,
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 fn main() {
+    bdrck_log::init_cli_logger().unwrap();
+
     main_impl_multiple_commands(vec![
         ExecutableCommand::new(
             Command::new(
