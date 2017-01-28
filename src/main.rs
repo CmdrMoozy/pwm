@@ -47,7 +47,7 @@ static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 
 fn init_pwm() -> Result<configuration::SingletonHandle> {
     try!(pwm_lib::init());
-    Ok(try!(configuration::SingletonHandle::new()))
+    Ok(try!(configuration::SingletonHandle::new(None)))
 }
 
 fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
