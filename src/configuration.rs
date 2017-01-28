@@ -16,6 +16,7 @@
 
 use bdrck_config::configuration as bdrck_config;
 use error::{Error, ErrorKind, Result};
+use std::path::Path;
 
 static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
 
@@ -53,10 +54,10 @@ fn get_identifier() -> &'static bdrck_config::Identifier {
 pub struct SingletonHandle;
 
 impl SingletonHandle {
-    pub fn new() -> Result<SingletonHandle> {
+    pub fn new(custom_path: Option<&Path>) -> Result<SingletonHandle> {
         try!(bdrck_config::new(get_identifier().clone(),
                                DEFAULT_CONFIGURATION.clone(),
-                               None));
+                               custom_path));
         Ok(SingletonHandle {})
     }
 }
