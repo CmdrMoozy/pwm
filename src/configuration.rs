@@ -18,7 +18,7 @@ use bdrck_config::configuration as bdrck_config;
 use error::{Error, ErrorKind, Result};
 use std::path::Path;
 
-static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
+pub static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
