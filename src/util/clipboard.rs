@@ -27,11 +27,7 @@ lazy_static! {
 fn set_contents_string(ctx: &mut clipboard::ClipboardContext, contents: String) -> Result<()> {
     match ctx.set_contents(contents) {
         Ok(_) => Ok(()),
-        Err(_) => {
-            Err(Error::new(ErrorKind::Clipboard {
-                description: "Failed to set clipboard contents".to_owned(),
-            }))
-        },
+        Err(_) => bail!("Failed to set clipboard contents"),
     }
 }
 
@@ -43,11 +39,7 @@ fn set_contents_string(ctx: &mut clipboard::ClipboardContext, contents: String) 
 pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
     let mut ctx = match clipboard::ClipboardContext::new() {
         Ok(ctx) => ctx,
-        Err(_) => {
-            return Err(Error::new(ErrorKind::Clipboard {
-                description: "Failed to get clipboard context".to_owned(),
-            }))
-        },
+        Err(_) => bail!("Failed to get clipboard context"),
     };
 
     let as_utf8 = data.to_utf8();
