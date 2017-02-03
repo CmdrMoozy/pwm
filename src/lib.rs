@@ -18,6 +18,8 @@ extern crate backtrace;
 extern crate bdrck_config;
 extern crate bdrck_log;
 extern crate byteorder;
+#[cfg(feature = "clipboard")]
+extern crate clipboard;
 extern crate data_encoding;
 extern crate git2;
 extern crate isatty;

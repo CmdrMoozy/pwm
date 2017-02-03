@@ -9,7 +9,9 @@ bdrck_config = "0.1"
 bdrck_log = "0.3"
 bdrck_params = "0.3"
 byteorder = "1.0"
+clipboard = { version = "0.1", optional = true }
 data-encoding = "1.1"
+git2 = { version = "0.6", default-features = false, features = [] }
 isatty = "0.1"
 lazy_static = "0.2"
 log = "0.3"
@@ -19,14 +21,12 @@ serde_derive = "0.8"
 serde_json = "0.8"
 sodiumoxide = "0.0.12"
 
-[dependencies.git2]
-version = "0.6"
-default-features = false
-features = []
-
 [dev-dependencies]
 tempdir = "0.3"
 tempfile = "2.1"
+
+[features]
+default = ["clipboard"]
 
 [lib]
 name = "pwm_lib"
