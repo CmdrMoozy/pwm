@@ -16,7 +16,24 @@
 
 use clipboard;
 use error::*;
+use std::thread::sleep;
+use std::time::Duration;
 use util::data::SensitiveData;
+
+lazy_static! {
+    static ref CLIPBOARD_TIMEOUT: Duration = Duration::new(45, 0);
+}
+
+fn set_contents_string(ctx: &mut clipboard::ClipboardContext, contents: String) -> Result<()> {
+    match ctx.set_contents(contents) {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            Err(Error::new(ErrorKind::Clipboard {
+                description: "Failed to set clipboard contents".to_owned(),
+            }))
+        },
+    }
+}
 
 /// Set the contents of the OS's clipboard to the given data. If force_binary
 /// is true, or if the
@@ -32,6 +49,7 @@ pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
             }))
         },
     };
+
     let as_utf8 = data.to_utf8();
     let binary = force_binary || as_utf8.is_err();
     let contents: String = if !binary {
@@ -39,12 +57,13 @@ pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
     } else {
         data.to_string()
     };
-    match ctx.set_contents(contents) {
-        Ok(_) => Ok(()),
-        Err(_) => {
-            Err(Error::new(ErrorKind::Clipboard {
-                description: "Failed to set clipboard contents".to_owned(),
-            }))
-        },
-    }
+
+    try!(set_contents_string(&mut ctx, contents));
+
+    info!("Copied stored password or key to clipboard. Will clear in {} seconds.",
+          CLIPBOARD_TIMEOUT.as_secs());
+    sleep(CLIPBOARD_TIMEOUT.clone());
+    try!(set_contents_string(&mut ctx, "".to_owned()));
+
+    Ok(())
 }
