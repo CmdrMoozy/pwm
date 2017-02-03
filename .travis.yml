@@ -41,11 +41,6 @@ script:
       travis-cargo build &&
       travis-cargo test
 
-matrix:
-  allow_failures:
-    - rust: stable
-    - rust: beta
-
 after_success:
   - travis-cargo coveralls --no-sudo --verify
   # Workaround for https://github.com/huonw/travis-cargo/pull/55
