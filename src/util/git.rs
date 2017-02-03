@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use error::{Error, ErrorKind, Result};
+use error::{Error, Result};
 use git2;
 use git2::{Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree};
 use std::collections::vec_deque::VecDeque;
@@ -47,11 +47,7 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
 pub fn get_repository_workdir(repository: &Repository) -> Result<&Path> {
     match repository.workdir() {
         Some(path) => Ok(path),
-        None => {
-            Err(Error::new(ErrorKind::Repository {
-                description: "Repository has no workdir".to_owned(),
-            }))
-        },
+        None => bail!("Repository has no workdir"),
     }
 }
 

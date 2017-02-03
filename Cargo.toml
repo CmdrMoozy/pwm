@@ -4,13 +4,13 @@ version = "0.1.0"
 authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 
 [dependencies]
-backtrace = "0.2"
 bdrck_config = "0.1"
 bdrck_log = "0.3"
 bdrck_params = "0.3"
 byteorder = "1.0"
 clipboard = { version = "0.1", optional = true }
 data-encoding = "1.1"
+error-chain = "0.8"
 git2 = { version = "0.6", default-features = false, features = [] }
 isatty = "0.1"
 lazy_static = "0.2"

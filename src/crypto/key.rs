@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use error::{Error, ErrorKind, Result};
+use error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt};
 use sodiumoxide::crypto::secretbox;
@@ -44,9 +44,7 @@ impl Key {
                 // NOTE: We handle this error gracefully, but in reality (by inspecting the
                 // libsodium source code) the only way this can actually fail is if the input
                 // password is *enormous*. So, this won't really fail in practice.
-                return Err(Error::new(ErrorKind::Key {
-                    cause: "Deriving key from password failed".to_owned(),
-                }));
+                bail!("Deriving key from password failed");
             }
         }
 

@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use error::{Error, ErrorKind, Result};
+use error::Result;
 use sodiumoxide::randombytes::randombytes;
 use std::io::Cursor;
 use std::mem;
@@ -36,9 +36,7 @@ fn get_padded_size(original_size: usize) -> usize {
 
 fn read_original_size(data: &SensitiveData) -> Result<usize> {
     if data.len() < mem::size_of::<u64>() {
-        return Err(Error::new(ErrorKind::Padding {
-            cause: "Cannot unpad data with invalid length".to_owned(),
-        }));
+        bail!("Cannot unpad data with invalid length");
     }
 
     let original_size_encoded: &[u8] = &data[data.len() - mem::size_of::<u64>()..];
