@@ -4,6 +4,8 @@
 
 A simple password manager for Linux.
 
+Inspired conceptually (although the implementation is completely independent) by [pass](https://www.passwordstore.org/) and [gopass](https://www.justwatch.com/blog/post/announcing-gopass/).
+
 ## Installing
 
 Installation requires a working Rust installation. pwm is developed and tested against nightly Rust, but other versions may as well (Travis build status may be a useful indicator here). Rust is most easily installed with [rustup](https://rustup.rs/):
