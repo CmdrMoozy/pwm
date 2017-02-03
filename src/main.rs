@@ -125,20 +125,9 @@ fn ls(options: HashMap<String, String>,
     Ok(())
 }
 
-fn get(options: HashMap<String, String>,
-       flags: HashMap<String, bool>,
-       arguments: HashMap<String, Vec<String>>)
-       -> Result<()> {
-    let _handle = try!(init_pwm());
-
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
-
-    let retrieved = try!(repository.read_decrypt(&path));
+fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()> {
     let as_utf8 = retrieved.to_utf8();
-    let binary = *flags.get("binary").unwrap() || as_utf8.is_err();
-
-    if !binary {
+    if !(force_binary || as_utf8.is_err()) {
         info!("{}", try!(as_utf8));
     } else {
         if isatty::stdout_isatty() {
@@ -153,6 +142,36 @@ fn get(options: HashMap<String, String>,
             let mut stdout = io::stdout();
             try!(stdout.write_all(&retrieved[..]));
         }
+    }
+    Ok(())
+}
+
+fn get(options: HashMap<String, String>,
+       flags: HashMap<String, bool>,
+       arguments: HashMap<String, Vec<String>>)
+       -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
+    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
+    let force_binary = *flags.get("binary").unwrap();
+
+    let retrieved = try!(repository.read_decrypt(&path));
+
+    match () {
+        #[cfg(feature = "clipboard")]
+        () => {
+            if *flags.get("clipboard").unwrap() {
+                try!(pwm_lib::util::clipboard::set_contents(retrieved, force_binary));
+            } else {
+                try!(print_stored_data(retrieved, force_binary));
+            }
+        },
+
+        #[cfg(not(feature = "clipboard"))]
+        () => {
+            try!(print_stored_data(retrieved, force_binary));
+        },
     }
 
     Ok(())
@@ -271,12 +290,23 @@ fn main() {
             Command::new(
                 "get",
                 "Retrieve a password or key from a pwm repository",
-                 vec![
-                    Option::optional(
-                        "repository", "The path to the repository to read from", Some('r')),
-                    Option::flag(
-                        "binary", "Treat the retrieved password or key as binary", Some('b')),
-                ],
+                if cfg!(feature = "clipboard") {
+                    vec![
+                        Option::optional(
+                            "repository", "The path to the repository to read from", Some('r')),
+                        Option::flag(
+                            "binary", "Treat the retrieved password or key as binary", Some('b')),
+                        Option::flag(
+                            "clipboard", "Copy the password or key to the clipboard", Some('c')),
+                    ]
+                } else {
+                    vec![
+                        Option::optional(
+                            "repository", "The path to the repository to read from", Some('r')),
+                        Option::flag(
+                            "binary", "Treat the retrieved password or key as binary", Some('b')),
+                    ]
+                },
                 vec![
                     Argument::new(
                         "path",
