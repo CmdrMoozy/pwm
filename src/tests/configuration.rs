@@ -18,7 +18,7 @@ use ::configuration::*;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use ::tests::tempfile;
+use tests::tempfile;
 
 lazy_static! {
     // The unit tests in this file MUST be run one-at-a-time, since they all access our

@@ -29,6 +29,7 @@ use std::string;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
+    Clipboard { description: String },
     Configuration { cause: String },
     Crypto { cause: String },
     Git { cause: String },
@@ -105,6 +106,7 @@ impl From<string::FromUtf8Error> for Error {
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.kind {
+            ErrorKind::Clipboard { description: _ } => "Clipboard error",
             ErrorKind::Configuration { cause: _ } => "Configuration error",
             ErrorKind::Crypto { cause: _ } => "Cryptographic error",
             ErrorKind::Git { cause: _ } => "Git error",
@@ -125,6 +127,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use std::error::Error;
         match self.kind {
+            ErrorKind::Clipboard { description: ref d } => {
+                f.write_str(format!("{}: {}", self.description(), d).as_str())
+            },
             ErrorKind::Configuration { cause: ref c } => {
                 f.write_str(format!("{}: {}", self.description(), c).as_str())
             },
