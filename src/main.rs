@@ -38,12 +38,13 @@ use pwm_lib::configuration;
 use pwm_lib::error::{Error, ErrorKind, Result};
 use pwm_lib::repository::Repository;
 use pwm_lib::repository::serde::{export_serialize, import_deserialize};
+use pwm_lib::util::{multiline_password_prompt, password_prompt};
 use pwm_lib::util::data::SensitiveData;
-use pwm_lib::util::password_prompt;
 
 extern crate serde_json;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
+static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EOF' is read:";
 
 fn init_pwm() -> Result<configuration::SingletonHandle> {
     try!(pwm_lib::init());
@@ -178,7 +179,7 @@ fn get(options: HashMap<String, String>,
 }
 
 fn set(options: HashMap<String, String>,
-       _: HashMap<String, bool>,
+       flags: HashMap<String, bool>,
        arguments: HashMap<String, Vec<String>>)
        -> Result<()> {
     let _handle = try!(init_pwm());
@@ -186,6 +187,13 @@ fn set(options: HashMap<String, String>,
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
     let key_file = options.get("key_file");
+    let multiline: bool = *flags.get("multiline").unwrap();
+
+    if key_file.is_some() && multiline {
+        return Err(Error::new(ErrorKind::Parameters {
+            description: "The 'key_file' and 'multiline' options are mutually exclusive".to_owned(),
+        }));
+    }
 
     if let Some(key_file) = key_file {
         // The user wants to set the password using a key file.
@@ -194,7 +202,10 @@ fn set(options: HashMap<String, String>,
     } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
-        try!(repository.write_encrypt(&path, try!(password_prompt(NEW_PASSWORD_PROMPT, true))));
+        try!(repository.write_encrypt(&path, match multiline {
+            false => try!(password_prompt(NEW_PASSWORD_PROMPT, true)),
+            true => try!(multiline_password_prompt(MULTILINE_PASSWORD_PROMPT)),
+        }));
     }
 
     Ok(())
@@ -324,6 +335,8 @@ fn main() {
                         "repository", "The path to the repository to modify", Some('r')),
                     Option::optional(
                         "key_file", "Store a key file instead of a password", Some('k')),
+                    Option::flag(
+                        "multiline", "Read multiple lines of input data, until 'EOF'", Some('m')),
                 ],
                 vec![
                     Argument::new(
