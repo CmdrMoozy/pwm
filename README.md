@@ -8,7 +8,7 @@ Inspired conceptually (although the implementation is completely independent) by
 
 ## Installing
 
-Installation requires a working Rust installation. pwm is developed and tested against nightly Rust, but other versions may as well (Travis build status may be a useful indicator here). Rust is most easily installed with [rustup](https://rustup.rs/):
+Installation requires a working Rust installation. Rust is most easily installed with [rustup](https://rustup.rs/):
 
 ```sh
 curl https://sh.rustup.rs -sSf | sh
