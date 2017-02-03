@@ -19,7 +19,7 @@ rpassword = "0.3"
 serde = "0.8"
 serde_derive = "0.8"
 serde_json = "0.8"
-sodiumoxide = "0.0.12"
+sodiumoxide = "0.0.14"
 
 [dev-dependencies]
 tempdir = "0.3"
