@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use bdrck_config::configuration as bdrck_config;
-use error::{Error, ErrorKind, Result};
+use error::{Error, Result};
 use std::path::Path;
 
 pub static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
@@ -77,9 +77,8 @@ pub fn set(key: &str, value: &str) -> Result<()> {
         if key == DEFAULT_REPOSITORY_KEY {
             config.default_repository = Some(value.to_owned());
         } else {
-            return Some(Error::new(ErrorKind::Configuration {
-                cause: format!("Invalid configuration key '{}'", key)
-            }));
+            let e: Error = format!("Invalid configuration key '{}'", key).into();
+            return Some(e);
         }
         instance.set(config);
         None
@@ -103,9 +102,7 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
             None => String::new(),
         })
     } else {
-        Err(Error::new(ErrorKind::Configuration {
-            cause: format!("Invalid configuration key '{}'", key),
-        }))
+        bail!("Invalid configuration key '{}'", key);
     }
 }
 

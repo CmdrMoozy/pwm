@@ -18,7 +18,7 @@ use crypto::decrypt::decrypt;
 use crypto::encrypt::encrypt;
 use crypto::key::Key;
 use crypto::padding;
-use error::{Error, ErrorKind, Result};
+use error::Result;
 use git2;
 use repository::configuration::{Configuration, ConfigurationInstance};
 use repository::path::Path as RepositoryPath;
@@ -85,10 +85,8 @@ fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData
     use std::io::Read;
 
     if !path.absolute_path().exists() {
-        return Err(Error::new(ErrorKind::Path {
-            description: format!("No stored password at path '{}'",
-                                 path.relative_path().display()),
-        }));
+        bail!("No stored password at path '{}'",
+              path.relative_path().display());
     }
 
     let mut file = try!(File::open(path.absolute_path()));
@@ -125,7 +123,7 @@ fn verify_auth_token(repository: &git2::Repository, create: bool, master_key: &K
         }
     }
 
-    Err(Error::new(ErrorKind::Crypto { cause: "Incorrect master password".to_owned() }))
+    bail!("Incorrect master password");
 }
 
 fn reencrypt_all(repository: &git2::Repository,

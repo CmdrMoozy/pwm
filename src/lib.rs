@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-extern crate backtrace;
 extern crate bdrck_config;
 extern crate bdrck_log;
 extern crate byteorder;
 #[cfg(feature = "clipboard")]
 extern crate clipboard;
 extern crate data_encoding;
+#[macro_use]
+extern crate error_chain;
 extern crate git2;
 extern crate isatty;
 #[macro_use]
@@ -44,9 +45,7 @@ mod tests;
 
 pub fn init() -> ::error::Result<()> {
     if !sodiumoxide::init() {
-        return Err(error::Error::new(error::ErrorKind::Initialization {
-            cause: "sodiumoxide initialization failed".to_owned(),
-        }));
+        bail!("sodiumoxide initialization failed");
     }
 
     Ok(())

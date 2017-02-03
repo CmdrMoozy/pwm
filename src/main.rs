@@ -28,6 +28,9 @@ use bdrck_params::command::ExecutableCommand;
 use bdrck_params::main_impl::main_impl_multiple_commands;
 use bdrck_params::option::Option;
 
+#[macro_use]
+extern crate error_chain;
+
 extern crate isatty;
 
 #[macro_use]
@@ -35,7 +38,7 @@ extern crate log;
 
 extern crate pwm_lib;
 use pwm_lib::configuration;
-use pwm_lib::error::{Error, ErrorKind, Result};
+use pwm_lib::error::Result;
 use pwm_lib::repository::Repository;
 use pwm_lib::repository::serde::{export_serialize, import_deserialize};
 use pwm_lib::util::{multiline_password_prompt, password_prompt};
@@ -55,11 +58,8 @@ fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
     match options.get("repository").or(try!(configuration::get()).default_repository.as_ref()) {
         Some(p) => Ok(p.clone()),
         None => {
-            Err(Error::new(ErrorKind::Parameters {
-                description: "No repository path specified. Try the 'repository' command option, \
-                              or setting the 'default_repository' configuration key."
-                    .to_owned(),
-            }))
+            bail!("No repository path specified. Try the 'repository' command option, or setting \
+                   the 'default_repository' configuration key.")
         },
     }
 }
@@ -75,10 +75,7 @@ fn config(options: HashMap<String, String>,
 
     if k.is_none() {
         if s.is_some() {
-            return Err(Error::new(ErrorKind::Parameters {
-                description: "A 'key' must be provided when 'set'ting a configuration value."
-                    .to_owned(),
-            }));
+            bail!("A 'key' must be provided when 'set'ting a configuration value.");
         }
 
         info!("{}",
@@ -190,9 +187,7 @@ fn set(options: HashMap<String, String>,
     let multiline: bool = *flags.get("multiline").unwrap();
 
     if key_file.is_some() && multiline {
-        return Err(Error::new(ErrorKind::Parameters {
-            description: "The 'key_file' and 'multiline' options are mutually exclusive".to_owned(),
-        }));
+        bail!("The 'key_file' and 'multiline' options are mutually exclusive.");
     }
 
     if let Some(key_file) = key_file {
