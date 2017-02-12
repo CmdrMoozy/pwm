@@ -25,7 +25,6 @@ pub trait Key {
 }
 
 pub struct PasswordKey {
-    salt: Salt,
     key: secretbox::Key,
 }
 
@@ -52,13 +51,8 @@ impl PasswordKey {
             }
         }
 
-        Ok(PasswordKey {
-            salt: salt,
-            key: key,
-        })
+        Ok(PasswordKey { key: key })
     }
-
-    pub fn get_salt(&self) -> &Salt { &self.salt }
 }
 
 impl Key for PasswordKey {

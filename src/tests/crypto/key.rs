@@ -20,12 +20,11 @@ use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
 #[test]
-fn test_predefined_salt() {
+fn test_password_key_derivation() {
     let salt: Salt = Salt::from_slice(&randombytes(32)[..]).unwrap();
-    let key = PasswordKey::new(SensitiveData::from("foobar".as_bytes().to_vec()),
-                               Some(salt.clone()),
-                               None,
-                               None)
+    let _key = PasswordKey::new(SensitiveData::from("foobar".as_bytes().to_vec()),
+                                Some(salt.clone()),
+                                None,
+                                None)
         .unwrap();
-    assert_eq!(&salt[..], &key.get_salt()[..]);
 }
