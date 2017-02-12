@@ -22,10 +22,10 @@ use util::data::SensitiveData;
 #[test]
 fn test_predefined_salt() {
     let salt: Salt = Salt::from_slice(&randombytes(32)[..]).unwrap();
-    let key = Key::new(SensitiveData::from("foobar".as_bytes().to_vec()),
-                       Some(salt.clone()),
-                       None,
-                       None)
+    let key = PasswordKey::new(SensitiveData::from("foobar".as_bytes().to_vec()),
+                               Some(salt.clone()),
+                               None,
+                               None)
         .unwrap();
     assert_eq!(&salt[..], &key.get_salt()[..]);
 }
