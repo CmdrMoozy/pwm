@@ -20,17 +20,21 @@ use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt};
 use sodiumoxide::crypto::secretbox;
 use util::data::SensitiveData;
 
-pub struct Key {
+pub trait Key {
+    fn get_key(&self) -> &secretbox::Key;
+}
+
+pub struct PasswordKey {
     salt: Salt,
     key: secretbox::Key,
 }
 
-impl Key {
+impl PasswordKey {
     pub fn new(password: SensitiveData,
                salt: Option<Salt>,
                ops: Option<OpsLimit>,
                mem: Option<MemLimit>)
-               -> Result<Key> {
+               -> Result<PasswordKey> {
         let salt: Salt = salt.unwrap_or(pwhash::gen_salt());
         let mut key = secretbox::Key([0; secretbox::KEYBYTES]);
         {
@@ -48,13 +52,15 @@ impl Key {
             }
         }
 
-        Ok(Key {
+        Ok(PasswordKey {
             salt: salt,
             key: key,
         })
     }
 
     pub fn get_salt(&self) -> &Salt { &self.salt }
+}
 
-    pub fn get_key(&self) -> &secretbox::Key { &self.key }
+impl Key for PasswordKey {
+    fn get_key(&self) -> &secretbox::Key { &self.key }
 }

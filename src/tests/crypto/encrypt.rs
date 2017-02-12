@@ -16,16 +16,16 @@
 
 use ::crypto::decrypt::*;
 use ::crypto::encrypt::*;
-use crypto::key::Key;
+use crypto::key::PasswordKey;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
 #[test]
 fn test_encryption_roundtrip() {
-    let key = Key::new(SensitiveData::from("foobar".as_bytes().to_vec()),
-                       None,
-                       None,
-                       None)
+    let key = PasswordKey::new(SensitiveData::from("foobar".as_bytes().to_vec()),
+                               None,
+                               None,
+                               None)
         .unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
     let (nonce, ciphertext) = encrypt(plaintext.clone(), &key).ok().unwrap();
