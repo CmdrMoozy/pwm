@@ -19,7 +19,7 @@ use error::Result;
 use sodiumoxide::crypto::secretbox;
 use util::data::SensitiveData;
 
-pub fn encrypt(plaintext: SensitiveData, key: &Key) -> Result<(secretbox::Nonce, Vec<u8>)> {
+pub fn encrypt<K: Key>(plaintext: SensitiveData, key: &K) -> Result<(secretbox::Nonce, Vec<u8>)> {
     let nonce = secretbox::gen_nonce();
     let ciphertext = secretbox::seal(&plaintext[..], &nonce, &key.get_key());
     Ok((nonce, ciphertext))
