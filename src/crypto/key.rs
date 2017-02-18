@@ -30,7 +30,11 @@ pub struct RandomKey {
 }
 
 impl RandomKey {
-    pub fn new() -> RandomKey {
+    pub fn new() -> RandomKey { Self::default() }
+}
+
+impl Default for RandomKey {
+    fn default() -> RandomKey {
         RandomKey { key: secretbox::Key::from_slice(&randombytes(32)[..]).unwrap() }
     }
 }
@@ -49,7 +53,7 @@ impl PasswordKey {
                ops: Option<OpsLimit>,
                mem: Option<MemLimit>)
                -> Result<PasswordKey> {
-        let salt: Salt = salt.unwrap_or(pwhash::gen_salt());
+        let salt: Salt = salt.unwrap_or_else(pwhash::gen_salt);
         let mut key = secretbox::Key([0; secretbox::KEYBYTES]);
         {
             let secretbox::Key(ref mut kb) = key;

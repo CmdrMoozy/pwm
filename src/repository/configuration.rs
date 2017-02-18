@@ -38,7 +38,7 @@ impl Configuration {
         }
     }
 
-    pub fn get_salt(&self) -> Salt { Salt(self.salt.clone()) }
+    pub fn get_salt(&self) -> Salt { Salt(self.salt) }
 
     pub fn get_mem_limit(&self) -> MemLimit { MemLimit(self.mem_limit) }
 

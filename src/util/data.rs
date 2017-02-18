@@ -20,9 +20,9 @@ use sodiumoxide::utils::memzero;
 use std::fs::File;
 use std::ops::{Index, Range, RangeFrom, RangeFull, RangeTo};
 
-/// SensitiveData is, essentially, a vector of bytes which attempts to treat
+/// `SensitiveData` is, essentially, a vector of bytes which attempts to treat
 /// its contents as particularly sensitive. In particular, when Drop'ed a
-/// SensitiveData will zero out the memory holding its contents to avoid
+/// `SensitiveData` will zero out the memory holding its contents to avoid
 /// leaking them. Additionally, the API tries to prevent callers from doing
 /// things which would leak its contents.
 ///
@@ -74,6 +74,7 @@ impl SensitiveData {
 
     fn as_slice(&self) -> &[u8] { &self.data }
 
+    pub fn is_empty(&self) -> bool { self.data.is_empty() }
     pub fn len(&self) -> usize { self.data.len() }
 
     /// Return a new SensitiveData which contains the concatenation of the
