@@ -16,24 +16,24 @@
 
 use ::crypto::decrypt::*;
 use ::crypto::encrypt::*;
-use crypto::key::PasswordKey;
+use crypto::key::Key;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
 #[test]
 fn test_decrypting_with_wrong_key_fails() {
-    let key = PasswordKey::new(SensitiveData::from("foobar".as_bytes().to_vec()),
-                               None,
-                               None,
-                               None)
+    let key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
+                                None,
+                                None,
+                                None)
         .unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
     let (nonce, ciphertext) = encrypt(plaintext, &key).ok().unwrap();
 
-    let wrong_key = PasswordKey::new(SensitiveData::from("raboof".as_bytes().to_vec()),
-                                     None,
-                                     None,
-                                     None)
+    let wrong_key = Key::password_key(SensitiveData::from("raboof".as_bytes().to_vec()),
+                                      None,
+                                      None,
+                                      None)
         .unwrap();
     let decrypted_result = decrypt(ciphertext.as_slice(), &nonce, &wrong_key);
     assert!(decrypted_result.is_err());
