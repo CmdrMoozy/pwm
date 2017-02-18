@@ -9,16 +9,16 @@ bdrck_log = "0.3"
 bdrck_params = "0.3"
 byteorder = "1.0"
 clipboard = { version = "0.1", optional = true }
-data-encoding = "1.1"
-error-chain = "0.8"
+data-encoding = "1.2"
+error-chain = "0.9"
 git2 = { version = "0.6", default-features = false, features = [] }
 isatty = "0.1"
 lazy_static = "0.2"
 log = "0.3"
 rpassword = "0.3"
-serde = "0.8"
-serde_derive = "0.8"
-serde_json = "0.8"
+serde = "0.9"
+serde_derive = "0.9"
+serde_json = "0.9"
 sodiumoxide = "0.0.14"
 
 [dev-dependencies]
