@@ -15,10 +15,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #[cfg(test)]
-mod decrypt;
-#[cfg(test)]
-mod encrypt;
-#[cfg(test)]
 mod key;
 #[cfg(test)]
 mod padding;
