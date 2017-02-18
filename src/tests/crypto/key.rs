@@ -28,3 +28,35 @@ fn test_password_key_derivation() {
                                  None)
         .unwrap();
 }
+
+#[test]
+fn test_encryption_roundtrip() {
+    let key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
+                                None,
+                                None,
+                                None)
+        .unwrap();
+    let plaintext = SensitiveData::from(randombytes(1024));
+    let (nonce, ciphertext) = key.encrypt(plaintext.clone()).ok().unwrap();
+    let decrypted = key.decrypt(ciphertext.as_slice(), &nonce).unwrap();
+    assert_eq!(plaintext, decrypted);
+}
+
+#[test]
+fn test_decrypting_with_wrong_key_fails() {
+    let key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
+                                None,
+                                None,
+                                None)
+        .unwrap();
+    let plaintext = SensitiveData::from(randombytes(1024));
+    let (nonce, ciphertext) = key.encrypt(plaintext).ok().unwrap();
+
+    let wrong_key = Key::password_key(SensitiveData::from("raboof".as_bytes().to_vec()),
+                                      None,
+                                      None,
+                                      None)
+        .unwrap();
+    let decrypted_result = wrong_key.decrypt(ciphertext.as_slice(), &nonce);
+    assert!(decrypted_result.is_err());
+}

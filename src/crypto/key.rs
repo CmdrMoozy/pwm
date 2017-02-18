@@ -57,4 +57,18 @@ impl Key {
     }
 
     pub fn get_key(&self) -> &secretbox::Key { &self.key }
+
+    pub fn encrypt(&self, plaintext: SensitiveData) -> Result<(secretbox::Nonce, Vec<u8>)> {
+        let nonce = secretbox::gen_nonce();
+        let ciphertext = secretbox::seal(&plaintext[..], &nonce, self.get_key());
+        Ok((nonce, ciphertext))
+    }
+
+    pub fn decrypt(&self, ciphertext: &[u8], nonce: &secretbox::Nonce) -> Result<SensitiveData> {
+        let result = secretbox::open(ciphertext, nonce, self.get_key());
+        if result.is_err() {
+            bail!("Ciphertext failed key verification");
+        }
+        Ok(SensitiveData::from(result.ok().unwrap()))
+    }
 }
