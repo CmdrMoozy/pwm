@@ -18,10 +18,25 @@ use error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt};
 use sodiumoxide::crypto::secretbox;
+use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
 pub trait Key {
     fn get_key(&self) -> &secretbox::Key;
+}
+
+pub struct RandomKey {
+    key: secretbox::Key,
+}
+
+impl RandomKey {
+    pub fn new() -> RandomKey {
+        RandomKey { key: secretbox::Key::from_slice(&randombytes(32)[..]).unwrap() }
+    }
+}
+
+impl Key for RandomKey {
+    fn get_key(&self) -> &secretbox::Key { &self.key }
 }
 
 pub struct PasswordKey {
