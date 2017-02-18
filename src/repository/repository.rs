@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use crypto::decrypt::decrypt;
-use crypto::encrypt::encrypt;
 use crypto::key::Key;
 use crypto::padding;
 use error::Result;
@@ -60,7 +58,7 @@ fn write_encrypt(repository: &git2::Repository,
                  plaintext: SensitiveData,
                  master_key: &Key)
                  -> Result<()> {
-    let (nonce, data) = try!(encrypt(padding::pad(plaintext), master_key));
+    let (nonce, data) = try!(master_key.encrypt(padding::pad(plaintext)));
 
     if let Some(parent) = path.absolute_path().parent() {
         try!(fs::create_dir_all(parent));
@@ -96,7 +94,7 @@ fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData
     try!(file.read_exact(&mut nonce.0));
     try!(file.read_to_end(&mut data));
 
-    padding::unpad(try!(decrypt(data.as_slice(), &nonce, master_key)))
+    padding::unpad(try!(master_key.decrypt(data.as_slice(), &nonce)))
 }
 
 fn write_auth_token(repository: &git2::Repository, master_key: &Key) -> Result<()> {
