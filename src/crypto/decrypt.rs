@@ -19,10 +19,7 @@ use error::Result;
 use sodiumoxide::crypto::secretbox;
 use util::data::SensitiveData;
 
-pub fn decrypt<K: Key>(ciphertext: &[u8],
-                       nonce: &secretbox::Nonce,
-                       key: &K)
-                       -> Result<SensitiveData> {
+pub fn decrypt(ciphertext: &[u8], nonce: &secretbox::Nonce, key: &Key) -> Result<SensitiveData> {
     let result = secretbox::open(ciphertext, nonce, key.get_key());
     if result.is_err() {
         bail!("Ciphertext failed key verification");
