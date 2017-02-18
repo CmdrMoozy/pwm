@@ -16,6 +16,7 @@
 
 extern crate bdrck_config;
 extern crate bdrck_log;
+extern crate bincode;
 extern crate byteorder;
 #[cfg(feature = "clipboard")]
 extern crate clipboard;
@@ -29,6 +30,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 extern crate rpassword;
+extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;

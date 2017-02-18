@@ -7,6 +7,7 @@ authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 bdrck_config = "0.1"
 bdrck_log = "0.3"
 bdrck_params = "0.3"
+bincode = "1.0.0-alpha2"
 byteorder = "1.0"
 clipboard = { version = "0.1", optional = true }
 data-encoding = "1.2"
