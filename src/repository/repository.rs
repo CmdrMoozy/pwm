@@ -45,7 +45,8 @@ static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / 
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
 
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
-    repository.signature().unwrap_or(git2::Signature::now("pwm", "pwm@nowhere.com").unwrap())
+    repository.signature()
+        .unwrap_or_else(|_| git2::Signature::now("pwm", "pwm@nowhere.com").unwrap())
 }
 
 fn open_crypto_configuration(repository: &git2::Repository) -> Result<ConfigurationInstance> {
@@ -130,7 +131,7 @@ fn verify_auth_token<K: Key>(repository: &git2::Repository,
 }
 
 fn reencrypt_all<K: Key>(repository: &git2::Repository,
-                         listing: &Vec<RepositoryPath>,
+                         listing: &[RepositoryPath],
                          old_master_key: &K,
                          new_master_key: &K)
                          -> Result<()> {
@@ -207,12 +208,11 @@ impl Repository {
         let path_filter: &RepositoryPath = path_filter.unwrap_or(&default_path_filter);
         let entries = try!(git::get_repository_listing(&self.repository,
                                                        path_filter.relative_path()));
-        let entries: Result<Vec<RepositoryPath>> = entries.into_iter()
+        entries.into_iter()
             .filter(|entry| entry != CRYPTO_CONFIGURATION_PATH.as_path())
             .filter(|entry| entry != AUTH_TOKEN_PATH.as_path())
             .map(|entry| self.path(entry))
-            .collect();
-        entries
+            .collect()
     }
 
     pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
