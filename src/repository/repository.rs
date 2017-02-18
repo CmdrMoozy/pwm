@@ -16,7 +16,7 @@
 
 use crypto::decrypt::decrypt;
 use crypto::encrypt::encrypt;
-use crypto::key::{Key, PasswordKey};
+use crypto::key::Key;
 use crypto::padding;
 use error::Result;
 use git2;
@@ -55,11 +55,11 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     ConfigurationInstance::new(path.as_path())
 }
 
-fn write_encrypt<K: Key>(repository: &git2::Repository,
-                         path: &RepositoryPath,
-                         plaintext: SensitiveData,
-                         master_key: &K)
-                         -> Result<()> {
+fn write_encrypt(repository: &git2::Repository,
+                 path: &RepositoryPath,
+                 plaintext: SensitiveData,
+                 master_key: &Key)
+                 -> Result<()> {
     let (nonce, data) = try!(encrypt(padding::pad(plaintext), master_key));
 
     if let Some(parent) = path.absolute_path().parent() {
@@ -82,7 +82,7 @@ fn write_encrypt<K: Key>(repository: &git2::Repository,
     Ok(())
 }
 
-fn read_decrypt<K: Key>(path: &RepositoryPath, master_key: &K) -> Result<SensitiveData> {
+fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData> {
     use std::io::Read;
 
     if !path.absolute_path().exists() {
@@ -99,7 +99,7 @@ fn read_decrypt<K: Key>(path: &RepositoryPath, master_key: &K) -> Result<Sensiti
     padding::unpad(try!(decrypt(data.as_slice(), &nonce, master_key)))
 }
 
-fn write_auth_token<K: Key>(repository: &git2::Repository, master_key: &K) -> Result<()> {
+fn write_auth_token(repository: &git2::Repository, master_key: &Key) -> Result<()> {
     write_encrypt(repository,
                   &try!(RepositoryPath::new(try!(git::get_repository_workdir(repository)),
                                             AUTH_TOKEN_PATH.as_path())),
@@ -107,10 +107,7 @@ fn write_auth_token<K: Key>(repository: &git2::Repository, master_key: &K) -> Re
                   master_key)
 }
 
-fn verify_auth_token<K: Key>(repository: &git2::Repository,
-                             create: bool,
-                             master_key: &K)
-                             -> Result<()> {
+fn verify_auth_token(repository: &git2::Repository, create: bool, master_key: &Key) -> Result<()> {
     let mut path = PathBuf::from(try!(git::get_repository_workdir(repository)));
     path.push(AUTH_TOKEN_PATH.as_path());
 
@@ -130,11 +127,11 @@ fn verify_auth_token<K: Key>(repository: &git2::Repository,
     bail!("Incorrect master password");
 }
 
-fn reencrypt_all<K: Key>(repository: &git2::Repository,
-                         listing: &[RepositoryPath],
-                         old_master_key: &K,
-                         new_master_key: &K)
-                         -> Result<()> {
+fn reencrypt_all(repository: &git2::Repository,
+                 listing: &[RepositoryPath],
+                 old_master_key: &Key,
+                 new_master_key: &Key)
+                 -> Result<()> {
     for path in listing {
         try!(write_encrypt(repository,
                            path,
@@ -150,7 +147,7 @@ pub struct Repository {
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<ConfigurationInstance>,
     master_password: SensitiveData,
-    master_key: PasswordKey,
+    master_key: Key,
 }
 
 impl Repository {
@@ -233,7 +230,7 @@ impl Repository {
         Ok(())
     }
 
-    fn reencrypt(&mut self, new_master_key: PasswordKey) -> Result<()> {
+    fn reencrypt(&mut self, new_master_key: Key) -> Result<()> {
         {
             let old_master_key = &self.master_key;
             try!(reencrypt_all(&self.repository,

@@ -22,9 +22,9 @@ use util::data::SensitiveData;
 #[test]
 fn test_password_key_derivation() {
     let salt: Salt = Salt::from_slice(&randombytes(32)[..]).unwrap();
-    let _key = PasswordKey::new(SensitiveData::from("foobar".as_bytes().to_vec()),
-                                Some(salt.clone()),
-                                None,
-                                None)
+    let _key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
+                                 Some(salt.clone()),
+                                 None,
+                                 None)
         .unwrap();
 }

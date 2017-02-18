@@ -21,40 +21,23 @@ use sodiumoxide::crypto::secretbox;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
-pub trait Key {
-    fn get_key(&self) -> &secretbox::Key;
-}
-
-pub struct RandomKey {
+pub struct Key {
     key: secretbox::Key,
 }
 
-impl RandomKey {
-    pub fn new() -> RandomKey { Self::default() }
-}
-
-impl Default for RandomKey {
-    fn default() -> RandomKey {
-        RandomKey { key: secretbox::Key::from_slice(&randombytes(32)[..]).unwrap() }
+impl Key {
+    pub fn random_key() -> Key {
+        Key { key: secretbox::Key::from_slice(&randombytes(32)[..]).unwrap() }
     }
-}
 
-impl Key for RandomKey {
-    fn get_key(&self) -> &secretbox::Key { &self.key }
-}
-
-pub struct PasswordKey {
-    key: secretbox::Key,
-}
-
-impl PasswordKey {
-    pub fn new(password: SensitiveData,
-               salt: Option<Salt>,
-               ops: Option<OpsLimit>,
-               mem: Option<MemLimit>)
-               -> Result<PasswordKey> {
-        let salt: Salt = salt.unwrap_or_else(pwhash::gen_salt);
+    pub fn password_key(password: SensitiveData,
+                        salt: Option<Salt>,
+                        ops: Option<OpsLimit>,
+                        mem: Option<MemLimit>)
+                        -> Result<Key> {
+        let salt = salt.unwrap_or_else(pwhash::gen_salt);
         let mut key = secretbox::Key([0; secretbox::KEYBYTES]);
+
         {
             let secretbox::Key(ref mut kb) = key;
             let result = pwhash::derive_key(kb,
@@ -70,10 +53,8 @@ impl PasswordKey {
             }
         }
 
-        Ok(PasswordKey { key: key })
+        Ok(Key { key: key })
     }
-}
 
-impl Key for PasswordKey {
-    fn get_key(&self) -> &secretbox::Key { &self.key }
+    pub fn get_key(&self) -> &secretbox::Key { &self.key }
 }
