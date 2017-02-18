@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use bincode::{deserialize, serialize};
+use bincode::SizeLimit;
 use error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt};
@@ -21,14 +23,29 @@ use sodiumoxide::crypto::secretbox;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
+#[derive(Deserialize, Serialize)]
 pub struct Key {
-    key: secretbox::Key,
+    wrap_nonce: Option<secretbox::Nonce>,
+    data: Vec<u8>,
+    key: Option<secretbox::Key>,
 }
 
 impl Key {
-    pub fn random_key() -> Key {
-        Key { key: secretbox::Key::from_slice(&randombytes(32)[..]).unwrap() }
+    fn new(wrap_nonce: Option<secretbox::Nonce>, data: Vec<u8>) -> Key {
+        let key = if wrap_nonce.is_some() {
+            None
+        } else {
+            secretbox::Key::from_slice(&data[..])
+        };
+
+        Key {
+            wrap_nonce: wrap_nonce,
+            data: data,
+            key: key,
+        }
     }
+
+    pub fn random_key() -> Key { Key::new(None, randombytes(secretbox::KEYBYTES)) }
 
     pub fn password_key(password: SensitiveData,
                         salt: Option<Salt>,
@@ -36,39 +53,65 @@ impl Key {
                         mem: Option<MemLimit>)
                         -> Result<Key> {
         let salt = salt.unwrap_or_else(pwhash::gen_salt);
-        let mut key = secretbox::Key([0; secretbox::KEYBYTES]);
+        let ops = ops.unwrap_or(pwhash::OPSLIMIT_INTERACTIVE);
+        let mem = mem.unwrap_or(pwhash::MEMLIMIT_INTERACTIVE);
 
+        let mut key_buffer = vec![0; secretbox::KEYBYTES];
         {
-            let secretbox::Key(ref mut kb) = key;
-            let result = pwhash::derive_key(kb,
-                                            &password[..],
-                                            &salt,
-                                            ops.unwrap_or(pwhash::OPSLIMIT_INTERACTIVE),
-                                            mem.unwrap_or(pwhash::MEMLIMIT_INTERACTIVE));
+            let result =
+                pwhash::derive_key(key_buffer.as_mut_slice(), &password[..], &salt, ops, mem);
             if result.is_err() {
                 // NOTE: We handle this error gracefully, but in reality (by inspecting the
-                // libsodium source code) the only way this can actually fail is if the input
-                // password is *enormous*. So, this won't really fail in practice.
+                // libsodium
+                // source code) the only way this can actually fail is if the input password is
+                // *enormous*. So, this won't really fail in practice.
                 bail!("Deriving key from password failed");
             }
         }
 
-        Ok(Key { key: key })
+        Ok(Key::new(None, key_buffer))
     }
 
-    pub fn get_key(&self) -> &secretbox::Key { &self.key }
+    pub fn get_key(&self) -> Result<&secretbox::Key> {
+        match self.key.as_ref() {
+            Some(k) => Ok(k),
+            None => bail!("Cannot build encryption key from wrapped key."),
+        }
+    }
 
     pub fn encrypt(&self, plaintext: SensitiveData) -> Result<(secretbox::Nonce, Vec<u8>)> {
         let nonce = secretbox::gen_nonce();
-        let ciphertext = secretbox::seal(&plaintext[..], &nonce, self.get_key());
+        let ciphertext = secretbox::seal(&plaintext[..], &nonce, try!(self.get_key()));
         Ok((nonce, ciphertext))
     }
 
     pub fn decrypt(&self, ciphertext: &[u8], nonce: &secretbox::Nonce) -> Result<SensitiveData> {
-        let result = secretbox::open(ciphertext, nonce, self.get_key());
+        let result = secretbox::open(ciphertext, nonce, try!(self.get_key()));
         if result.is_err() {
             bail!("Ciphertext failed key verification");
         }
         Ok(SensitiveData::from(result.ok().unwrap()))
+    }
+
+    pub fn wrap(self, wrap_key: &Key) -> Result<Key> {
+        let serialized = match serialize(&self, SizeLimit::Infinite) {
+            Err(_) => bail!("Serializing key failed"),
+            Ok(s) => s,
+        };
+        let (nonce, encrypted) = try!(wrap_key.encrypt(SensitiveData::from(serialized)));
+        Ok(Key::new(Some(nonce), encrypted))
+    }
+
+    pub fn unwrap(self, wrap_key: &Key) -> Result<Key> {
+        if self.wrap_nonce.is_none() {
+            bail!("Cannot unwrap key without nonce");
+        }
+
+        let decrypted =
+            try!(wrap_key.decrypt(self.data.as_slice(), self.wrap_nonce.as_ref().unwrap()));
+        Ok(match deserialize(&decrypted[..]) {
+            Err(_) => bail!("Deserializing key failed"),
+            Ok(d) => d,
+        })
     }
 }
