@@ -31,11 +31,10 @@ fn set_contents_string(ctx: &mut clipboard::ClipboardContext, contents: String) 
     }
 }
 
-/// Set the contents of the OS's clipboard to the given data. If force_binary
-/// is true, or if the
-/// given data is determined to not be a valid UTF-8-encoded string, then the
-/// clipboard will be
-/// populated with a Base64 encoded version of the data.
+/// Set the contents of the OS's clipboard to the given data. If `force_binary`
+/// is true, or if the given data is determined to not be a valid UTF-8-encoded
+/// string, then the clipboard will be populated with a Base64 encoded version
+/// of the data.
 pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
     let mut ctx = match clipboard::ClipboardContext::new() {
         Ok(ctx) => ctx,
@@ -54,7 +53,7 @@ pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
 
     info!("Copied stored password or key to clipboard. Will clear in {} seconds.",
           CLIPBOARD_TIMEOUT.as_secs());
-    sleep(CLIPBOARD_TIMEOUT.clone());
+    sleep(*CLIPBOARD_TIMEOUT);
     try!(set_contents_string(&mut ctx, "".to_owned()));
 
     Ok(())

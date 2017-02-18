@@ -55,7 +55,8 @@ fn init_pwm() -> Result<configuration::SingletonHandle> {
 }
 
 fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
-    match options.get("repository").or(try!(configuration::get()).default_repository.as_ref()) {
+    let config = try!(configuration::get());
+    match options.get("repository").or_else(|| config.default_repository.as_ref()) {
         Some(p) => Ok(p.clone()),
         None => {
             bail!("No repository path specified. Try the 'repository' command option, or setting \
@@ -116,7 +117,7 @@ fn ls(options: HashMap<String, String>,
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
-    for entry in try!(repository.list(Some(&path))).iter() {
+    for entry in &try!(repository.list(Some(&path))) {
         info!("{}", entry.to_str().unwrap());
     }
 
@@ -127,19 +128,17 @@ fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()>
     let as_utf8 = retrieved.to_utf8();
     if !(force_binary || as_utf8.is_err()) {
         info!("{}", try!(as_utf8));
+    } else if isatty::stdout_isatty() {
+        // The stored password is binary, but stdout is an interactive terminal so we
+        // can't really write binary output. Display the password in Base64.
+        info!("{}", retrieved.to_string());
     } else {
-        if isatty::stdout_isatty() {
-            // The stored password is binary, but stdout is an interactive terminal so we
-            // can't really write binary output. Display the password in Base64.
-            info!("{}", retrieved.to_string());
-        } else {
-            use std::io::Write;
+        use std::io::Write;
 
-            // The stored password is binary, and stdout is a file / pipe / whatever. Write
-            // the raw bytes.
-            let mut stdout = io::stdout();
-            try!(stdout.write_all(&retrieved[..]));
-        }
+        // The stored password is binary, and stdout is a file / pipe / whatever. Write
+        // the raw bytes.
+        let mut stdout = io::stdout();
+        try!(stdout.write_all(&retrieved[..]));
     }
     Ok(())
 }
@@ -152,14 +151,14 @@ fn get(options: HashMap<String, String>,
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
-    let force_binary = *flags.get("binary").unwrap();
+    let force_binary = flags["binary"];
 
     let retrieved = try!(repository.read_decrypt(&path));
 
     match () {
         #[cfg(feature = "clipboard")]
         () => {
-            if *flags.get("clipboard").unwrap() {
+            if flags["clipboard"] {
                 try!(pwm_lib::util::clipboard::set_contents(retrieved, force_binary));
             } else {
                 try!(print_stored_data(retrieved, force_binary));
@@ -184,7 +183,7 @@ fn set(options: HashMap<String, String>,
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
     let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
     let key_file = options.get("key_file");
-    let multiline: bool = *flags.get("multiline").unwrap();
+    let multiline = flags["multiline"];
 
     if key_file.is_some() && multiline {
         bail!("The 'key_file' and 'multiline' options are mutually exclusive.");
@@ -239,7 +238,7 @@ fn import(options: HashMap<String, String>,
 
     let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
 
-    let input_path = options.get("input").unwrap();
+    let input_path = &options["input"];
     let mut input = String::new();
     let mut f = try!(File::open(&input_path));
     try!(f.read_to_string(&mut input));
