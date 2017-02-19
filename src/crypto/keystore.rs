@@ -16,6 +16,7 @@
 
 use crypto::key::Key;
 use error::Result;
+use std::fs::File;
 use std::path::Path;
 use util::serde::{deserialize_binary, serialize_binary};
 
@@ -33,12 +34,42 @@ struct EncryptedContents {
     pub wrapped_keys: Vec<Vec<u8>>,
 }
 
+impl EncryptedContents {
+    pub fn new() -> EncryptedContents { Self::default() }
+
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<EncryptedContents> {
+        use std::io::Read;
+        let mut file = try!(File::open(path));
+        let mut contents: Vec<u8> = Vec::new();
+        try!(file.read_to_end(&mut contents));
+        deserialize_binary(contents.as_slice())
+    }
+
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        use std::io::Write;
+        let data = try!(serialize_binary(self));
+        let mut file = try!(File::create(path));
+        Ok(try!(file.write_all(data.as_slice())))
+    }
+}
+
+impl Default for EncryptedContents {
+    fn default() -> EncryptedContents {
+        EncryptedContents {
+            token: AUTH_TOKEN_CONTENTS.clone(),
+            wrapped_keys: Vec::new(),
+        }
+    }
+}
+
 pub struct KeyStore {
     master_key: Key,
 }
 
 impl KeyStore {
     pub fn new() -> KeyStore { Self::default() }
+
+    pub fn get_key(&self) -> &Key { &self.master_key }
 }
 
 impl Default for KeyStore {
