@@ -18,6 +18,7 @@
 pub mod clipboard;
 pub mod data;
 pub mod git;
+pub mod serde;
 
 use error::Result;
 use rpassword;

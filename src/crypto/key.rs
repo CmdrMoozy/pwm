@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use bincode::{deserialize, serialize};
-use bincode::SizeLimit;
 use error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt};
 use sodiumoxide::crypto::secretbox;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
+use util::serde::{deserialize_binary, serialize_binary};
 
 #[derive(Deserialize, Serialize)]
 pub struct Key {
@@ -94,10 +93,7 @@ impl Key {
     }
 
     pub fn wrap(self, wrap_key: &Key) -> Result<Key> {
-        let serialized = match serialize(&self, SizeLimit::Infinite) {
-            Err(_) => bail!("Serializing key failed"),
-            Ok(s) => s,
-        };
+        let serialized = try!(serialize_binary(&self));
         let (nonce, encrypted) = try!(wrap_key.encrypt(SensitiveData::from(serialized)));
         Ok(Key::new(Some(nonce), encrypted))
     }
@@ -106,12 +102,8 @@ impl Key {
         if self.wrap_nonce.is_none() {
             bail!("Cannot unwrap key without nonce");
         }
-
         let decrypted =
             try!(wrap_key.decrypt(self.data.as_slice(), self.wrap_nonce.as_ref().unwrap()));
-        Ok(match deserialize(&decrypted[..]) {
-            Err(_) => bail!("Deserializing key failed"),
-            Ok(d) => d,
-        })
+        deserialize_binary(&decrypted[..])
     }
 }
