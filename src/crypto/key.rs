@@ -30,33 +30,32 @@ enum KeyType {
 
 #[derive(Deserialize, Serialize)]
 pub struct Key {
+    /// The raw bytes of this Key. These bytes may either be an actual key, or
+    /// an encrypted ("wrapped") key.
     data: Vec<u8>,
+    /// The signature of the outer-most (in the case of wrapping) real key.
     signature: Digest,
+    /// The type of this particular Key structure (whether it is a wrapped key,
+    /// or a real key).
     key_type: KeyType,
 }
 
 impl Key {
-    fn new(wrap_nonce: Option<secretbox::Nonce>, data: Vec<u8>) -> Result<Key> {
+    fn normal_key(data: Vec<u8>) -> Result<Key> {
         let signature = hash(data.as_slice());
-        let key_type = match wrap_nonce {
-            Some(wrap_nonce) => KeyType::Wrapped(wrap_nonce),
-            None => {
-                let key = secretbox::Key::from_slice(&data[..]);
-                if key.is_none() {
-                    bail!("Building key from the given data failed");
-                }
-                KeyType::Normal(key.unwrap())
-            },
-        };
+        let key = secretbox::Key::from_slice(data.as_slice());
+        if key.is_none() {
+            bail!("Building key from raw data failed");
+        }
 
         Ok(Key {
             data: data,
             signature: signature,
-            key_type: key_type,
+            key_type: KeyType::Normal(key.unwrap()),
         })
     }
 
-    pub fn random_key() -> Result<Key> { Key::new(None, randombytes(secretbox::KEYBYTES)) }
+    pub fn random_key() -> Result<Key> { Key::normal_key(randombytes(secretbox::KEYBYTES)) }
 
     pub fn password_key(password: SensitiveData,
                         salt: Option<Salt>,
@@ -79,8 +78,15 @@ impl Key {
             }
         }
 
-        Key::new(None, key_buffer)
+        Key::normal_key(key_buffer)
     }
+
+    /// Returns this Key's signature (i.e., a hash of the actual key material).
+    /// This is just a direct hash in the case of a normal key, or the hash of
+    /// the outer-most wrapping key in the case of a wrapped key. Note that,
+    /// because of the latter case, this is not suitable for checking key
+    /// equiality in all cases.
+    pub fn get_signature(&self) -> &Digest { &self.signature }
 
     pub fn get_key(&self) -> Result<&secretbox::Key> {
         match self.key_type {
@@ -106,7 +112,12 @@ impl Key {
     pub fn wrap(self, wrap_key: &Key) -> Result<Key> {
         let serialized = try!(serialize_binary(&self));
         let (nonce, encrypted) = try!(wrap_key.encrypt(SensitiveData::from(serialized)));
-        Key::new(Some(nonce), encrypted)
+
+        Ok(Key {
+            data: encrypted,
+            signature: wrap_key.signature.clone(),
+            key_type: KeyType::Wrapped(nonce),
+        })
     }
 
     pub fn unwrap(&self, wrap_key: &Key) -> Result<Key> {
@@ -119,9 +130,3 @@ impl Key {
         }
     }
 }
-
-impl PartialEq for Key {
-    fn eq(&self, other: &Key) -> bool { self.signature == other.signature }
-}
-
-impl Eq for Key {}
