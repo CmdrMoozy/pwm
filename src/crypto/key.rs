@@ -98,7 +98,7 @@ impl Key {
         Ok(Key::new(Some(nonce), encrypted))
     }
 
-    pub fn unwrap(self, wrap_key: &Key) -> Result<Key> {
+    pub fn unwrap(&self, wrap_key: &Key) -> Result<Key> {
         if self.wrap_nonce.is_none() {
             bail!("Cannot unwrap key without nonce");
         }
