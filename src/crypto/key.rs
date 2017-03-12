@@ -41,6 +41,9 @@ pub struct Key {
 }
 
 impl Key {
+    /// This is a utility used to implement our various public constructors.
+    /// This constructor builds a new Normal (i.e., non-wrapped) key from the
+    /// given raw bytes.
     fn normal_key(data: Vec<u8>) -> Result<Key> {
         let signature = hash(data.as_slice());
         let key = secretbox::Key::from_slice(data.as_slice());
