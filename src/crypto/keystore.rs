@@ -16,8 +16,10 @@
 
 use crypto::key::Key;
 use error::Result;
+use sodiumoxide::crypto::secretbox;
 use std::fs::File;
 use std::path::Path;
+use util::data::SensitiveData;
 use util::serde::{deserialize_binary, serialize_binary};
 
 lazy_static! {
@@ -30,12 +32,21 @@ lazy_static! {
 
 #[derive(Deserialize, Serialize)]
 struct EncryptedContents {
+    pub token_nonce: secretbox::Nonce,
     pub token: Vec<u8>,
-    pub wrapped_keys: Vec<Vec<u8>>,
+    pub wrapped_keys: Vec<Key>,
 }
 
 impl EncryptedContents {
-    pub fn new() -> EncryptedContents { Self::default() }
+    pub fn new(master_key: &Key) -> Result<EncryptedContents> {
+        let (nonce, encrypted) =
+            try!(master_key.encrypt(SensitiveData::from(AUTH_TOKEN_CONTENTS.clone())));
+        Ok(EncryptedContents {
+            token_nonce: nonce,
+            token: encrypted,
+            wrapped_keys: Vec::new(),
+        })
+    }
 
     pub fn open<P: AsRef<Path>>(path: P) -> Result<EncryptedContents> {
         use std::io::Read;
@@ -51,27 +62,49 @@ impl EncryptedContents {
         let mut file = try!(File::create(path));
         Ok(try!(file.write_all(data.as_slice())))
     }
-}
 
-impl Default for EncryptedContents {
-    fn default() -> EncryptedContents {
-        EncryptedContents {
-            token: AUTH_TOKEN_CONTENTS.clone(),
-            wrapped_keys: Vec::new(),
-        }
+    pub fn is_master_key(&self, key: &Key) -> Result<bool> {
+        let decrypted = try!(key.decrypt(self.token.as_slice(), &self.token_nonce));
+        Ok(&decrypted[..] == AUTH_TOKEN_CONTENTS.as_slice())
     }
+
+    pub fn add(&mut self, wrapped_key: Key) { self.wrapped_keys.push(wrapped_key) }
 }
 
 pub struct KeyStore {
     master_key: Key,
+    encrypted_contents: EncryptedContents,
 }
 
 impl KeyStore {
-    pub fn new() -> KeyStore { Self::default() }
+    pub fn new() -> Result<KeyStore> {
+        let master_key = Key::random_key();
+        let encrypted_contents = try!(EncryptedContents::new(&master_key));
+
+        Ok(KeyStore {
+            master_key: master_key,
+            encrypted_contents: encrypted_contents,
+        })
+    }
+
+    pub fn open<P: AsRef<Path>>(path: P, wrap_key: &Key) -> Result<KeyStore> {
+        let contents = try!(EncryptedContents::open(path));
+        let mut master_key: Option<Key> = None;
+        for wrapped_key in contents.wrapped_keys.iter() {
+            let key = try!(wrapped_key.unwrap(wrap_key));
+            if try!(contents.is_master_key(&key)) {
+                master_key = Some(key);
+            }
+        }
+
+        if master_key.is_some() {
+            return Ok(KeyStore {
+                master_key: master_key.unwrap(),
+                encrypted_contents: contents,
+            });
+        }
+        bail!("Failed to unwrap master key with the provided wrapping key.");
+    }
 
     pub fn get_key(&self) -> &Key { &self.master_key }
-}
-
-impl Default for KeyStore {
-    fn default() -> KeyStore { KeyStore { master_key: Key::random_key() } }
 }
