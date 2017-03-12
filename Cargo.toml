@@ -20,7 +20,8 @@ rpassword = "0.3"
 serde = "0.9"
 serde_derive = "0.9"
 serde_json = "0.9"
-sodiumoxide = "0.0.14"
+# TODO: Switch to a published version once #152 / fc43d8c is included in a release.
+sodiumoxide = { git = "https://github.com/dnaq/sodiumoxide.git" }
 
 [dev-dependencies]
 tempdir = "0.3"
