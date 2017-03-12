@@ -78,7 +78,7 @@ pub struct KeyStore {
 
 impl KeyStore {
     pub fn new() -> Result<KeyStore> {
-        let master_key = Key::random_key();
+        let master_key = try!(Key::random_key());
         let encrypted_contents = try!(EncryptedContents::new(&master_key));
 
         Ok(KeyStore {

@@ -15,36 +15,44 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use error::Result;
-use sodiumoxide::crypto::pwhash;
-use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt};
+use sodiumoxide::crypto::pwhash::{self, MemLimit, OpsLimit, Salt};
 use sodiumoxide::crypto::secretbox;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 use util::serde::{deserialize_binary, serialize_binary};
 
 #[derive(Deserialize, Serialize)]
+enum KeyType {
+    Wrapped(secretbox::Nonce),
+    Normal(secretbox::Key),
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct Key {
-    wrap_nonce: Option<secretbox::Nonce>,
     data: Vec<u8>,
-    key: Option<secretbox::Key>,
+    key_type: KeyType,
 }
 
 impl Key {
-    fn new(wrap_nonce: Option<secretbox::Nonce>, data: Vec<u8>) -> Key {
-        let key = if wrap_nonce.is_some() {
-            None
-        } else {
-            secretbox::Key::from_slice(&data[..])
+    fn new(wrap_nonce: Option<secretbox::Nonce>, data: Vec<u8>) -> Result<Key> {
+        let key_type = match wrap_nonce {
+            Some(wrap_nonce) => KeyType::Wrapped(wrap_nonce),
+            None => {
+                let key = secretbox::Key::from_slice(&data[..]);
+                if key.is_none() {
+                    bail!("Building key from the given data failed");
+                }
+                KeyType::Normal(key.unwrap())
+            },
         };
 
-        Key {
-            wrap_nonce: wrap_nonce,
+        Ok(Key {
             data: data,
-            key: key,
-        }
+            key_type: key_type,
+        })
     }
 
-    pub fn random_key() -> Key { Key::new(None, randombytes(secretbox::KEYBYTES)) }
+    pub fn random_key() -> Result<Key> { Key::new(None, randombytes(secretbox::KEYBYTES)) }
 
     pub fn password_key(password: SensitiveData,
                         salt: Option<Salt>,
@@ -68,13 +76,13 @@ impl Key {
             }
         }
 
-        Ok(Key::new(None, key_buffer))
+        Key::new(None, key_buffer)
     }
 
     pub fn get_key(&self) -> Result<&secretbox::Key> {
-        match self.key.as_ref() {
-            Some(k) => Ok(k),
-            None => bail!("Cannot build encryption key from wrapped key."),
+        match self.key_type {
+            KeyType::Normal(ref key) => Ok(key),
+            _ => bail!("Cannot build encryption key from wrapped key"),
         }
     }
 
@@ -95,15 +103,16 @@ impl Key {
     pub fn wrap(self, wrap_key: &Key) -> Result<Key> {
         let serialized = try!(serialize_binary(&self));
         let (nonce, encrypted) = try!(wrap_key.encrypt(SensitiveData::from(serialized)));
-        Ok(Key::new(Some(nonce), encrypted))
+        Key::new(Some(nonce), encrypted)
     }
 
     pub fn unwrap(&self, wrap_key: &Key) -> Result<Key> {
-        if self.wrap_nonce.is_none() {
-            bail!("Cannot unwrap key without nonce");
+        match self.key_type {
+            KeyType::Wrapped(ref nonce) => {
+                let decrypted = try!(wrap_key.decrypt(self.data.as_slice(), nonce));
+                deserialize_binary(&decrypted[..])
+            },
+            _ => bail!("Cannot unwrap key without nonce"),
         }
-        let decrypted =
-            try!(wrap_key.decrypt(self.data.as_slice(), self.wrap_nonce.as_ref().unwrap()));
-        deserialize_binary(&decrypted[..])
     }
 }
