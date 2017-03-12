@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use error::Result;
+use sodiumoxide::crypto::hash::{Digest, hash};
 use sodiumoxide::crypto::pwhash::{self, MemLimit, OpsLimit, Salt};
 use sodiumoxide::crypto::secretbox;
 use sodiumoxide::randombytes::randombytes;
@@ -30,11 +31,13 @@ enum KeyType {
 #[derive(Deserialize, Serialize)]
 pub struct Key {
     data: Vec<u8>,
+    signature: Digest,
     key_type: KeyType,
 }
 
 impl Key {
     fn new(wrap_nonce: Option<secretbox::Nonce>, data: Vec<u8>) -> Result<Key> {
+        let signature = hash(data.as_slice());
         let key_type = match wrap_nonce {
             Some(wrap_nonce) => KeyType::Wrapped(wrap_nonce),
             None => {
@@ -48,6 +51,7 @@ impl Key {
 
         Ok(Key {
             data: data,
+            signature: signature,
             key_type: key_type,
         })
     }
@@ -69,9 +73,8 @@ impl Key {
                 pwhash::derive_key(key_buffer.as_mut_slice(), &password[..], &salt, ops, mem);
             if result.is_err() {
                 // NOTE: We handle this error gracefully, but in reality (by inspecting the
-                // libsodium
-                // source code) the only way this can actually fail is if the input password is
-                // *enormous*. So, this won't really fail in practice.
+                // libsodium source code) the only way this can actually fail is if the input
+                // password is *enormous*. So, this won't really fail in practice.
                 bail!("Deriving key from password failed");
             }
         }
@@ -116,3 +119,9 @@ impl Key {
         }
     }
 }
+
+impl PartialEq for Key {
+    fn eq(&self, other: &Key) -> bool { self.signature == other.signature }
+}
+
+impl Eq for Key {}
