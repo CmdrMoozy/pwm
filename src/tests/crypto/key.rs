@@ -20,6 +20,9 @@ use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
 #[test]
+fn test_random_key_generation() { let _key = Key::random_key().unwrap(); }
+
+#[test]
 fn test_password_key_derivation() {
     let salt: Salt = Salt::from_slice(&randombytes(32)[..]).unwrap();
     let _key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
@@ -27,6 +30,16 @@ fn test_password_key_derivation() {
                                  None,
                                  None)
         .unwrap();
+}
+
+#[test]
+fn test_basic_key_signature_comparison() {
+    let a = Key::random_key().unwrap();
+    let b = Key::random_key().unwrap();
+    let c = a.clone();
+
+    assert_eq!(a.get_signature(), c.get_signature());
+    assert_ne!(a.get_signature(), b.get_signature());
 }
 
 #[test]
@@ -59,4 +72,29 @@ fn test_decrypting_with_wrong_key_fails() {
         .unwrap();
     let decrypted_result = wrong_key.decrypt(ciphertext.as_slice(), &nonce);
     assert!(decrypted_result.is_err());
+}
+
+#[test]
+fn test_wrapping_roundtrip() {
+    let a = Key::random_key().unwrap();
+    let b = Key::random_key().unwrap();
+    let wrapped = a.clone().wrap(&b).unwrap();
+    assert_eq!(wrapped.get_signature(), b.get_signature());
+    let unwrapped = wrapped.unwrap(&b).unwrap();
+    assert_eq!(unwrapped.get_signature(), a.get_signature());
+}
+
+#[test]
+fn test_unwrapping_non_wrapped_key_fails() {
+    let a = Key::random_key().unwrap();
+    let b = Key::random_key().unwrap();
+    assert!(a.unwrap(&b).is_err());
+}
+
+#[test]
+fn test_unwrapping_with_wrong_key_fails() {
+    let a = Key::random_key().unwrap();
+    let b = Key::random_key().unwrap();
+    let wrapped = a.clone().wrap(&b).unwrap();
+    assert!(wrapped.unwrap(&a).is_err());
 }
