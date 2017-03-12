@@ -18,7 +18,7 @@ use crypto::key::Key;
 use error::Result;
 use sodiumoxide::crypto::secretbox;
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use util::data::SensitiveData;
 use util::serde::{deserialize_binary, serialize_binary};
 
@@ -68,27 +68,45 @@ impl EncryptedContents {
         Ok(&decrypted[..] == AUTH_TOKEN_CONTENTS.as_slice())
     }
 
-    pub fn add(&mut self, wrapped_key: Key) { self.wrapped_keys.push(wrapped_key) }
+    pub fn add(&mut self, wrapped_key: Key) {
+        if self.wrapped_keys
+            .iter()
+            .filter(|k| k.get_signature() == wrapped_key.get_signature())
+            .count() > 0 {
+            return;
+        }
+        self.wrapped_keys.push(wrapped_key)
+    }
+
+    pub fn remove(&mut self, wrap_key: &Key) {
+        let wrapped_keys = self.wrapped_keys
+            .drain(..)
+            .filter(|k| k.get_signature() != wrap_key.get_signature())
+            .collect();
+        self.wrapped_keys = wrapped_keys;
+    }
 }
 
 pub struct KeyStore {
+    path: PathBuf,
     master_key: Key,
     encrypted_contents: EncryptedContents,
 }
 
 impl KeyStore {
-    pub fn new() -> Result<KeyStore> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<KeyStore> {
         let master_key = try!(Key::random_key());
         let encrypted_contents = try!(EncryptedContents::new(&master_key));
 
         Ok(KeyStore {
+            path: PathBuf::from(path.as_ref()),
             master_key: master_key,
             encrypted_contents: encrypted_contents,
         })
     }
 
     pub fn open<P: AsRef<Path>>(path: P, wrap_key: &Key) -> Result<KeyStore> {
-        let contents = try!(EncryptedContents::open(path));
+        let contents = try!(EncryptedContents::open(path.as_ref()));
         let mut master_key: Option<Key> = None;
         for wrapped_key in contents.wrapped_keys.iter() {
             let key = try!(wrapped_key.unwrap(wrap_key));
@@ -99,6 +117,7 @@ impl KeyStore {
 
         if master_key.is_some() {
             return Ok(KeyStore {
+                path: PathBuf::from(path.as_ref()),
                 master_key: master_key.unwrap(),
                 encrypted_contents: contents,
             });
@@ -107,4 +126,15 @@ impl KeyStore {
     }
 
     pub fn get_key(&self) -> &Key { &self.master_key }
+
+    pub fn add(&mut self, wrap_key: &Key) -> Result<()> {
+        self.encrypted_contents.add(try!(self.master_key.clone().wrap(wrap_key)));
+        Ok(())
+    }
+
+    pub fn remove(&mut self, wrap_key: &Key) { self.encrypted_contents.remove(wrap_key) }
+}
+
+impl Drop for KeyStore {
+    fn drop(&mut self) { self.encrypted_contents.save(self.path.as_path()).unwrap(); }
 }

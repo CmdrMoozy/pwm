@@ -22,13 +22,13 @@ use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 use util::serde::{deserialize_binary, serialize_binary};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 enum KeyType {
     Wrapped(secretbox::Nonce),
     Normal(secretbox::Key),
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Key {
     /// The raw bytes of this Key. These bytes may either be an actual key, or
     /// an encrypted ("wrapped") key.
