@@ -14,9 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#[cfg(test)]
-mod data;
-#[cfg(test)]
-mod git;
-#[cfg(test)]
-mod serde;
+use util::serde::*;
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+struct TestStruct {
+    a: String,
+    b: u64,
+    c: bool,
+}
+
+#[test]
+fn test_binary_round_trip() {
+    let original = TestStruct {
+        a: "this is a test!".to_owned(),
+        b: 42,
+        c: true,
+    };
+
+    let serialized = serialize_binary(&original).unwrap();
+    let deserialized = deserialize_binary(serialized.as_slice()).unwrap();
+    assert_eq!(original, deserialized);
+}
