@@ -94,7 +94,7 @@ pub struct KeyStore {
 }
 
 impl KeyStore {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<KeyStore> {
+    fn new<P: AsRef<Path>>(path: P) -> Result<KeyStore> {
         let master_key = try!(Key::random_key());
         let encrypted_contents = try!(EncryptedContents::new(&master_key));
 
@@ -123,6 +123,16 @@ impl KeyStore {
             });
         }
         bail!("Failed to unwrap master key with the provided wrapping key.");
+    }
+
+    pub fn open_or_new<P: AsRef<Path>>(path: P, wrap_key: &Key) -> Result<KeyStore> {
+        if path.as_ref().exists() {
+            Self::open(path, wrap_key)
+        } else {
+            let mut keystore = try!(Self::new(path));
+            try!(keystore.add(wrap_key));
+            Ok(keystore)
+        }
     }
 
     pub fn get_key(&self) -> &Key { &self.master_key }
