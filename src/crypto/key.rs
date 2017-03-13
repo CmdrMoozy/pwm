@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use crypto::configuration::Configuration;
 use error::Result;
 use sodiumoxide::crypto::hash::{Digest, hash};
-use sodiumoxide::crypto::pwhash::{self, MemLimit, OpsLimit, Salt};
+use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::secretbox;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
@@ -56,18 +57,16 @@ impl NormalKey {
     pub fn new_random() -> Result<NormalKey> { Self::from_bytes(randombytes(secretbox::KEYBYTES)) }
 
     pub fn new_password(password: SensitiveData,
-                        salt: Option<Salt>,
-                        ops: Option<OpsLimit>,
-                        mem: Option<MemLimit>)
+                        config: Option<Configuration>)
                         -> Result<NormalKey> {
-        let salt = salt.unwrap_or_else(pwhash::gen_salt);
-        let ops = ops.unwrap_or(pwhash::OPSLIMIT_INTERACTIVE);
-        let mem = mem.unwrap_or(pwhash::MEMLIMIT_INTERACTIVE);
-
+        let config = config.unwrap_or_else(Configuration::default);
         let mut key_buffer = vec![0; secretbox::KEYBYTES];
         {
-            let result =
-                pwhash::derive_key(key_buffer.as_mut_slice(), &password[..], &salt, ops, mem);
+            let result = pwhash::derive_key(key_buffer.as_mut_slice(),
+                                            &password[..],
+                                            &config.get_salt(),
+                                            config.get_ops_limit(),
+                                            config.get_mem_limit());
             if result.is_err() {
                 // NOTE: We handle this error gracefully, but in reality (by inspecting the
                 // libsodium source code) the only way this can actually fail is if the input

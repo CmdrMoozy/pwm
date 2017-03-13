@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use crypto::configuration::{Configuration, ConfigurationInstance};
 use crypto::key::NormalKey;
 use crypto::keystore::KeyStore;
 use crypto::padding;
 use error::Result;
 use git2;
-use repository::configuration::{Configuration, ConfigurationInstance};
 use repository::path::Path as RepositoryPath;
 use sodiumoxide::crypto::secretbox;
 use std::fs;
@@ -116,7 +116,8 @@ impl Repository {
         } else {
             try!(password_prompt(MASTER_PASSWORD_PROMPT, create))
         };
-        let master_key = try!(crypto_configuration.get().build_key(master_password));
+        let master_key = try!(NormalKey::new_password(master_password,
+                                                      Some(crypto_configuration.get())));
         let keystore = try!(open_keystore(&repository, &master_key));
 
         Ok(Repository {
