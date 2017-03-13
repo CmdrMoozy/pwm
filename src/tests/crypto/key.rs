@@ -20,22 +20,22 @@ use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 
 #[test]
-fn test_random_key_generation() { let _key = Key::random_key().unwrap(); }
+fn test_random_key_generation() { let _key = NormalKey::new_random().unwrap(); }
 
 #[test]
 fn test_password_key_derivation() {
     let salt: Salt = Salt::from_slice(&randombytes(32)[..]).unwrap();
-    let _key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
-                                 Some(salt.clone()),
-                                 None,
-                                 None)
+    let _key = NormalKey::new_password(SensitiveData::from("foobar".as_bytes().to_vec()),
+                                       Some(salt.clone()),
+                                       None,
+                                       None)
         .unwrap();
 }
 
 #[test]
 fn test_basic_key_signature_comparison() {
-    let a = Key::random_key().unwrap();
-    let b = Key::random_key().unwrap();
+    let a = NormalKey::new_random().unwrap();
+    let b = NormalKey::new_random().unwrap();
     let c = a.clone();
 
     assert_eq!(a.get_signature(), c.get_signature());
@@ -44,31 +44,31 @@ fn test_basic_key_signature_comparison() {
 
 #[test]
 fn test_encryption_roundtrip() {
-    let key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
-                                None,
-                                None,
-                                None)
+    let key = NormalKey::new_password(SensitiveData::from("foobar".as_bytes().to_vec()),
+                                      None,
+                                      None,
+                                      None)
         .unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
-    let (nonce, ciphertext) = key.encrypt(plaintext.clone()).ok().unwrap();
+    let (nonce, ciphertext) = key.encrypt(plaintext.clone());
     let decrypted = key.decrypt(ciphertext.as_slice(), &nonce).unwrap();
     assert_eq!(plaintext, decrypted);
 }
 
 #[test]
 fn test_decrypting_with_wrong_key_fails() {
-    let key = Key::password_key(SensitiveData::from("foobar".as_bytes().to_vec()),
-                                None,
-                                None,
-                                None)
-        .unwrap();
-    let plaintext = SensitiveData::from(randombytes(1024));
-    let (nonce, ciphertext) = key.encrypt(plaintext).ok().unwrap();
-
-    let wrong_key = Key::password_key(SensitiveData::from("raboof".as_bytes().to_vec()),
+    let key = NormalKey::new_password(SensitiveData::from("foobar".as_bytes().to_vec()),
                                       None,
                                       None,
                                       None)
+        .unwrap();
+    let plaintext = SensitiveData::from(randombytes(1024));
+    let (nonce, ciphertext) = key.encrypt(plaintext);
+
+    let wrong_key = NormalKey::new_password(SensitiveData::from("raboof".as_bytes().to_vec()),
+                                            None,
+                                            None,
+                                            None)
         .unwrap();
     let decrypted_result = wrong_key.decrypt(ciphertext.as_slice(), &nonce);
     assert!(decrypted_result.is_err());
@@ -76,8 +76,8 @@ fn test_decrypting_with_wrong_key_fails() {
 
 #[test]
 fn test_wrapping_roundtrip() {
-    let a = Key::random_key().unwrap();
-    let b = Key::random_key().unwrap();
+    let a = NormalKey::new_random().unwrap();
+    let b = NormalKey::new_random().unwrap();
     let wrapped = a.clone().wrap(&b).unwrap();
     assert_eq!(wrapped.get_signature(), b.get_signature());
     let unwrapped = wrapped.unwrap(&b).unwrap();
@@ -85,16 +85,9 @@ fn test_wrapping_roundtrip() {
 }
 
 #[test]
-fn test_unwrapping_non_wrapped_key_fails() {
-    let a = Key::random_key().unwrap();
-    let b = Key::random_key().unwrap();
-    assert!(a.unwrap(&b).is_err());
-}
-
-#[test]
 fn test_unwrapping_with_wrong_key_fails() {
-    let a = Key::random_key().unwrap();
-    let b = Key::random_key().unwrap();
+    let a = NormalKey::new_random().unwrap();
+    let b = NormalKey::new_random().unwrap();
     let wrapped = a.clone().wrap(&b).unwrap();
     assert!(wrapped.unwrap(&a).is_err());
 }

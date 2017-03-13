@@ -22,49 +22,44 @@ use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 use util::serde::{deserialize_binary, serialize_binary};
 
-#[derive(Clone, Deserialize, Serialize)]
-enum KeyType {
-    Wrapped(secretbox::Nonce),
-    Normal(secretbox::Key),
+pub trait Key {
+    /// Returns this Key's signature (i.e., a hash of the actual key material).
+    /// This is just a direct hash in the case of a normal key, or the hash of
+    /// the outer-most wrapping key in the case of a wrapped key. Note that,
+    /// because of the latter case, this is not suitable for checking key
+    /// equiality in all cases.
+    fn get_signature(&self) -> &Digest;
 }
 
 #[derive(Clone, Deserialize, Serialize)]
-pub struct Key {
-    /// The raw bytes of this Key. These bytes may either be an actual key, or
-    /// an encrypted ("wrapped") key.
-    data: Vec<u8>,
-    /// The signature of the outer-most (in the case of wrapping) real key.
+pub struct NormalKey {
+    key: secretbox::Key,
     signature: Digest,
-    /// The type of this particular Key structure (whether it is a wrapped key,
-    /// or a real key).
-    key_type: KeyType,
 }
 
-impl Key {
+impl NormalKey {
     /// This is a utility used to implement our various public constructors.
-    /// This constructor builds a new Normal (i.e., non-wrapped) key from the
-    /// given raw bytes.
-    fn normal_key(data: Vec<u8>) -> Result<Key> {
+    /// This constructor builds a new NormalKey from the given raw bytes.
+    fn from_bytes(data: Vec<u8>) -> Result<NormalKey> {
         let signature = hash(data.as_slice());
         let key = secretbox::Key::from_slice(data.as_slice());
         if key.is_none() {
             bail!("Building key from raw data failed");
         }
 
-        Ok(Key {
-            data: data,
+        Ok(NormalKey {
+            key: key.unwrap(),
             signature: signature,
-            key_type: KeyType::Normal(key.unwrap()),
         })
     }
 
-    pub fn random_key() -> Result<Key> { Key::normal_key(randombytes(secretbox::KEYBYTES)) }
+    pub fn new_random() -> Result<NormalKey> { Self::from_bytes(randombytes(secretbox::KEYBYTES)) }
 
-    pub fn password_key(password: SensitiveData,
+    pub fn new_password(password: SensitiveData,
                         salt: Option<Salt>,
                         ops: Option<OpsLimit>,
                         mem: Option<MemLimit>)
-                        -> Result<Key> {
+                        -> Result<NormalKey> {
         let salt = salt.unwrap_or_else(pwhash::gen_salt);
         let ops = ops.unwrap_or(pwhash::OPSLIMIT_INTERACTIVE);
         let mem = mem.unwrap_or(pwhash::MEMLIMIT_INTERACTIVE);
@@ -81,55 +76,56 @@ impl Key {
             }
         }
 
-        Key::normal_key(key_buffer)
+        Self::from_bytes(key_buffer)
     }
 
-    /// Returns this Key's signature (i.e., a hash of the actual key material).
-    /// This is just a direct hash in the case of a normal key, or the hash of
-    /// the outer-most wrapping key in the case of a wrapped key. Note that,
-    /// because of the latter case, this is not suitable for checking key
-    /// equiality in all cases.
-    pub fn get_signature(&self) -> &Digest { &self.signature }
-
-    pub fn get_key(&self) -> Result<&secretbox::Key> {
-        match self.key_type {
-            KeyType::Normal(ref key) => Ok(key),
-            _ => bail!("Cannot build encryption key from wrapped key"),
-        }
-    }
-
-    pub fn encrypt(&self, plaintext: SensitiveData) -> Result<(secretbox::Nonce, Vec<u8>)> {
+    pub fn encrypt(&self, plaintext: SensitiveData) -> (secretbox::Nonce, Vec<u8>) {
         let nonce = secretbox::gen_nonce();
-        let ciphertext = secretbox::seal(&plaintext[..], &nonce, try!(self.get_key()));
-        Ok((nonce, ciphertext))
+        let ciphertext = secretbox::seal(&plaintext[..], &nonce, &self.key);
+        (nonce, ciphertext)
     }
 
     pub fn decrypt(&self, ciphertext: &[u8], nonce: &secretbox::Nonce) -> Result<SensitiveData> {
-        let result = secretbox::open(ciphertext, nonce, try!(self.get_key()));
+        let result = secretbox::open(ciphertext, nonce, &self.key);
         if result.is_err() {
-            bail!("Ciphertext failed key verification");
+            bail!("Decryption with the provided key failed");
         }
         Ok(SensitiveData::from(result.ok().unwrap()))
     }
 
-    pub fn wrap(self, wrap_key: &Key) -> Result<Key> {
+    pub fn wrap(self, key: &NormalKey) -> Result<WrappedKey> {
         let serialized = try!(serialize_binary(&self));
-        let (nonce, encrypted) = try!(wrap_key.encrypt(SensitiveData::from(serialized)));
-
-        Ok(Key {
+        let (nonce, encrypted) = key.encrypt(SensitiveData::from(serialized));
+        Ok(WrappedKey {
             data: encrypted,
-            signature: wrap_key.signature.clone(),
-            key_type: KeyType::Wrapped(nonce),
+            nonce: nonce,
+            signature: key.signature.clone(),
         })
     }
+}
 
-    pub fn unwrap(&self, wrap_key: &Key) -> Result<Key> {
-        match self.key_type {
-            KeyType::Wrapped(ref nonce) => {
-                let decrypted = try!(wrap_key.decrypt(self.data.as_slice(), nonce));
-                deserialize_binary(&decrypted[..])
-            },
-            _ => bail!("Cannot unwrap key without nonce"),
-        }
+impl Key for NormalKey {
+    fn get_signature(&self) -> &Digest { &self.signature }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct WrappedKey {
+    /// The raw wrapped bytes. This key needs to be unwrapped before these
+    /// bytes can be used.
+    data: Vec<u8>,
+    /// The nonce used to encrypt this wrapped key.
+    nonce: secretbox::Nonce,
+    /// The signature of the key used to wrap this key.
+    signature: Digest,
+}
+
+impl WrappedKey {
+    pub fn unwrap(&self, key: &NormalKey) -> Result<NormalKey> {
+        let decrypted = try!(key.decrypt(self.data.as_slice(), &self.nonce));
+        deserialize_binary(&decrypted[..])
     }
+}
+
+impl Key for WrappedKey {
+    fn get_signature(&self) -> &Digest { &self.signature }
 }

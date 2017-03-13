@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use crypto::key::Key;
+use crypto::key::NormalKey;
 use crypto::keystore::KeyStore;
 use crypto::padding;
 use error::Result;
@@ -52,14 +52,17 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     ConfigurationInstance::new(path.as_path())
 }
 
-fn open_keystore(repository: &git2::Repository, master_key: &Key) -> Result<KeyStore> {
+fn open_keystore(repository: &git2::Repository, key: &NormalKey) -> Result<KeyStore> {
     let mut path = PathBuf::from(try!(git::get_repository_workdir(repository)));
     path.push(KEYSTORE_PATH.as_path());
-    KeyStore::open_or_new(path.as_path(), &master_key)
+    KeyStore::open_or_new(path.as_path(), &key)
 }
 
-fn write_encrypt(path: &RepositoryPath, plaintext: SensitiveData, master_key: &Key) -> Result<()> {
-    let (nonce, data) = try!(master_key.encrypt(padding::pad(plaintext)));
+fn write_encrypt(path: &RepositoryPath,
+                 plaintext: SensitiveData,
+                 master_key: &NormalKey)
+                 -> Result<()> {
+    let (nonce, data) = master_key.encrypt(padding::pad(plaintext));
 
     if let Some(parent) = path.absolute_path().parent() {
         try!(fs::create_dir_all(parent));
@@ -73,7 +76,7 @@ fn write_encrypt(path: &RepositoryPath, plaintext: SensitiveData, master_key: &K
     Ok(())
 }
 
-fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData> {
+fn read_decrypt(path: &RepositoryPath, master_key: &NormalKey) -> Result<SensitiveData> {
     use std::io::Read;
 
     if !path.absolute_path().exists() {
@@ -131,7 +134,7 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    fn get_master_key(&self) -> &Key { self.keystore.as_ref().unwrap().get_key() }
+    fn get_master_key(&self) -> &NormalKey { self.keystore.as_ref().unwrap().get_key() }
 
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
