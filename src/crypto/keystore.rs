@@ -68,22 +68,32 @@ impl EncryptedContents {
         Ok(&decrypted[..] == AUTH_TOKEN_CONTENTS.as_slice())
     }
 
-    pub fn add(&mut self, wrapped_key: Key) {
+    /// Add the given wrapped key to this data structure. Note that it is up to
+    /// the caller to ensure that the proper global "master key" has been
+    /// wrapped before passing it to this function. Returns true if the key was
+    /// added, or false if an existing key with a matching signature was found.
+    pub fn add(&mut self, wrapped_key: Key) -> bool {
         if self.wrapped_keys
             .iter()
             .filter(|k| k.get_signature() == wrapped_key.get_signature())
             .count() > 0 {
-            return;
+            return false;
         }
-        self.wrapped_keys.push(wrapped_key)
+        self.wrapped_keys.push(wrapped_key);
+        true
     }
 
-    pub fn remove(&mut self, wrap_key: &Key) {
+    /// Remove any keys wrapped with the given key from this data structure.
+    /// Returns true if any keys were removed, or false if no keys wrapped with
+    /// the given key could be found.
+    pub fn remove(&mut self, wrap_key: &Key) -> bool {
+        let original_length = self.wrapped_keys.len();
         let wrapped_keys = self.wrapped_keys
             .drain(..)
             .filter(|k| k.get_signature() != wrap_key.get_signature())
             .collect();
         self.wrapped_keys = wrapped_keys;
+        self.wrapped_keys.len() != original_length
     }
 }
 
@@ -105,7 +115,7 @@ impl KeyStore {
         })
     }
 
-    pub fn open<P: AsRef<Path>>(path: P, wrap_key: &Key) -> Result<KeyStore> {
+    fn open<P: AsRef<Path>>(path: P, wrap_key: &Key) -> Result<KeyStore> {
         let contents = try!(EncryptedContents::open(path.as_ref()));
         let mut master_key: Option<Key> = None;
         for wrapped_key in contents.wrapped_keys.iter() {
@@ -137,12 +147,11 @@ impl KeyStore {
 
     pub fn get_key(&self) -> &Key { &self.master_key }
 
-    pub fn add(&mut self, wrap_key: &Key) -> Result<()> {
-        self.encrypted_contents.add(try!(self.master_key.clone().wrap(wrap_key)));
-        Ok(())
+    pub fn add(&mut self, wrap_key: &Key) -> Result<bool> {
+        Ok(self.encrypted_contents.add(try!(self.master_key.clone().wrap(wrap_key))))
     }
 
-    pub fn remove(&mut self, wrap_key: &Key) { self.encrypted_contents.remove(wrap_key) }
+    pub fn remove(&mut self, wrap_key: &Key) -> bool { self.encrypted_contents.remove(wrap_key) }
 }
 
 impl Drop for KeyStore {
