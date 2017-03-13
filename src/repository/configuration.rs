@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use bdrck_config::configuration as bdrck_config;
-use crypto::key::Key;
+use crypto::key::NormalKey;
 use error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt, SALTBYTES};
@@ -44,11 +44,11 @@ impl Configuration {
 
     pub fn get_ops_limit(&self) -> OpsLimit { OpsLimit(self.ops_limit) }
 
-    pub fn build_key(&self, password: SensitiveData) -> Result<Key> {
-        Key::password_key(password,
-                          Some(self.get_salt()),
-                          Some(self.get_ops_limit()),
-                          Some(self.get_mem_limit()))
+    pub fn build_key(&self, password: SensitiveData) -> Result<NormalKey> {
+        NormalKey::new_password(password,
+                                Some(self.get_salt()),
+                                Some(self.get_ops_limit()),
+                                Some(self.get_mem_limit()))
     }
 }
 
