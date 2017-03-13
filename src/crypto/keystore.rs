@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use crypto::key::Key;
+use crypto::key::{Key, NormalKey, WrappedKey};
 use error::Result;
 use sodiumoxide::crypto::secretbox;
 use std::fs::File;
@@ -34,13 +34,13 @@ lazy_static! {
 struct EncryptedContents {
     pub token_nonce: secretbox::Nonce,
     pub token: Vec<u8>,
-    pub wrapped_keys: Vec<Key>,
+    pub wrapped_keys: Vec<WrappedKey>,
 }
 
 impl EncryptedContents {
-    pub fn new(master_key: &Key) -> Result<EncryptedContents> {
+    pub fn new(master_key: &NormalKey) -> Result<EncryptedContents> {
         let (nonce, encrypted) =
-            try!(master_key.encrypt(SensitiveData::from(AUTH_TOKEN_CONTENTS.clone())));
+            master_key.encrypt(SensitiveData::from(AUTH_TOKEN_CONTENTS.clone()));
         Ok(EncryptedContents {
             token_nonce: nonce,
             token: encrypted,
@@ -63,7 +63,7 @@ impl EncryptedContents {
         Ok(try!(file.write_all(data.as_slice())))
     }
 
-    pub fn is_master_key(&self, key: &Key) -> Result<bool> {
+    pub fn is_master_key(&self, key: &NormalKey) -> Result<bool> {
         let decrypted = try!(key.decrypt(self.token.as_slice(), &self.token_nonce));
         Ok(&decrypted[..] == AUTH_TOKEN_CONTENTS.as_slice())
     }
@@ -72,7 +72,7 @@ impl EncryptedContents {
     /// the caller to ensure that the proper global "master key" has been
     /// wrapped before passing it to this function. Returns true if the key was
     /// added, or false if an existing key with a matching signature was found.
-    pub fn add(&mut self, wrapped_key: Key) -> bool {
+    pub fn add(&mut self, wrapped_key: WrappedKey) -> bool {
         if self.wrapped_keys
             .iter()
             .filter(|k| k.get_signature() == wrapped_key.get_signature())
@@ -86,7 +86,7 @@ impl EncryptedContents {
     /// Remove any keys wrapped with the given key from this data structure.
     /// Returns true if any keys were removed, or false if no keys wrapped with
     /// the given key could be found.
-    pub fn remove(&mut self, wrap_key: &Key) -> bool {
+    pub fn remove(&mut self, wrap_key: &NormalKey) -> bool {
         let original_length = self.wrapped_keys.len();
         let wrapped_keys = self.wrapped_keys
             .drain(..)
@@ -99,13 +99,13 @@ impl EncryptedContents {
 
 pub struct KeyStore {
     path: PathBuf,
-    master_key: Key,
+    master_key: NormalKey,
     encrypted_contents: EncryptedContents,
 }
 
 impl KeyStore {
     fn new<P: AsRef<Path>>(path: P) -> Result<KeyStore> {
-        let master_key = try!(Key::random_key());
+        let master_key = try!(NormalKey::new_random());
         let encrypted_contents = try!(EncryptedContents::new(&master_key));
 
         Ok(KeyStore {
@@ -115,13 +115,13 @@ impl KeyStore {
         })
     }
 
-    fn open<P: AsRef<Path>>(path: P, wrap_key: &Key) -> Result<KeyStore> {
+    fn open<P: AsRef<Path>>(path: P, key: &NormalKey) -> Result<KeyStore> {
         let contents = try!(EncryptedContents::open(path.as_ref()));
-        let mut master_key: Option<Key> = None;
+        let mut master_key: Option<NormalKey> = None;
         for wrapped_key in contents.wrapped_keys.iter() {
-            let key = try!(wrapped_key.unwrap(wrap_key));
-            if try!(contents.is_master_key(&key)) {
-                master_key = Some(key);
+            let unwrapped_key = try!(wrapped_key.unwrap(key));
+            if try!(contents.is_master_key(&unwrapped_key)) {
+                master_key = Some(unwrapped_key);
             }
         }
 
@@ -135,23 +135,23 @@ impl KeyStore {
         bail!("Failed to unwrap master key with the provided wrapping key.");
     }
 
-    pub fn open_or_new<P: AsRef<Path>>(path: P, wrap_key: &Key) -> Result<KeyStore> {
+    pub fn open_or_new<P: AsRef<Path>>(path: P, key: &NormalKey) -> Result<KeyStore> {
         if path.as_ref().exists() {
-            Self::open(path, wrap_key)
+            Self::open(path, key)
         } else {
             let mut keystore = try!(Self::new(path));
-            try!(keystore.add(wrap_key));
+            try!(keystore.add(key));
             Ok(keystore)
         }
     }
 
-    pub fn get_key(&self) -> &Key { &self.master_key }
+    pub fn get_key(&self) -> &NormalKey { &self.master_key }
 
-    pub fn add(&mut self, wrap_key: &Key) -> Result<bool> {
-        Ok(self.encrypted_contents.add(try!(self.master_key.clone().wrap(wrap_key))))
+    pub fn add(&mut self, key: &NormalKey) -> Result<bool> {
+        Ok(self.encrypted_contents.add(try!(self.master_key.clone().wrap(key))))
     }
 
-    pub fn remove(&mut self, wrap_key: &Key) -> bool { self.encrypted_contents.remove(wrap_key) }
+    pub fn remove(&mut self, key: &NormalKey) -> bool { self.encrypted_contents.remove(key) }
 }
 
 impl Drop for KeyStore {
