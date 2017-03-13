@@ -15,12 +15,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use bdrck_config::configuration as bdrck_config;
-use crypto::key::NormalKey;
 use error::Result;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt, SALTBYTES};
 use std::path::Path;
-use util::data::SensitiveData;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
@@ -43,12 +41,13 @@ impl Configuration {
     pub fn get_mem_limit(&self) -> MemLimit { MemLimit(self.mem_limit) }
 
     pub fn get_ops_limit(&self) -> OpsLimit { OpsLimit(self.ops_limit) }
+}
 
-    pub fn build_key(&self, password: SensitiveData) -> Result<NormalKey> {
-        NormalKey::new_password(password,
-                                Some(self.get_salt()),
-                                Some(self.get_ops_limit()),
-                                Some(self.get_mem_limit()))
+impl Default for Configuration {
+    fn default() -> Configuration {
+        Self::new(pwhash::gen_salt(),
+                  pwhash::MEMLIMIT_INTERACTIVE,
+                  pwhash::OPSLIMIT_INTERACTIVE)
     }
 }
 
@@ -60,14 +59,6 @@ impl PartialEq for Configuration {
 }
 
 impl Eq for Configuration {}
-
-lazy_static! {
-    static ref DEFAULT_CONFIGURATION: Configuration = Configuration {
-        salt: pwhash::gen_salt().0,
-        mem_limit: pwhash::MEMLIMIT_INTERACTIVE.0,
-        ops_limit: pwhash::OPSLIMIT_INTERACTIVE.0,
-    };
-}
 
 pub struct ConfigurationInstance {
     identifier: bdrck_config::Identifier,
@@ -82,7 +73,7 @@ impl ConfigurationInstance {
             },
         };
         try!(bdrck_config::new(instance.identifier.clone(),
-                               DEFAULT_CONFIGURATION.clone(),
+                               Configuration::default(),
                                Some(path.as_ref())));
         Ok(instance)
     }
