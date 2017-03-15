@@ -29,7 +29,7 @@ pub fn export(repository: &Repository) -> Result<Contents> {
     let mut contents: Contents = Contents { contents: HashMap::new() };
 
     for path in try!(repository.list(None)) {
-        let plaintext: String = try!(repository.read_decrypt(&path)).to_string();
+        let plaintext: String = try!(repository.read_decrypt(&path)).encode();
         contents.contents.insert(try!(path.to_str()).to_owned(), plaintext);
     }
 
@@ -43,7 +43,7 @@ pub fn export_serialize(repository: &Repository) -> Result<String> {
 pub fn import(repository: &Repository, contents: Contents) -> Result<()> {
     for (path, plaintext) in contents.contents {
         let path = try!(repository.path(path));
-        try!(repository.write_encrypt(&path, try!(SensitiveData::from_string(plaintext))));
+        try!(repository.write_encrypt(&path, try!(SensitiveData::decode(plaintext))));
     }
     Ok(())
 }

@@ -40,22 +40,46 @@ pub struct SensitiveData {
 }
 
 impl SensitiveData {
-    /// Load the given string into a new SensitiveData instance. The given
-    /// string must be in a format as returned by SensitiveData.to_string(), or
-    /// the behavior is undefined (most likely an error will be returned).
-    pub fn from_string(s: String) -> Result<SensitiveData> {
+    /// Load the given encoded String into a new SensitiveData instance. The
+    /// given String must be in a format as returned by `decode`, or the
+    /// behavior of this function is undefined (most likely an error will be
+    /// returned).
+    pub fn decode(s: String) -> Result<SensitiveData> {
         Ok(SensitiveData::from(try!(base64::decode(&s.into_bytes()[..]))))
     }
 
-    /// Convert this SensitiveData to a string. The resulting string is an
-    /// encoded representation of this structure's bytes, so it is not
-    /// human-readable. However, it *is* suitable for use with from_string.
-    pub fn to_string(&self) -> String { base64::encode(&self.data) }
+    /// Return an encoded version of this struct's data as a String. The
+    /// returned string is not human-readable, but it is suitable for use
+    /// with decode.
+    pub fn encode(&self) -> String { base64::encode(&self.data) }
 
     /// Try to return a String which interprets this structure's bytes as a
     /// UTF8-encoded string. If decoding is not possible, an error is returned
     /// instead.
-    pub fn to_utf8(&self) -> Result<String> { Ok(try!(String::from_utf8((&self[..]).to_vec()))) }
+    fn to_utf8(&self) -> Result<String> { Ok(try!(String::from_utf8((&self[..]).to_vec()))) }
+
+    /// Return a copy of this structure's data in a format which is suitable
+    /// for being displayed to a human. There are several cases being handled
+    /// here:
+    ///
+    /// - If the data is valid UTF-8 encoded character data, it will be
+    ///   interpreted as such and returned as a normal string.
+    /// - If the data is binary (or force_binary is set), and require_utf8
+    ///   is set, then we will return the data as a base64-encoded string.
+    /// - Otherwise, None is returned, and the caller can access the raw
+    ///   bytes using `as_slice` or similar.
+    pub fn display(&self, force_binary: bool, require_utf8: bool) -> Option<String> {
+        let as_utf8 = self.to_utf8();
+        let is_binary = force_binary || as_utf8.is_err();
+
+        if !is_binary {
+            Some(as_utf8.unwrap())
+        } else if require_utf8 {
+            Some(self.encode())
+        } else {
+            None
+        }
+    }
 
     /// Load the contents of the given file into a new SensitiveData instance.
     ///

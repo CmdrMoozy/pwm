@@ -41,15 +41,7 @@ pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
         Err(_) => bail!("Failed to get clipboard context"),
     };
 
-    let as_utf8 = data.to_utf8();
-    let binary = force_binary || as_utf8.is_err();
-    let contents: String = if !binary {
-        try!(as_utf8)
-    } else {
-        data.to_string()
-    };
-
-    try!(set_contents_string(&mut ctx, contents));
+    try!(set_contents_string(&mut ctx, data.display(force_binary, true).unwrap()));
 
     info!("Copied stored password or key to clipboard. Will clear in {} seconds.",
           CLIPBOARD_TIMEOUT.as_secs());
