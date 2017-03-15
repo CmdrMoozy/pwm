@@ -62,19 +62,19 @@ fn test_truncate() {
 }
 
 #[test]
-fn test_from_string() {
+fn test_decode() {
     let src: String = "Some arbitrary test string.".to_owned();
     let sd_from_bytes = SensitiveData::from(src.as_bytes().to_vec());
-    let sd_to_string = sd_from_bytes.to_string();
+    let sd_to_string = sd_from_bytes.encode();
     assert_ne!(src, sd_to_string);
-    let sd_from_string = SensitiveData::from_string(sd_to_string).unwrap();
+    let sd_from_string = SensitiveData::decode(sd_to_string).unwrap();
     assert_eq!(src.as_bytes(), &sd_from_string[..]);
 }
 
 #[test]
-fn test_to_string() {
+fn test_encode() {
     let data = SensitiveData::from(randombytes(1024));
-    assert!(data.to_string().len() > 0);
+    assert!(data.encode().len() > 0);
 }
 
 #[test]

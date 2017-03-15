@@ -125,21 +125,18 @@ fn ls(options: HashMap<String, String>,
 }
 
 fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()> {
-    let as_utf8 = retrieved.to_utf8();
-    if !(force_binary || as_utf8.is_err()) {
-        info!("{}", try!(as_utf8));
-    } else if isatty::stdout_isatty() {
-        // The stored password is binary, but stdout is an interactive terminal so we
-        // can't really write binary output. Display the password in Base64.
-        info!("{}", retrieved.to_string());
+    let tty = isatty::stdout_isatty();
+    let display: Optional<String> = retrieved.display(force_binary, tty);
+    let bytes: &[u8] = display.as_ref().map_or_else(|| &retrieved[..], |s| s.as_bytes());
+
+    if tty {
+        info!("{}", String::from_utf8_lossy(bytes));
     } else {
         use std::io::Write;
-
-        // The stored password is binary, and stdout is a file / pipe / whatever. Write
-        // the raw bytes.
         let mut stdout = io::stdout();
-        try!(stdout.write_all(&retrieved[..]));
+        try!(stdout.write_all(bytes));
     }
+
     Ok(())
 }
 
