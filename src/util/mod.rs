@@ -25,9 +25,8 @@ use rpassword;
 use std::io;
 
 /// Prompt the user for a password using the given prompt on stderr, and then
-/// read the result on
-/// stdin. If confirm is set, we'll prompt for the password twice, and make
-/// sure they copies match.
+/// read the result on stdin. If confirm is set, we'll prompt for the password
+/// twice, and make sure they copies match.
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::SensitiveData> {
     loop {
         let password = data::SensitiveData::from(try!(rpassword::prompt_password_stderr(prompt))
@@ -41,8 +40,7 @@ pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::SensitiveDat
 }
 
 /// Prompt the user for multiple lines of password data using the given prompt
-/// on stderr. We'll
-/// keep reading lines of text from stdin until we read "EOF".
+/// on stderr. We'll keep reading lines of text from stdin until we read "EOF".
 pub fn multiline_password_prompt(prompt: &str) -> Result<data::SensitiveData> {
     use std::io::Write;
 
