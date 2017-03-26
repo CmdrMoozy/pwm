@@ -20,11 +20,23 @@ lazy_static! {
 }
 
 static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
+static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
+
+fn unwrap_password_or_prompt(password: Option<SensitiveData>,
+                             prompt: &str,
+                             confirm: bool)
+                             -> Result<SensitiveData> {
+    Ok(if let Some(p) = password {
+        p
+    } else {
+        try!(password_prompt(prompt, confirm))
+    })
+}
 
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
     repository.signature()
@@ -100,11 +112,8 @@ impl Repository {
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
         let keystore = Lazy::new(move || -> Result<KeyStore> {
-            let master_password: SensitiveData = if let Some(p) = password {
-                p
-            } else {
-                try!(password_prompt(MASTER_PASSWORD_PROMPT, create))
-            };
+            let master_password =
+                try!(unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create));
             let master_key = try!(NormalKey::new_password(master_password, Some(c)));
             let repository = try!(git::open_repository(path.as_path(), false));
             open_keystore(&repository, &master_key)
@@ -125,12 +134,22 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    fn get_master_key(&self) -> Result<&NormalKey> {
+    fn get_key_store(&self) -> Result<&KeyStore> {
         match self.keystore.as_ref().unwrap().as_ref() {
-            Ok(ks) => Ok(ks.get_key()),
-            Err(e) => bail!("Accessing master key failed: {}", e),
+            Ok(ks) => Ok(ks),
+            Err(e) => bail!("Accessing repository key store failed: {}", e),
         }
     }
+
+    fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
+        use std::ops::DerefMut;
+        let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
+        lazy.deref_mut()
+            .as_mut()
+            .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
+    }
+
+    fn get_master_key(&self) -> Result<&NormalKey> { Ok(try!(self.get_key_store()).get_key()) }
 
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
@@ -157,6 +176,17 @@ impl Repository {
             .filter(|entry| entry != KEYSTORE_PATH.as_path())
             .map(|entry| self.path(entry))
             .collect()
+    }
+
+    pub fn add_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
+        let config = self.get_crypto_configuration();
+        let password = try!(unwrap_password_or_prompt(password, ADD_KEY_PROMPT, true));
+        let key = try!(NormalKey::new_password(password, Some(config)));
+        let was_added = try!(try!(self.get_key_store_mut()).add(&key));
+        if !was_added {
+            bail!("The specified key is already in use, so it was not re-added");
+        }
+        Ok(())
     }
 
     pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
