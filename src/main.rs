@@ -22,6 +22,7 @@ extern crate log;
 
 extern crate pwm_lib;
 use pwm_lib::configuration;
+use pwm_lib::crypto::pwgen;
 use pwm_lib::error::Result;
 use pwm_lib::repository::Repository;
 use pwm_lib::repository::serde::{export_serialize, import_deserialize};
@@ -198,6 +199,33 @@ fn rm(options: HashMap<String, String>,
     Ok(())
 }
 
+fn generate(options: HashMap<String, String>,
+            flags: HashMap<String, bool>,
+            _: HashMap<String, Vec<String>>)
+            -> Result<()> {
+    let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
+    if !flags["exclude_letters"] {
+        charsets.push(pwgen::CharacterSet::Letters);
+    }
+    if !flags["exclude_numbers"] {
+        charsets.push(pwgen::CharacterSet::Numbers);
+    }
+    if flags["include_symbols"] {
+        charsets.push(pwgen::CharacterSet::Symbols);
+    }
+
+    let length: usize = try!(options["password_length"].parse::<usize>());
+    let custom_exclude: Vec<char> = options.get("custom_exclude")
+        .map_or(Vec::new(), |x| x.chars().collect());
+
+    info!("{}",
+          try!(pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice()))
+              .display(false, false)
+              .unwrap());
+
+    Ok(())
+}
+
 fn export(options: HashMap<String, String>,
           _: HashMap<String, bool>,
           _: HashMap<String, Vec<String>>)
@@ -337,6 +365,23 @@ fn main() {
                 ],
                 false).unwrap(),
             Box::new(rm)),
+        ExecutableCommand::new(
+            Command::new(
+                "generate",
+                "Generate a random password",
+                vec![
+                    Option::required(
+                        "password_length", "The length of the password to generate", Some('l'),
+                        Some(pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH.to_string().as_str())),
+                    Option::flag("exclude_letters", "Exclude letters from the password", Some('A')),
+                    Option::flag("exclude_numbers", "Exclude numbers from the password", Some('N')),
+                    Option::flag("include_symbols", "Include symbols in the password", Some('s')),
+                    Option::optional(
+                        "custom_exclude", "Exclude a custom set of characters", Some('x')),
+                ],
+                vec![],
+                false).unwrap(),
+            Box::new(generate)),
         ExecutableCommand::new(
             Command::new(
                 "export",
