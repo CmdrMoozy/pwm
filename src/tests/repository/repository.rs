@@ -142,3 +142,47 @@ fn test_adding_key_succeeds() {
     let output_plaintext = repository.read_decrypt(&path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
 }
+
+#[test]
+fn test_removing_only_key() {
+    let mut t = TestRepository::new("foobar").unwrap();
+    assert!(t.remove_key(Some(to_password("foobar"))).is_err());
+}
+
+#[test]
+fn test_removing_unused_key() {
+    let mut t = TestRepository::new("foobar").unwrap();
+    assert!(t.remove_key(Some(to_password("barbaz"))).is_err());
+}
+
+#[test]
+fn test_removing_key_succeeds() {
+    let repository_dir = TempDir::new(TEST_REPO_DIR).unwrap();
+    let pwa = to_password("foobar");
+    let pwb = to_password("barbaz");
+    let path = "test";
+    let plaintext = SensitiveData::from(randombytes(1024));
+
+    {
+        let mut repository = Repository::new(repository_dir.path(), true, Some(pwa.clone()))
+            .unwrap();
+        let path = repository.path(path).unwrap();
+        repository.write_encrypt(&path, plaintext.clone()).unwrap();
+
+        repository.add_key(Some(pwb.clone())).unwrap();
+        repository.remove_key(Some(pwa.clone())).unwrap();
+    }
+
+    {
+        // Accessing the repository with the old key should fail.
+        let repository = Repository::new(repository_dir.path(), false, Some(pwa.clone())).unwrap();
+        let path = repository.path(path).unwrap();
+        assert!(repository.read_decrypt(&path).is_err());
+    }
+
+    // Accessing the repository with the new key should still succeed.
+    let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
+    let path = repository.path(path).unwrap();
+    let output_plaintext = repository.read_decrypt(&path).unwrap();
+    assert_eq!(&plaintext[..], &output_plaintext[..]);
+}

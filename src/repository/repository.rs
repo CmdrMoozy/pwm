@@ -21,6 +21,7 @@ lazy_static! {
 
 static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
 static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
+static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
@@ -185,6 +186,17 @@ impl Repository {
         let was_added = try!(try!(self.get_key_store_mut()).add(&key));
         if !was_added {
             bail!("The specified key is already in use, so it was not re-added");
+        }
+        Ok(())
+    }
+
+    pub fn remove_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
+        let config = self.get_crypto_configuration();
+        let password = try!(unwrap_password_or_prompt(password, REMOVE_KEY_PROMPT, true));
+        let key = try!(NormalKey::new_password(password, Some(config)));
+        let was_removed = try!(try!(self.get_key_store_mut()).remove(&key));
+        if !was_removed {
+            bail!("The specified key is not registered with this repository");
         }
         Ok(())
     }
