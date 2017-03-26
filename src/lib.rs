@@ -13,6 +13,7 @@ extern crate isatty;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+extern crate rand;
 extern crate rpassword;
 extern crate serde;
 #[macro_use]
