@@ -1,5 +1,6 @@
-use ::repository::*;
+use repository::*;
 use sodiumoxide::randombytes::randombytes;
+use std::path::PathBuf;
 use tests::tempdir::TempDir;
 use util::data::SensitiveData;
 
@@ -7,18 +8,22 @@ use util::data::SensitiveData;
 fn test_wrong_master_password_fails() {
     let repository_dir = TempDir::new("pwm-test").unwrap();
 
+    let good = SensitiveData::from("foobar".as_bytes().to_vec());
+    let bad = SensitiveData::from("barbaz".as_bytes().to_vec());
+    let path = PathBuf::from("test");
+
     {
-        let _repository = Repository::new(repository_dir.path(),
-                                          true,
-                                          Some(SensitiveData::from("foobar".as_bytes().to_vec())))
+        let repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
+        let path = repository.path(path.as_path()).unwrap();
+        repository.write_encrypt(&path,
+                           SensitiveData::from("Hello, world!".as_bytes().to_vec()))
             .unwrap();
     }
 
-    let repository_result =
-        Repository::new(repository_dir.path(),
-                        false,
-                        Some(SensitiveData::from("barbaz".as_bytes().to_vec())));
-    assert!(repository_result.is_err());
+    let repository = Repository::new(repository_dir.path(), false, Some(bad)).unwrap();
+    let path = repository.path(path.as_path()).unwrap();
+    let read_result = repository.read_decrypt(&path);
+    assert!(read_result.is_err());
 }
 
 #[test]
