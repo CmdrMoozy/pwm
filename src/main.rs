@@ -106,10 +106,15 @@ fn addkey(options: HashMap<String, String>,
     Ok(())
 }
 
-fn rmkey(_: HashMap<String, String>,
+fn rmkey(options: HashMap<String, String>,
          _: HashMap<String, bool>,
          _: HashMap<String, Vec<String>>)
          -> Result<()> {
+    let _handle = try!(init_pwm());
+
+    let mut repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
+    try!(repository.remove_key(None));
+
     Ok(())
 }
 
