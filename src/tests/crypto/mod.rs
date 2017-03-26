@@ -4,3 +4,5 @@ mod key;
 mod keystore;
 #[cfg(test)]
 mod padding;
+#[cfg(test)]
+mod rng;
