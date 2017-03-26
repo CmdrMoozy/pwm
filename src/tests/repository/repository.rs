@@ -114,3 +114,31 @@ fn test_remove() {
         t.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();
     assert!(listing.is_empty());
 }
+
+#[test]
+fn test_adding_duplicate_key() {
+    let mut t = TestRepository::new("foobar").unwrap();
+    assert!(t.add_key(Some(to_password("foobar"))).is_err());
+}
+
+#[test]
+fn test_adding_key_succeeds() {
+    let repository_dir = TempDir::new(TEST_REPO_DIR).unwrap();
+    let pwa = to_password("foobar");
+    let pwb = to_password("barbaz");
+    let path = "test";
+    let plaintext = SensitiveData::from(randombytes(1024));
+
+    {
+        let mut repository = Repository::new(repository_dir.path(), true, Some(pwa)).unwrap();
+        let path = repository.path(path).unwrap();
+        repository.write_encrypt(&path, plaintext.clone()).unwrap();
+
+        repository.add_key(Some(pwb.clone())).unwrap();
+    }
+
+    let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
+    let path = repository.path(path).unwrap();
+    let output_plaintext = repository.read_decrypt(&path).unwrap();
+    assert_eq!(&plaintext[..], &output_plaintext[..]);
+}
