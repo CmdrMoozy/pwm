@@ -11,6 +11,7 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use util::data::SensitiveData;
 use util::git;
+use util::lazy::Lazy;
 use util::password_prompt;
 
 lazy_static! {
@@ -82,7 +83,7 @@ pub struct Repository {
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<ConfigurationInstance>,
     // NOTE: keystore is guaranteed to be Some() everywhere except within drop().
-    keystore: Option<KeyStore>,
+    keystore: Option<Lazy<'static, Result<KeyStore>>>,
 }
 
 impl Repository {
@@ -93,16 +94,21 @@ impl Repository {
                                create: bool,
                                password: Option<SensitiveData>)
                                -> Result<Repository> {
-        let repository = try!(git::open_repository(path, create));
+        let repository = try!(git::open_repository(path.as_ref(), create));
         let crypto_configuration = try!(open_crypto_configuration(&repository));
-        let master_password: SensitiveData = if let Some(p) = password {
-            p
-        } else {
-            try!(password_prompt(MASTER_PASSWORD_PROMPT, create))
-        };
-        let master_key = try!(NormalKey::new_password(master_password,
-                                                      Some(crypto_configuration.get())));
-        let keystore = try!(open_keystore(&repository, &master_key));
+
+        let c = crypto_configuration.get();
+        let path = path.as_ref().to_path_buf();
+        let keystore = Lazy::new(move || -> Result<KeyStore> {
+            let master_password: SensitiveData = if let Some(p) = password {
+                p
+            } else {
+                try!(password_prompt(MASTER_PASSWORD_PROMPT, create))
+            };
+            let master_key = try!(NormalKey::new_password(master_password, Some(c)));
+            let repository = try!(git::open_repository(path.as_path(), false));
+            open_keystore(&repository, &master_key)
+        });
 
         Ok(Repository {
             repository: repository,
@@ -119,7 +125,12 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    fn get_master_key(&self) -> &NormalKey { self.keystore.as_ref().unwrap().get_key() }
+    fn get_master_key(&self) -> Result<&NormalKey> {
+        match self.keystore.as_ref().unwrap().as_ref() {
+            Ok(ks) => Ok(ks.get_key()),
+            Err(e) => bail!("Accessing master key failed: {}", e),
+        }
+    }
 
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
@@ -149,13 +160,13 @@ impl Repository {
     }
 
     pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
-        try!(write_encrypt(path, plaintext, self.get_master_key()));
+        try!(write_encrypt(path, plaintext, try!(self.get_master_key())));
         try!(self.commit_one(STORED_PASSWORD_UPDATE_MESSAGE, path.relative_path()));
         Ok(())
     }
 
     pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
-        read_decrypt(path, self.get_master_key())
+        read_decrypt(path, try!(self.get_master_key()))
     }
 
     pub fn remove(&self, path: &RepositoryPath) -> Result<()> {
