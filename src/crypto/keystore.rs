@@ -103,9 +103,10 @@ impl KeyStore {
         let contents = try!(EncryptedContents::open(path.as_ref()));
         let mut master_key: Option<NormalKey> = None;
         for wrapped_key in contents.wrapped_keys.iter() {
-            let unwrapped_key = try!(wrapped_key.unwrap(key));
-            if try!(contents.is_master_key(&unwrapped_key)) {
-                master_key = Some(unwrapped_key);
+            if let Ok(unwrapped_key) = wrapped_key.unwrap(key) {
+                if try!(contents.is_master_key(&unwrapped_key)) {
+                    master_key = Some(unwrapped_key);
+                }
             }
         }
 

@@ -27,6 +27,32 @@ fn test_keystore_save_round_trip() {
 }
 
 #[test]
+fn test_keystore_open_with_added_key() {
+    let file = tempfile::NamedTempFile::new().unwrap();
+    let path = file.path().to_owned();
+    // Remove the file: an empty file isn't a valid serialized KeyStore.
+    fs::remove_file(path.as_path()).unwrap();
+
+    let keya = NormalKey::new_random().unwrap();
+    let keyb = NormalKey::new_random().unwrap();
+    assert_ne!(keya.get_signature(), keyb.get_signature());
+    let master_key: Option<NormalKey>;
+
+    {
+        let mut keystore = KeyStore::open_or_new(path.as_path(), &keya).unwrap();
+        master_key = Some(keystore.get_key().clone());
+
+        assert!(keystore.add(&keyb).unwrap());
+    }
+
+    {
+        let keystore = KeyStore::open_or_new(path.as_path(), &keyb).unwrap();
+        assert_eq!(master_key.as_ref().unwrap().get_signature(),
+                   keystore.get_key().get_signature());
+    }
+}
+
+#[test]
 fn test_add_duplicate_key() {
     let file = tempfile::NamedTempFile::new().unwrap();
     let path = file.path().to_owned();
