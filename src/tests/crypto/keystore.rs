@@ -19,10 +19,9 @@ fn test_keystore_save_round_trip() {
     }
 
     {
-        let mut keystore = KeyStore::open_or_new(path.as_path(), &wrap_key).unwrap();
+        let keystore = KeyStore::open_or_new(path.as_path(), &wrap_key).unwrap();
         assert_eq!(master_key.as_ref().unwrap().get_signature(),
                    keystore.get_key().get_signature());
-        assert!(keystore.remove(&wrap_key));
     }
 }
 
@@ -75,7 +74,21 @@ fn test_remove_unused_key() {
 
     let wrap_key = NormalKey::new_random().unwrap();
     let mut keystore = KeyStore::open_or_new(path.as_path(), &wrap_key).unwrap();
-    // Test that removing some other key returns false.
+    // Test that removing some other key returns false, since it isn't in the
+    // KeyStore.
     let other_key = NormalKey::new_random().unwrap();
-    assert!(!keystore.remove(&other_key));
+    assert!(!keystore.remove(&other_key).unwrap());
+}
+
+#[test]
+fn test_remove_only_key() {
+    let file = tempfile::NamedTempFile::new().unwrap();
+    let path = file.path().to_owned();
+    // Remove the file: an empty file isn't a valid serialized KeyStore.
+    fs::remove_file(path.as_path()).unwrap();
+
+    let key = NormalKey::new_random().unwrap();
+    let mut keystore = KeyStore::open_or_new(path.as_path(), &key).unwrap();
+    // Test that removing the sole key is treated as an error.
+    assert!(keystore.remove(&key).is_err());
 }
