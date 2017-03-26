@@ -5,4 +5,6 @@ mod keystore;
 #[cfg(test)]
 mod padding;
 #[cfg(test)]
+mod pwgen;
+#[cfg(test)]
 mod rng;
