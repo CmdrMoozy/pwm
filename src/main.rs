@@ -94,6 +94,20 @@ fn init(options: HashMap<String, String>,
     Ok(())
 }
 
+fn addkey(_: HashMap<String, String>,
+          _: HashMap<String, bool>,
+          _: HashMap<String, Vec<String>>)
+          -> Result<()> {
+    Ok(())
+}
+
+fn rmkey(_: HashMap<String, String>,
+         _: HashMap<String, bool>,
+         _: HashMap<String, Vec<String>>)
+         -> Result<()> {
+    Ok(())
+}
+
 fn ls(options: HashMap<String, String>,
       _: HashMap<String, bool>,
       arguments: HashMap<String, Vec<String>>)
@@ -284,6 +298,28 @@ fn main() {
                 vec![],
                 false).unwrap(),
             Box::new(init)),
+        ExecutableCommand::new(
+            Command::new(
+                "addkey",
+                "Add a new master key to an existing repository",
+                vec![
+                    Option::optional(
+                        "repository", "The path to the repository to initialize", Some('r')),
+                ],
+                vec![],
+                false).unwrap(),
+            Box::new(addkey)),
+        ExecutableCommand::new(
+            Command::new(
+                "rmkey",
+                "Remove an existing master key from an existing repository",
+                vec![
+                    Option::optional(
+                        "repository", "The path to the repository to initialize", Some('r')),
+                ],
+                vec![],
+                false).unwrap(),
+            Box::new(rmkey)),
         ExecutableCommand::new(
             Command::new(
                 "ls",
