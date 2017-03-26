@@ -70,14 +70,17 @@ impl EncryptedContents {
     /// Remove any keys wrapped with the given key from this data structure.
     /// Returns true if any keys were removed, or false if no keys wrapped with
     /// the given key could be found.
-    pub fn remove(&mut self, wrap_key: &NormalKey) -> bool {
+    pub fn remove(&mut self, wrap_key: &NormalKey) -> Result<bool> {
         let original_length = self.wrapped_keys.len();
-        let wrapped_keys = self.wrapped_keys
+        let wrapped_keys: Vec<WrappedKey> = self.wrapped_keys
             .drain(..)
             .filter(|k| k.get_signature() != wrap_key.get_signature())
             .collect();
+        if wrapped_keys.is_empty() {
+            bail!("Refusing to remove all valid keys from this KeyStore")
+        }
         self.wrapped_keys = wrapped_keys;
-        self.wrapped_keys.len() != original_length
+        Ok(self.wrapped_keys.len() != original_length)
     }
 }
 
@@ -136,7 +139,9 @@ impl KeyStore {
         Ok(self.encrypted_contents.add(try!(self.master_key.clone().wrap(key))))
     }
 
-    pub fn remove(&mut self, key: &NormalKey) -> bool { self.encrypted_contents.remove(key) }
+    pub fn remove(&mut self, key: &NormalKey) -> Result<bool> {
+        self.encrypted_contents.remove(key)
+    }
 }
 
 impl Drop for KeyStore {
