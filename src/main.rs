@@ -222,6 +222,8 @@ fn generate(options: HashMap<String, String>,
             flags: HashMap<String, bool>,
             _: HashMap<String, Vec<String>>)
             -> Result<()> {
+    let _handle = try!(init_pwm());
+
     let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
     if !flags["exclude_letters"] {
         charsets.push(pwgen::CharacterSet::Letters);
