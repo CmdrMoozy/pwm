@@ -14,13 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use bincode::{deserialize, serialize};
-use bincode::SizeLimit;
+use bincode::{self, deserialize, serialize};
 use error::Result;
 use serde::{Deserialize, Serialize};
 
 pub fn serialize_binary<T: Serialize>(data: &T) -> Result<Vec<u8>> {
-    match serialize(data, SizeLimit::Infinite) {
+    match serialize(data, bincode::Infinite) {
         Err(e) => bail!("Binary serialization failed: {}", e),
         Ok(s) => Ok(s),
     }
