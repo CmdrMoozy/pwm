@@ -6,6 +6,7 @@ error_chain! {
         Io(::std::io::Error);
         Json(::serde_json::Error);
         Log(::log::SetLoggerError);
+        ParseInt(::std::num::ParseIntError);
         Utf8(::std::string::FromUtf8Error);
     }
 }
