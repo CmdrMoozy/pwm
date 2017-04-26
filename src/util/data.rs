@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use data_encoding::base64;
+use data_encoding::BASE64;
 use error::Result;
 use sodiumoxide::utils::memzero;
 use std::fs::File;
@@ -43,13 +43,13 @@ impl SensitiveData {
     /// behavior of this function is undefined (most likely an error will be
     /// returned).
     pub fn decode(s: String) -> Result<SensitiveData> {
-        Ok(SensitiveData::from(try!(base64::decode(&s.into_bytes()[..]))))
+        Ok(SensitiveData::from(try!(BASE64.decode(&s.into_bytes()[..]))))
     }
 
     /// Return an encoded version of this struct's data as a String. The
     /// returned string is not human-readable, but it is suitable for use
     /// with decode.
-    pub fn encode(&self) -> String { base64::encode(&self.data) }
+    pub fn encode(&self) -> String { BASE64.encode(&self.data) }
 
     /// Try to return a String which interprets this structure's bytes as a
     /// UTF8-encoded string. If decoding is not possible, an error is returned
