@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clipboard;
+use clipboard::{self, ClipboardProvider};
 use error::*;
 use std::thread::sleep;
 use std::time::Duration;
@@ -22,8 +22,8 @@ lazy_static! {
     static ref CLIPBOARD_TIMEOUT: Duration = Duration::new(45, 0);
 }
 
-fn set_contents_string(ctx: &mut clipboard::ClipboardContext, contents: String) -> Result<()> {
-    match ctx.set_contents(contents) {
+fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> Result<()> {
+    match cp.set_contents(contents) {
         Ok(_) => Ok(()),
         Err(_) => bail!("Failed to set clipboard contents"),
     }
@@ -34,17 +34,17 @@ fn set_contents_string(ctx: &mut clipboard::ClipboardContext, contents: String) 
 /// string, then the clipboard will be populated with a Base64 encoded version
 /// of the data.
 pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
-    let mut ctx = match clipboard::ClipboardContext::new() {
-        Ok(ctx) => ctx,
+    let mut cp = match clipboard::x11_clipboard::X11ClipboardContext::new() {
+        Ok(cp) => cp,
         Err(_) => bail!("Failed to get clipboard context"),
     };
 
-    try!(set_contents_string(&mut ctx, data.display(force_binary, true).unwrap()));
+    try!(set_contents_string(&mut cp, data.display(force_binary, true).unwrap()));
 
     info!("Copied stored password or key to clipboard. Will clear in {} seconds.",
           CLIPBOARD_TIMEOUT.as_secs());
     sleep(*CLIPBOARD_TIMEOUT);
-    try!(set_contents_string(&mut ctx, "".to_owned()));
+    try!(set_contents_string(&mut cp, "".to_owned()));
 
     Ok(())
 }
