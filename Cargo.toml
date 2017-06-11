@@ -5,10 +5,10 @@ authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 license = "Apache-2.0"
 
 [dependencies]
-bdrck_config = "0.1"
+bdrck_config = "0.2"
 bdrck_log = "0.3"
 bdrck_params = "0.3"
-bincode = "1.0.0-alpha7"
+bincode = "0.8"
 byteorder = "1.0"
 clipboard = { version = "0.2", optional = true }
 data-encoding = "2.0.0-rc.1"
@@ -19,11 +19,10 @@ lazy_static = "0.2"
 log = "0.3"
 rand = "0.3"
 rpassword = "0.4"
-serde = "0.9"
-serde_derive = "0.9"
-serde_json = "0.9"
-# TODO: Switch to a published version once #152 / fc43d8c is included in a release (> 0.0.14).
-sodiumoxide = { git = "https://github.com/dnaq/sodiumoxide.git" }
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
+sodiumoxide = "0.0.15"
 
 [dev-dependencies]
 tempdir = "0.3"
