@@ -10,7 +10,7 @@ bdrck_log = "0.3"
 bdrck_params = "0.3"
 bincode = "0.8"
 byteorder = "1.0"
-clipboard = { version = "0.2", optional = true }
+clipboard = { version = "0.3", optional = true }
 data-encoding = "2.0.0-rc.1"
 error-chain = "0.10"
 git2 = { version = "0.6", default-features = false, features = [] }
