@@ -28,10 +28,11 @@ use std::io;
 /// twice, and make sure they copies match.
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::SensitiveData> {
     loop {
-        let password = data::SensitiveData::from(try!(rpassword::prompt_password_stderr(prompt))
-            .into_bytes());
+        let password =
+            data::SensitiveData::from(rpassword::prompt_password_stderr(prompt)?.into_bytes());
         if !confirm ||
-           data::SensitiveData::from(try!(rpassword::prompt_password_stderr("Confirm: "))
+           data::SensitiveData::from(rpassword::prompt_password_stderr("Confirm: ")
+            ?
             .into_bytes()) == password {
             return Ok(password);
         }
@@ -43,13 +44,13 @@ pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::SensitiveDat
 pub fn multiline_password_prompt(prompt: &str) -> Result<data::SensitiveData> {
     use std::io::Write;
 
-    try!(writeln!(&mut io::stderr(), "{}", prompt));
+    writeln!(&mut io::stderr(), "{}", prompt)?;
 
     let stdin = io::stdin();
     let mut data: Vec<u8> = vec![];
     loop {
         let mut buffer = String::new();
-        try!(stdin.read_line(&mut buffer));
+        stdin.read_line(&mut buffer)?;
         if buffer == "EOF\n" {
             break;
         }

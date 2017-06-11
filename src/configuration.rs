@@ -53,9 +53,9 @@ pub struct SingletonHandle;
 
 impl SingletonHandle {
     pub fn new(custom_path: Option<&Path>) -> Result<SingletonHandle> {
-        try!(bdrck_config::new(get_identifier().clone(),
-                               DEFAULT_CONFIGURATION.clone(),
-                               custom_path));
+        bdrck_config::new(get_identifier().clone(),
+                          DEFAULT_CONFIGURATION.clone(),
+                          custom_path)?;
         Ok(SingletonHandle {})
     }
 }
@@ -69,7 +69,7 @@ impl Drop for SingletonHandle {
 }
 
 pub fn set(key: &str, value: &str) -> Result<()> {
-    let err = try!(bdrck_config::instance_apply_mut(get_identifier(),
+    let err = bdrck_config::instance_apply_mut(get_identifier(),
         |instance: &mut bdrck_config::Configuration<Configuration>| -> Option<Error> {
         let mut config = instance.get().clone();
         if key == DEFAULT_REPOSITORY_KEY {
@@ -80,7 +80,7 @@ pub fn set(key: &str, value: &str) -> Result<()> {
         }
         instance.set(config);
         None
-    }));
+    })?;
 
     match err {
         Some(err) => Err(err),
@@ -88,12 +88,10 @@ pub fn set(key: &str, value: &str) -> Result<()> {
     }
 }
 
-pub fn get() -> Result<Configuration> {
-    Ok(try!(bdrck_config::get::<Configuration>(get_identifier())))
-}
+pub fn get() -> Result<Configuration> { Ok(bdrck_config::get::<Configuration>(get_identifier())?) }
 
 pub fn get_value_as_str(key: &str) -> Result<String> {
-    let config = try!(get());
+    let config = get()?;
     if key == DEFAULT_REPOSITORY_KEY {
         Ok(match config.default_repository {
             Some(v) => v.clone(),
@@ -104,4 +102,4 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
     }
 }
 
-pub fn reset() -> Result<()> { Ok(try!(bdrck_config::reset::<Configuration>(get_identifier()))) }
+pub fn reset() -> Result<()> { Ok(bdrck_config::reset::<Configuration>(get_identifier())?) }

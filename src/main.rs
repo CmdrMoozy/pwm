@@ -49,12 +49,12 @@ static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EOF' is read:";
 
 fn init_pwm() -> Result<configuration::SingletonHandle> {
-    try!(pwm_lib::init());
-    Ok(try!(configuration::SingletonHandle::new(None)))
+    pwm_lib::init()?;
+    Ok(configuration::SingletonHandle::new(None)?)
 }
 
 fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
-    let config = try!(configuration::get());
+    let config = configuration::get()?;
     match options.get("repository").or_else(|| config.default_repository.as_ref()) {
         Some(p) => Ok(p.clone()),
         None => {
@@ -68,7 +68,7 @@ fn config(options: HashMap<String, String>,
           _: HashMap<String, bool>,
           _: HashMap<String, Vec<String>>)
           -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
     let k: Optional<&String> = options.get("key");
     let s: Optional<&String> = options.get("set");
@@ -90,7 +90,7 @@ fn config(options: HashMap<String, String>,
 
     info!("{} = {}",
           key,
-          try!(configuration::get_value_as_str(key.as_str())));
+          configuration::get_value_as_str(key.as_str())?);
 
     Ok(())
 }
@@ -99,9 +99,9 @@ fn init(options: HashMap<String, String>,
         _: HashMap<String, bool>,
         _: HashMap<String, Vec<String>>)
         -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), true, None));
+    let repository = Repository::new(get_repository_path(&options)?, true, None)?;
     info!("Initialized repository: {}",
           repository.workdir().unwrap().display());
 
@@ -112,10 +112,10 @@ fn addkey(options: HashMap<String, String>,
           _: HashMap<String, bool>,
           _: HashMap<String, Vec<String>>)
           -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let mut repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    try!(repository.add_key(None));
+    let mut repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    repository.add_key(None)?;
 
     Ok(())
 }
@@ -124,10 +124,10 @@ fn rmkey(options: HashMap<String, String>,
          _: HashMap<String, bool>,
          _: HashMap<String, Vec<String>>)
          -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let mut repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    try!(repository.remove_key(None));
+    let mut repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    repository.remove_key(None)?;
 
     Ok(())
 }
@@ -136,11 +136,11 @@ fn ls(options: HashMap<String, String>,
       _: HashMap<String, bool>,
       arguments: HashMap<String, Vec<String>>)
       -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
-    for entry in &try!(repository.list(Some(&path))) {
+    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let path = repository.path(&arguments.get("path").unwrap()[0])?;
+    for entry in &repository.list(Some(&path))? {
         info!("{}", entry.to_str().unwrap());
     }
 
@@ -157,7 +157,7 @@ fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()>
     } else {
         use std::io::Write;
         let mut stdout = io::stdout();
-        try!(stdout.write_all(bytes));
+        stdout.write_all(bytes)?;
     }
 
     Ok(())
@@ -167,27 +167,27 @@ fn get(options: HashMap<String, String>,
        flags: HashMap<String, bool>,
        arguments: HashMap<String, Vec<String>>)
        -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
+    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let path = repository.path(&arguments.get("path").unwrap()[0])?;
     let force_binary = flags["binary"];
 
-    let retrieved = try!(repository.read_decrypt(&path));
+    let retrieved = repository.read_decrypt(&path)?;
 
     match () {
         #[cfg(feature = "clipboard")]
         () => {
             if flags["clipboard"] {
-                try!(pwm_lib::util::clipboard::set_contents(retrieved, force_binary));
+                pwm_lib::util::clipboard::set_contents(retrieved, force_binary)?;
             } else {
-                try!(print_stored_data(retrieved, force_binary));
+                print_stored_data(retrieved, force_binary)?;
             }
         },
 
         #[cfg(not(feature = "clipboard"))]
         () => {
-            try!(print_stored_data(retrieved, force_binary));
+            print_stored_data(retrieved, force_binary)?;
         },
     }
 
@@ -198,10 +198,10 @@ fn set(options: HashMap<String, String>,
        flags: HashMap<String, bool>,
        arguments: HashMap<String, Vec<String>>)
        -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
+    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let path = repository.path(&arguments.get("path").unwrap()[0])?;
     let key_file = options.get("key_file");
     let multiline = flags["multiline"];
 
@@ -211,15 +211,16 @@ fn set(options: HashMap<String, String>,
 
     if let Some(key_file) = key_file {
         // The user wants to set the password using a key file.
-        let mut key_file = try!(File::open(key_file));
-        try!(repository.write_encrypt(&path, try!(SensitiveData::from_file(&mut key_file))));
+        let mut key_file = File::open(key_file)?;
+        repository.write_encrypt(&path, SensitiveData::from_file(&mut key_file)?)?;
     } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
-        try!(repository.write_encrypt(&path, match multiline {
-            false => try!(password_prompt(NEW_PASSWORD_PROMPT, true)),
-            true => try!(multiline_password_prompt(MULTILINE_PASSWORD_PROMPT)),
-        }));
+        repository.write_encrypt(&path,
+                           match multiline {
+                               false => password_prompt(NEW_PASSWORD_PROMPT, true)?,
+                               true => multiline_password_prompt(MULTILINE_PASSWORD_PROMPT)?,
+                           })?;
     }
 
     Ok(())
@@ -229,11 +230,11 @@ fn rm(options: HashMap<String, String>,
       _: HashMap<String, bool>,
       arguments: HashMap<String, Vec<String>>)
       -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    let path = try!(repository.path(&arguments.get("path").unwrap()[0]));
-    try!(repository.remove(&path));
+    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let path = repository.path(&arguments.get("path").unwrap()[0])?;
+    repository.remove(&path)?;
     Ok(())
 }
 
@@ -241,7 +242,7 @@ fn generate(options: HashMap<String, String>,
             flags: HashMap<String, bool>,
             _: HashMap<String, Vec<String>>)
             -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
     let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
     if !flags["exclude_letters"] {
@@ -254,12 +255,13 @@ fn generate(options: HashMap<String, String>,
         charsets.push(pwgen::CharacterSet::Symbols);
     }
 
-    let length: usize = try!(options["password_length"].parse::<usize>());
+    let length: usize = options["password_length"].parse::<usize>()?;
     let custom_exclude: Vec<char> = options.get("custom_exclude")
         .map_or(Vec::new(), |x| x.chars().collect());
 
     info!("{}",
-          try!(pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice()))
+          pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice())
+              ?
               .display(false, false)
               .unwrap());
 
@@ -270,10 +272,10 @@ fn export(options: HashMap<String, String>,
           _: HashMap<String, bool>,
           _: HashMap<String, Vec<String>>)
           -> Result<()> {
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
-    info!("{}", try!(export_serialize(&repository)));
+    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    info!("{}", export_serialize(&repository)?);
     Ok(())
 }
 
@@ -283,16 +285,16 @@ fn import(options: HashMap<String, String>,
           -> Result<()> {
     use std::io::Read;
 
-    let _handle = try!(init_pwm());
+    let _handle = init_pwm()?;
 
-    let repository = try!(Repository::new(try!(get_repository_path(&options)), false, None));
+    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
 
     let input_path = &options["input"];
     let mut input = String::new();
-    let mut f = try!(File::open(&input_path));
-    try!(f.read_to_string(&mut input));
+    let mut f = File::open(&input_path)?;
+    f.read_to_string(&mut input)?;
 
-    try!(import_deserialize(&repository, input.as_str()));
+    import_deserialize(&repository, input.as_str())?;
 
     Ok(())
 }

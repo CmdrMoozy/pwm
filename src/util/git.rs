@@ -32,7 +32,7 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
             if create &&
                (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository) &&
                error.code() == ErrorCode::NotFound {
-                Ok(try!(Repository::init(path)))
+                Ok(Repository::init(path)?)
             } else {
                 Err(Error::from(error))
             }
@@ -55,17 +55,17 @@ fn get_signature_or_default(repository: &Repository,
                             -> Result<Signature<'static>> {
     match signature {
         Some(s) => Ok(s.to_owned()),
-        None => Ok(try!(repository.signature())),
+        None => Ok(repository.signature()?),
     }
 }
 
 fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
     match repository.head() {
         Ok(r) => {
-            let resolved = try!(r.resolve());
-            let object = try!(resolved.peel(ObjectType::Commit));
-            Ok(Some(try!(object.into_commit()
-                .map_err(|_| git2::Error::from_str("Resolving head commit failed.")))))
+            let resolved = r.resolve()?;
+            let object = resolved.peel(ObjectType::Commit)?;
+            Ok(Some(object.into_commit()
+                .map_err(|_| git2::Error::from_str("Resolving head commit failed."))?))
         },
         Err(e) => {
             if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
@@ -78,9 +78,10 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
 }
 
 fn get_head_tree(repository: &Repository) -> Result<Tree> {
-    let tree_id = try!(get_head_commit(repository))
+    let tree_id = get_head_commit(repository)
+        ?
         .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| c.tree_id());
-    Ok(try!(repository.find_tree(tree_id)))
+    Ok(repository.find_tree(tree_id)?)
 }
 
 /// Recursively list all of the contents of the given repository's HEAD tree,
@@ -89,7 +90,7 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
     let mut listing: Vec<PathBuf> = vec![];
 
     let mut pending_trees: VecDeque<(Tree, PathBuf)> = VecDeque::new();
-    pending_trees.push_back((try!(get_head_tree(repository)), PathBuf::new()));
+    pending_trees.push_back((get_head_tree(repository)?, PathBuf::new()));
     while !pending_trees.is_empty() {
         let (tree, prefix) = pending_trees.pop_front().unwrap();
 
@@ -124,7 +125,7 @@ fn commit_tree(repository: &Repository,
                message: &str,
                tree: Tree)
                -> Result<Oid> {
-    let head = try!(get_head_commit(repository));
+    let head = get_head_commit(repository)?;
     let parents = match head {
         Some(h) => vec![h],
         None => vec![],
@@ -140,12 +141,12 @@ fn commit_tree(repository: &Repository,
         return Ok(parent_tree_id);
     }
 
-    let oid = try!(repository.commit(Some("HEAD"),
-                                     &try!(get_signature_or_default(repository, author)),
-                                     &try!(get_signature_or_default(repository, committer)),
-                                     message,
-                                     &tree,
-                                     parent_refs.as_slice()));
+    let oid = repository.commit(Some("HEAD"),
+                &get_signature_or_default(repository, author)?,
+                &get_signature_or_default(repository, committer)?,
+                message,
+                &tree,
+                parent_refs.as_slice())?;
 
     Ok(oid)
 }
@@ -161,27 +162,27 @@ pub fn commit_paths(repository: &Repository,
                     message: &str,
                     paths: &[&Path])
                     -> Result<Oid> {
-    let mut index: Index = try!(repository.index());
+    let mut index: Index = repository.index()?;
 
-    let workdir: PathBuf = PathBuf::from(try!(get_repository_workdir(repository)));
+    let workdir: PathBuf = PathBuf::from(get_repository_workdir(repository)?);
     for path in paths {
         let mut absolute_path = workdir.clone();
         absolute_path.push(path);
 
         if absolute_path.exists() {
-            try!(index.add_path(path));
+            index.add_path(path)?;
         } else {
-            try!(index.remove_path(path));
+            index.remove_path(path)?;
         }
     }
 
     // Commit our changes to the index to disk. This prevents a bug where, e.g.
     // when committing a newly added file, the index will show the newly added file
     // as deleted + untracked.
-    try!(index.write());
+    index.write()?;
     // Write the index out as a tree so we can commit the tree.
-    let oid = try!(index.write_tree());
-    let tree = try!(repository.find_tree(oid));
+    let oid = index.write_tree()?;
+    let tree = repository.find_tree(oid)?;
 
     commit_tree(repository, author, committer, message, tree)
 }
