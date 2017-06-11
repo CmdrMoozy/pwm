@@ -43,7 +43,7 @@ impl SensitiveData {
     /// behavior of this function is undefined (most likely an error will be
     /// returned).
     pub fn decode(s: String) -> Result<SensitiveData> {
-        Ok(SensitiveData::from(try!(BASE64.decode(&s.into_bytes()[..]))))
+        Ok(SensitiveData::from(BASE64.decode(&s.into_bytes()[..])?))
     }
 
     /// Return an encoded version of this struct's data as a String. The
@@ -54,7 +54,7 @@ impl SensitiveData {
     /// Try to return a String which interprets this structure's bytes as a
     /// UTF8-encoded string. If decoding is not possible, an error is returned
     /// instead.
-    fn to_utf8(&self) -> Result<String> { Ok(try!(String::from_utf8((&self[..]).to_vec()))) }
+    fn to_utf8(&self) -> Result<String> { Ok(String::from_utf8((&self[..]).to_vec())?) }
 
     /// Return a copy of this structure's data in a format which is suitable
     /// for being displayed to a human. There are several cases being handled
@@ -90,7 +90,7 @@ impl SensitiveData {
     pub fn from_file(file: &mut File) -> Result<SensitiveData> {
         use std::io::Read;
         let mut data: Vec<u8> = vec![];
-        try!(file.read_to_end(&mut data));
+        file.read_to_end(&mut data)?;
         Ok(SensitiveData::from(data))
     }
 

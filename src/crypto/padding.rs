@@ -55,6 +55,6 @@ pub fn pad(data: SensitiveData) -> SensitiveData {
 }
 
 pub fn unpad(data: SensitiveData) -> Result<SensitiveData> {
-    let original_size = try!(read_original_size(&data));
+    let original_size = read_original_size(&data)?;
     Ok(data.truncate(original_size))
 }

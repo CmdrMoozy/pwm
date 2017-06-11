@@ -48,21 +48,21 @@ impl EncryptedContents {
 
     pub fn open<P: AsRef<Path>>(path: P) -> Result<EncryptedContents> {
         use std::io::Read;
-        let mut file = try!(File::open(path));
+        let mut file = File::open(path)?;
         let mut contents: Vec<u8> = Vec::new();
-        try!(file.read_to_end(&mut contents));
+        file.read_to_end(&mut contents)?;
         deserialize_binary(contents.as_slice())
     }
 
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         use std::io::Write;
-        let data = try!(serialize_binary(self));
-        let mut file = try!(File::create(path));
-        Ok(try!(file.write_all(data.as_slice())))
+        let data = serialize_binary(self)?;
+        let mut file = File::create(path)?;
+        Ok(file.write_all(data.as_slice())?)
     }
 
     pub fn is_master_key(&self, key: &NormalKey) -> Result<bool> {
-        let decrypted = try!(key.decrypt(self.token.as_slice(), &self.token_nonce));
+        let decrypted = key.decrypt(self.token.as_slice(), &self.token_nonce)?;
         Ok(&decrypted[..] == AUTH_TOKEN_CONTENTS.as_slice())
     }
 
@@ -106,8 +106,8 @@ pub struct KeyStore {
 
 impl KeyStore {
     fn new<P: AsRef<Path>>(path: P) -> Result<KeyStore> {
-        let master_key = try!(NormalKey::new_random());
-        let encrypted_contents = try!(EncryptedContents::new(&master_key));
+        let master_key = NormalKey::new_random()?;
+        let encrypted_contents = EncryptedContents::new(&master_key)?;
 
         Ok(KeyStore {
             path: PathBuf::from(path.as_ref()),
@@ -117,11 +117,11 @@ impl KeyStore {
     }
 
     fn open<P: AsRef<Path>>(path: P, key: &NormalKey) -> Result<KeyStore> {
-        let contents = try!(EncryptedContents::open(path.as_ref()));
+        let contents = EncryptedContents::open(path.as_ref())?;
         let mut master_key: Option<NormalKey> = None;
         for wrapped_key in contents.wrapped_keys.iter() {
             if let Ok(unwrapped_key) = wrapped_key.unwrap(key) {
-                if try!(contents.is_master_key(&unwrapped_key)) {
+                if contents.is_master_key(&unwrapped_key)? {
                     master_key = Some(unwrapped_key);
                 }
             }
@@ -141,8 +141,8 @@ impl KeyStore {
         if path.as_ref().exists() {
             Self::open(path, key)
         } else {
-            let mut keystore = try!(Self::new(path));
-            try!(keystore.add(key));
+            let mut keystore = Self::new(path)?;
+            keystore.add(key)?;
             Ok(keystore)
         }
     }
@@ -150,7 +150,7 @@ impl KeyStore {
     pub fn get_key(&self) -> &NormalKey { &self.master_key }
 
     pub fn add(&mut self, key: &NormalKey) -> Result<bool> {
-        Ok(self.encrypted_contents.add(try!(self.master_key.clone().wrap(key))))
+        Ok(self.encrypted_contents.add(self.master_key.clone().wrap(key)?))
     }
 
     pub fn remove(&mut self, key: &NormalKey) -> Result<bool> {

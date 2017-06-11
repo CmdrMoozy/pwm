@@ -70,14 +70,14 @@ impl ConfigurationInstance {
                 name: path.as_ref().to_string_lossy().into_owned(),
             },
         };
-        try!(bdrck_config::new(instance.identifier.clone(),
-                               Configuration::default(),
-                               Some(path.as_ref())));
+        bdrck_config::new(instance.identifier.clone(),
+                          Configuration::default(),
+                          Some(path.as_ref()))?;
         Ok(instance)
     }
 
     pub fn close(self) -> Result<()> {
-        try!(bdrck_config::remove::<Configuration>(&self.identifier));
+        bdrck_config::remove::<Configuration>(&self.identifier)?;
         Ok(())
     }
 

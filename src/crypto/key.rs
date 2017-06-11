@@ -91,7 +91,7 @@ impl NormalKey {
     }
 
     pub fn wrap(self, key: &NormalKey) -> Result<WrappedKey> {
-        let serialized = try!(serialize_binary(&self));
+        let serialized = serialize_binary(&self)?;
         let (nonce, encrypted) = key.encrypt(SensitiveData::from(serialized));
         Ok(WrappedKey {
             data: encrypted,
@@ -118,7 +118,7 @@ pub struct WrappedKey {
 
 impl WrappedKey {
     pub fn unwrap(&self, key: &NormalKey) -> Result<NormalKey> {
-        let decrypted = try!(key.decrypt(self.data.as_slice(), &self.nonce));
+        let decrypted = key.decrypt(self.data.as_slice(), &self.nonce)?;
         deserialize_binary(&decrypted[..])
     }
 }

@@ -26,26 +26,26 @@ pub struct Contents {
 pub fn export(repository: &Repository) -> Result<Contents> {
     let mut contents: Contents = Contents { contents: HashMap::new() };
 
-    for path in try!(repository.list(None)) {
-        let plaintext: String = try!(repository.read_decrypt(&path)).encode();
-        contents.contents.insert(try!(path.to_str()).to_owned(), plaintext);
+    for path in repository.list(None)? {
+        let plaintext: String = repository.read_decrypt(&path)?.encode();
+        contents.contents.insert(path.to_str()?.to_owned(), plaintext);
     }
 
     Ok(contents)
 }
 
 pub fn export_serialize(repository: &Repository) -> Result<String> {
-    Ok(try!(to_string_pretty(&try!(export(repository)))))
+    Ok(to_string_pretty(&export(repository)?)?)
 }
 
 pub fn import(repository: &Repository, contents: Contents) -> Result<()> {
     for (path, plaintext) in contents.contents {
-        let path = try!(repository.path(path));
-        try!(repository.write_encrypt(&path, try!(SensitiveData::decode(plaintext))));
+        let path = repository.path(path)?;
+        repository.write_encrypt(&path, SensitiveData::decode(plaintext)?)?;
     }
     Ok(())
 }
 
 pub fn import_deserialize(repository: &Repository, s: &str) -> Result<()> {
-    import(repository, try!(from_str(s)))
+    import(repository, from_str(s)?)
 }
