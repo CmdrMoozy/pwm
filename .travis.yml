@@ -8,6 +8,7 @@ addons:
     packages:
       - cmake
       - xorg-dev
+      - xcb
       # Required for coveralls.
       - libcurl4-openssl-dev
       - libelf-dev
