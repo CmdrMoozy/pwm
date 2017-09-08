@@ -11,8 +11,8 @@ bdrck_params = "0.3"
 bincode = "0.8"
 byteorder = "1.1"
 clipboard = { version = "0.4", optional = true }
-data-encoding = "2.0.0-rc.1"
-error-chain = "0.10"
+data-encoding = "2.0.0-rc.2"
+error-chain = "0.11"
 git2 = { version = "0.6", default-features = false, features = [] }
 isatty = "0.1"
 lazy_static = "0.2"
