@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use ::configuration::*;
+use configuration::*;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -77,8 +77,10 @@ fn test_get_value_as_str() {
 
     let _handle = SingletonHandle::new(Some(path.as_path())).unwrap();
 
-    assert_eq!("/home/foo/bar",
-               get_value_as_str(DEFAULT_REPOSITORY_KEY).unwrap());
+    assert_eq!(
+        "/home/foo/bar",
+        get_value_as_str(DEFAULT_REPOSITORY_KEY).unwrap()
+    );
 
     // While we're at it, also test that getting an invalid key is an error.
     assert!(get_value_as_str("bogus key").is_err());

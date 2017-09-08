@@ -17,7 +17,7 @@ use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
 use tests::tempdir::TempDir;
-use ::util::git::*;
+use util::git::*;
 
 fn get_test_signature() -> Signature<'static> { Signature::now("test", "test@test.com").unwrap() }
 
@@ -42,12 +42,13 @@ fn write_and_commit(relative_path: &str, contents: &str, repository: &Repository
     file.write_all(contents.as_bytes()).unwrap();
     file.flush().unwrap();
 
-    commit_paths(repository,
-                 Some(&get_test_signature()),
-                 Some(&get_test_signature()),
-                 "test commit",
-                 &[relative_path.as_path()])
-        .unwrap()
+    commit_paths(
+        repository,
+        Some(&get_test_signature()),
+        Some(&get_test_signature()),
+        "test commit",
+        &[relative_path.as_path()],
+    ).unwrap()
 }
 
 #[test]
@@ -62,9 +63,12 @@ fn test_commit_paths_and_listing() {
 
     let path_filter = PathBuf::new();
     let listing = get_repository_listing(&repository, path_filter.as_path()).unwrap();
-    assert_eq!(vec![PathBuf::from("baz.txt"),
-                    PathBuf::from("foo.txt"),
-                    PathBuf::from("a/b/bar.txt")],
-               listing);
-
+    assert_eq!(
+        vec![
+            PathBuf::from("baz.txt"),
+            PathBuf::from("foo.txt"),
+            PathBuf::from("a/b/bar.txt"),
+        ],
+        listing
+    );
 }

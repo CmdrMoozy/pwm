@@ -66,7 +66,9 @@ fn test_wrong_master_password_fails() {
     {
         let repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
         let path = repository.path(path).unwrap();
-        repository.write_encrypt(&path, to_password("Hello, world!")).unwrap();
+        repository
+            .write_encrypt(&path, to_password("Hello, world!"))
+            .unwrap();
     }
 
     let repository = Repository::new(repository_dir.path(), false, Some(bad)).unwrap();
@@ -84,11 +86,15 @@ fn test_write_read_round_trip() {
 
     {
         let repository = Repository::new(repository_dir.path(), true, Some(pw.clone())).unwrap();
-        repository.write_encrypt(&repository.path(path).unwrap(), plaintext.clone()).unwrap();
+        repository
+            .write_encrypt(&repository.path(path).unwrap(), plaintext.clone())
+            .unwrap();
     }
 
     let repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
-    let output_plaintext = repository.read_decrypt(&repository.path(path).unwrap()).unwrap();
+    let output_plaintext = repository
+        .read_decrypt(&repository.path(path).unwrap())
+        .unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
 }
 
@@ -97,35 +103,53 @@ fn test_repository_listing() {
     let t = TestRepository::new("foobar").unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
 
-    t.write_encrypt(&t.path("foo/1").unwrap(), plaintext.clone()).unwrap();
-    t.write_encrypt(&t.path("bar/2").unwrap(), plaintext.clone()).unwrap();
-    t.write_encrypt(&t.path("3").unwrap(), plaintext.clone()).unwrap();
-    t.write_encrypt(&t.path("foo/bar/4").unwrap(), plaintext.clone()).unwrap();
+    t.write_encrypt(&t.path("foo/1").unwrap(), plaintext.clone())
+        .unwrap();
+    t.write_encrypt(&t.path("bar/2").unwrap(), plaintext.clone())
+        .unwrap();
+    t.write_encrypt(&t.path("3").unwrap(), plaintext.clone())
+        .unwrap();
+    t.write_encrypt(&t.path("foo/bar/4").unwrap(), plaintext.clone())
+        .unwrap();
 
-    let listing: Vec<String> =
-        t.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();
+    let listing: Vec<String> = t.list(None)
+        .unwrap()
+        .iter()
+        .map(|p| p.to_str().unwrap().to_owned())
+        .collect();
 
-    assert_eq!(vec!["3".to_owned(),
-                    "bar/2".to_owned(),
-                    "foo/1".to_owned(),
-                    "foo/bar/4".to_owned()],
-               listing);
+    assert_eq!(
+        vec![
+            "3".to_owned(),
+            "bar/2".to_owned(),
+            "foo/1".to_owned(),
+            "foo/bar/4".to_owned(),
+        ],
+        listing
+    );
 }
 
 #[test]
 fn test_remove() {
     let t = TestRepository::new("foobar").unwrap();
-    t.write_encrypt(&t.path("test").unwrap(),
-                       SensitiveData::from(randombytes(1024)))
-        .unwrap();
+    t.write_encrypt(
+        &t.path("test").unwrap(),
+        SensitiveData::from(randombytes(1024)),
+    ).unwrap();
 
-    let listing: Vec<String> =
-        t.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();
+    let listing: Vec<String> = t.list(None)
+        .unwrap()
+        .iter()
+        .map(|p| p.to_str().unwrap().to_owned())
+        .collect();
     assert_eq!(vec!["test".to_owned()], listing);
 
     t.remove(&t.path("test").unwrap()).unwrap();
-    let listing: Vec<String> =
-        t.list(None).unwrap().iter().map(|p| p.to_str().unwrap().to_owned()).collect();
+    let listing: Vec<String> = t.list(None)
+        .unwrap()
+        .iter()
+        .map(|p| p.to_str().unwrap().to_owned())
+        .collect();
     assert!(listing.is_empty());
 }
 
@@ -178,8 +202,8 @@ fn test_removing_key_succeeds() {
     let plaintext = SensitiveData::from(randombytes(1024));
 
     {
-        let mut repository = Repository::new(repository_dir.path(), true, Some(pwa.clone()))
-            .unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(), true, Some(pwa.clone())).unwrap();
         let path = repository.path(path).unwrap();
         repository.write_encrypt(&path, plaintext.clone()).unwrap();
 

@@ -122,7 +122,9 @@ impl SensitiveData {
         }
         data.truncate(len);
 
-        SensitiveData { data: data.into_boxed_slice() }
+        SensitiveData {
+            data: data.into_boxed_slice(),
+        }
     }
 }
 
@@ -131,7 +133,11 @@ impl Drop for SensitiveData {
 }
 
 impl From<Vec<u8>> for SensitiveData {
-    fn from(data: Vec<u8>) -> SensitiveData { SensitiveData { data: data.into_boxed_slice() } }
+    fn from(data: Vec<u8>) -> SensitiveData {
+        SensitiveData {
+            data: data.into_boxed_slice(),
+        }
+    }
 }
 
 impl Index<usize> for SensitiveData {

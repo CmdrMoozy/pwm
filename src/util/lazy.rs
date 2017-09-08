@@ -22,7 +22,9 @@ pub struct Lazy<'a, T> {
 
 impl<'a, T> Lazy<'a, T> {
     pub fn new<F: 'a + FnOnce() -> T>(f: F) -> Lazy<'a, T> {
-        Lazy { state: UnsafeCell::new(LazyState::Unevaluated(Factory::new(f))) }
+        Lazy {
+            state: UnsafeCell::new(LazyState::Unevaluated(Factory::new(f))),
+        }
     }
 
 
@@ -64,7 +66,9 @@ impl<'a, T> Factory<'a, T> {
         // work. Remove this if Box<FnOnce> ever works on Rust stable, or if FnBox is
         // stabilized.
         let mut f = Some(f);
-        Factory { f: Box::new(move || -> T { f.take().unwrap()() }) }
+        Factory {
+            f: Box::new(move || -> T { f.take().unwrap()() }),
+        }
     }
 
     fn build(mut self) -> T { (self.f)() }

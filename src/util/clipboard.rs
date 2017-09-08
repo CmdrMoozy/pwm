@@ -41,8 +41,10 @@ pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
 
     set_contents_string(&mut cp, data.display(force_binary, true).unwrap())?;
 
-    info!("Copied stored password or key to clipboard. Will clear in {} seconds.",
-          CLIPBOARD_TIMEOUT.as_secs());
+    info!(
+        "Copied stored password or key to clipboard. Will clear in {} seconds.",
+        CLIPBOARD_TIMEOUT.as_secs()
+    );
     sleep(*CLIPBOARD_TIMEOUT);
     set_contents_string(&mut cp, "".to_owned())?;
 

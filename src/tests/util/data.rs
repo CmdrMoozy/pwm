@@ -15,7 +15,7 @@
 use sodiumoxide::randombytes::randombytes;
 use std::io::SeekFrom;
 use tests::tempfile::tempfile;
-use ::util::data::*;
+use util::data::*;
 
 #[test]
 fn test_from_file() {

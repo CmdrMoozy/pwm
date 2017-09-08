@@ -34,8 +34,10 @@ fn test_keystore_save_round_trip() {
 
     {
         let keystore = KeyStore::open_or_new(path.as_path(), &wrap_key).unwrap();
-        assert_eq!(master_key.as_ref().unwrap().get_signature(),
-                   keystore.get_key().get_signature());
+        assert_eq!(
+            master_key.as_ref().unwrap().get_signature(),
+            keystore.get_key().get_signature()
+        );
     }
 }
 
@@ -60,8 +62,10 @@ fn test_keystore_open_with_added_key() {
 
     {
         let keystore = KeyStore::open_or_new(path.as_path(), &keyb).unwrap();
-        assert_eq!(master_key.as_ref().unwrap().get_signature(),
-                   keystore.get_key().get_signature());
+        assert_eq!(
+            master_key.as_ref().unwrap().get_signature(),
+            keystore.get_key().get_signature()
+        );
     }
 }
 

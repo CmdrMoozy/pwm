@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use ::error::*;
+use error::*;
 use std::path::Path as StdPath;
 use std::path::PathBuf;
 
@@ -24,7 +24,9 @@ pub struct Path {
 
 impl Path {
     pub fn new<WorkdirPath: AsRef<StdPath>, RelativePath: AsRef<StdPath>>(
-        workdir_path: WorkdirPath, relative_path: RelativePath) -> Result<Path> {
+        workdir_path: WorkdirPath,
+        relative_path: RelativePath,
+    ) -> Result<Path> {
         let mut absolute_path = PathBuf::from(workdir_path.as_ref());
         absolute_path.push(relative_path.as_ref());
         Ok(Path {

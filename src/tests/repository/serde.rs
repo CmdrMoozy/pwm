@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use repository::Repository;
-use ::repository::serde::*;
+use repository::serde::*;
 use sodiumoxide::randombytes::randombytes;
 use tests::tempdir::TempDir;
 use util::data::SensitiveData;
@@ -28,27 +28,34 @@ fn test_export_import_round_trip_ascii() {
 
     {
         let repository_dir = TempDir::new("pwm-test").unwrap();
-        let repository = Repository::new(repository_dir.path(),
-                                         true,
-                                         Some(SensitiveData::from("foobar".as_bytes().to_vec())))
-            .unwrap();
+        let repository = Repository::new(
+            repository_dir.path(),
+            true,
+            Some(SensitiveData::from("foobar".as_bytes().to_vec())),
+        ).unwrap();
         for path in &paths {
-            repository.write_encrypt(&repository.path(path).unwrap(), plaintext_sd.clone())
+            repository
+                .write_encrypt(&repository.path(path).unwrap(), plaintext_sd.clone())
                 .unwrap();
         }
         serialized = export_serialize(&repository).unwrap();
     }
 
     let repository_dir = TempDir::new("pwm-test").unwrap();
-    let repository = Repository::new(repository_dir.path(),
-                                     true,
-                                     Some(SensitiveData::from("raboof".as_bytes().to_vec())))
-        .unwrap();
+    let repository = Repository::new(
+        repository_dir.path(),
+        true,
+        Some(SensitiveData::from("raboof".as_bytes().to_vec())),
+    ).unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
     import_deserialize(&repository, serialized.as_str()).unwrap();
     for path in &paths {
-        assert_eq!(plaintext_sd,
-                   repository.read_decrypt(&repository.path(path).unwrap()).unwrap());
+        assert_eq!(
+            plaintext_sd,
+            repository
+                .read_decrypt(&repository.path(path).unwrap())
+                .unwrap()
+        );
     }
 }
 
@@ -61,25 +68,33 @@ fn test_export_import_round_trip_binary() {
 
     {
         let repository_dir = TempDir::new("pwm-test").unwrap();
-        let repository = Repository::new(repository_dir.path(),
-                                         true,
-                                         Some(SensitiveData::from("foobar".as_bytes().to_vec())))
-            .unwrap();
+        let repository = Repository::new(
+            repository_dir.path(),
+            true,
+            Some(SensitiveData::from("foobar".as_bytes().to_vec())),
+        ).unwrap();
         for path in &paths {
-            repository.write_encrypt(&repository.path(path).unwrap(), plaintext.clone()).unwrap();
+            repository
+                .write_encrypt(&repository.path(path).unwrap(), plaintext.clone())
+                .unwrap();
         }
         serialized = export_serialize(&repository).unwrap();
     }
 
     let repository_dir = TempDir::new("pwm-test").unwrap();
-    let repository = Repository::new(repository_dir.path(),
-                                     true,
-                                     Some(SensitiveData::from("raboof".as_bytes().to_vec())))
-        .unwrap();
+    let repository = Repository::new(
+        repository_dir.path(),
+        true,
+        Some(SensitiveData::from("raboof".as_bytes().to_vec())),
+    ).unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
     import_deserialize(&repository, serialized.as_str()).unwrap();
     for path in &paths {
-        assert_eq!(plaintext,
-                   repository.read_decrypt(&repository.path(path).unwrap()).unwrap());
+        assert_eq!(
+            plaintext,
+            repository
+                .read_decrypt(&repository.path(path).unwrap())
+                .unwrap()
+        );
     }
 }

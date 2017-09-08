@@ -23,8 +23,7 @@ const PAD_BLOCK_SIZE_BYTES: usize = 1024;
 
 fn get_padded_size(original_size: usize) -> usize {
     let padded_size = original_size + mem::size_of::<u64>();
-    let blocks = (padded_size / PAD_BLOCK_SIZE_BYTES) +
-                 if padded_size % PAD_BLOCK_SIZE_BYTES == 0 {
+    let blocks = (padded_size / PAD_BLOCK_SIZE_BYTES) + if padded_size % PAD_BLOCK_SIZE_BYTES == 0 {
         0
     } else {
         1
@@ -48,7 +47,9 @@ pub fn pad(data: SensitiveData) -> SensitiveData {
     let padding_bytes = padded_size - original_size - mem::size_of::<u64>();
 
     let mut original_size_encoded: Vec<u8> = vec![];
-    original_size_encoded.write_u64::<BigEndian>(original_size as u64).unwrap();
+    original_size_encoded
+        .write_u64::<BigEndian>(original_size as u64)
+        .unwrap();
 
     data.concat(SensitiveData::from(randombytes(padding_bytes)))
         .concat(SensitiveData::from(original_size_encoded))

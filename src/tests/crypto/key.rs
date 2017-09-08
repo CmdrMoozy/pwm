@@ -25,8 +25,10 @@ fn custom_salt_configuration(salt: Salt) -> Configuration {
 }
 
 fn new_password_key(password: &str, salt: Option<Salt>) -> Result<NormalKey> {
-    NormalKey::new_password(SensitiveData::from(password.as_bytes().to_vec()),
-                            salt.map(|salt| custom_salt_configuration(salt)))
+    NormalKey::new_password(
+        SensitiveData::from(password.as_bytes().to_vec()),
+        salt.map(|salt| custom_salt_configuration(salt)),
+    )
 }
 
 #[test]
@@ -34,9 +36,10 @@ fn test_random_key_generation() { let _key = NormalKey::new_random().unwrap(); }
 
 #[test]
 fn test_password_key_derivation() {
-    let _key = new_password_key("foobar",
-                                Some(Salt::from_slice(&randombytes(32)[..]).unwrap()))
-        .unwrap();
+    let _key = new_password_key(
+        "foobar",
+        Some(Salt::from_slice(&randombytes(32)[..]).unwrap()),
+    ).unwrap();
 }
 
 #[test]

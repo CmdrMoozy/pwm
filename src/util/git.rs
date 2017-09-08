@@ -28,14 +28,13 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
     let path = path.as_ref();
     match Repository::open(path) {
         Ok(repository) => Ok(repository),
-        Err(error) => {
-            if create &&
-               (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository) &&
-               error.code() == ErrorCode::NotFound {
-                Ok(Repository::init(path)?)
-            } else {
-                Err(Error::from(error))
-            }
+        Err(error) => if create &&
+            (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository) &&
+            error.code() == ErrorCode::NotFound
+        {
+            Ok(Repository::init(path)?)
+        } else {
+            Err(Error::from(error))
         },
     }
 }
@@ -50,9 +49,10 @@ pub fn get_repository_workdir(repository: &Repository) -> Result<&Path> {
     }
 }
 
-fn get_signature_or_default(repository: &Repository,
-                            signature: Option<&Signature>)
-                            -> Result<Signature<'static>> {
+fn get_signature_or_default(
+    repository: &Repository,
+    signature: Option<&Signature>,
+) -> Result<Signature<'static>> {
     match signature {
         Some(s) => Ok(s.to_owned()),
         None => Ok(repository.signature()?),
@@ -64,22 +64,22 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
         Ok(r) => {
             let resolved = r.resolve()?;
             let object = resolved.peel(ObjectType::Commit)?;
-            Ok(Some(object.into_commit()
-                .map_err(|_| git2::Error::from_str("Resolving head commit failed."))?))
+            Ok(Some(
+                object
+                    .into_commit()
+                    .map_err(|_| git2::Error::from_str("Resolving head commit failed."))?,
+            ))
         },
-        Err(e) => {
-            if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
-                Ok(None)
-            } else {
-                Err(Error::from(e))
-            }
+        Err(e) => if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
+            Ok(None)
+        } else {
+            Err(Error::from(e))
         },
     }
 }
 
 fn get_head_tree(repository: &Repository) -> Result<Tree> {
-    let tree_id = get_head_commit(repository)
-        ?
+    let tree_id = get_head_commit(repository)?
         .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| c.tree_id());
     Ok(repository.find_tree(tree_id)?)
 }
@@ -95,17 +95,29 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
         let (tree, prefix) = pending_trees.pop_front().unwrap();
 
         let mut subtrees: VecDeque<(Tree, PathBuf)> = tree.iter()
-            .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) == ObjectType::Tree)
+            .filter(|entry| {
+                entry.kind().unwrap_or(ObjectType::Any) == ObjectType::Tree
+            })
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
                 path.push(entry.name().unwrap());
-                (entry.to_object(repository).unwrap().into_tree().ok().unwrap(), path)
+                (
+                    entry
+                        .to_object(repository)
+                        .unwrap()
+                        .into_tree()
+                        .ok()
+                        .unwrap(),
+                    path,
+                )
             })
             .collect();
         pending_trees.append(&mut subtrees);
 
         let mut entries: Vec<PathBuf> = tree.iter()
-            .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) != ObjectType::Tree)
+            .filter(|entry| {
+                entry.kind().unwrap_or(ObjectType::Any) != ObjectType::Tree
+            })
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
                 path.push(entry.name().unwrap());
@@ -119,12 +131,13 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
     Ok(listing)
 }
 
-fn commit_tree(repository: &Repository,
-               author: Option<&Signature>,
-               committer: Option<&Signature>,
-               message: &str,
-               tree: Tree)
-               -> Result<Oid> {
+fn commit_tree(
+    repository: &Repository,
+    author: Option<&Signature>,
+    committer: Option<&Signature>,
+    message: &str,
+    tree: Tree,
+) -> Result<Oid> {
     let head = get_head_commit(repository)?;
     let parents = match head {
         Some(h) => vec![h],
@@ -132,7 +145,8 @@ fn commit_tree(repository: &Repository,
     };
 
     let parent_refs = parents.iter().collect::<Vec<&Commit>>();
-    let parent_tree_id: Oid = parent_refs.get(0)
+    let parent_tree_id: Oid = parent_refs
+        .get(0)
         .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| p.tree_id());
 
     // If this commit is empty (e.g., its tree is identical to its parent's), don't
@@ -141,12 +155,14 @@ fn commit_tree(repository: &Repository,
         return Ok(parent_tree_id);
     }
 
-    let oid = repository.commit(Some("HEAD"),
-                &get_signature_or_default(repository, author)?,
-                &get_signature_or_default(repository, committer)?,
-                message,
-                &tree,
-                parent_refs.as_slice())?;
+    let oid = repository.commit(
+        Some("HEAD"),
+        &get_signature_or_default(repository, author)?,
+        &get_signature_or_default(repository, committer)?,
+        message,
+        &tree,
+        parent_refs.as_slice(),
+    )?;
 
     Ok(oid)
 }
@@ -156,12 +172,13 @@ fn commit_tree(repository: &Repository,
 /// Signatures will be used instead from Git's configuration. Empty commits
 /// will not be created; if there were no changes to the given paths, the
 /// existing HEAD OID will be returned instead.
-pub fn commit_paths(repository: &Repository,
-                    author: Option<&Signature>,
-                    committer: Option<&Signature>,
-                    message: &str,
-                    paths: &[&Path])
-                    -> Result<Oid> {
+pub fn commit_paths(
+    repository: &Repository,
+    author: Option<&Signature>,
+    committer: Option<&Signature>,
+    message: &str,
+    paths: &[&Path],
+) -> Result<Oid> {
     let mut index: Index = repository.index()?;
 
     let workdir: PathBuf = PathBuf::from(get_repository_workdir(repository)?);

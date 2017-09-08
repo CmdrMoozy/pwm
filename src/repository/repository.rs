@@ -42,10 +42,11 @@ static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
 
-fn unwrap_password_or_prompt(password: Option<SensitiveData>,
-                             prompt: &str,
-                             confirm: bool)
-                             -> Result<SensitiveData> {
+fn unwrap_password_or_prompt(
+    password: Option<SensitiveData>,
+    prompt: &str,
+    confirm: bool,
+) -> Result<SensitiveData> {
     Ok(if let Some(p) = password {
         p
     } else {
@@ -54,7 +55,8 @@ fn unwrap_password_or_prompt(password: Option<SensitiveData>,
 }
 
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
-    repository.signature()
+    repository
+        .signature()
         .unwrap_or_else(|_| git2::Signature::now("pwm", "pwm@nowhere.com").unwrap())
 }
 
@@ -70,10 +72,11 @@ fn open_keystore(repository: &git2::Repository, key: &NormalKey) -> Result<KeySt
     KeyStore::open_or_new(path.as_path(), &key)
 }
 
-fn write_encrypt(path: &RepositoryPath,
-                 plaintext: SensitiveData,
-                 master_key: &NormalKey)
-                 -> Result<()> {
+fn write_encrypt(
+    path: &RepositoryPath,
+    plaintext: SensitiveData,
+    master_key: &NormalKey,
+) -> Result<()> {
     let (nonce, data) = master_key.encrypt(padding::pad(plaintext));
 
     if let Some(parent) = path.absolute_path().parent() {
@@ -92,8 +95,10 @@ fn read_decrypt(path: &RepositoryPath, master_key: &NormalKey) -> Result<Sensiti
     use std::io::Read;
 
     if !path.absolute_path().exists() {
-        bail!("No stored password at path '{}'",
-              path.relative_path().display());
+        bail!(
+            "No stored password at path '{}'",
+            path.relative_path().display()
+        );
     }
 
     let mut file = File::open(path.absolute_path())?;
@@ -117,10 +122,11 @@ impl Repository {
     /// Construct a new Repository handle. If the repository doesn't exist, and
     /// create = true, then a new repository will be initialized. If no master
     /// password is provided, we will prompt for one on stdin.
-    pub fn new<P: AsRef<Path>>(path: P,
-                               create: bool,
-                               password: Option<SensitiveData>)
-                               -> Result<Repository> {
+    pub fn new<P: AsRef<Path>>(
+        path: P,
+        create: bool,
+        password: Option<SensitiveData>,
+    ) -> Result<Repository> {
         let repository = git::open_repository(path.as_ref(), create)?;
         let crypto_configuration = open_crypto_configuration(&repository)?;
 
@@ -159,9 +165,9 @@ impl Repository {
     fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
         use std::ops::DerefMut;
         let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
-        lazy.deref_mut()
-            .as_mut()
-            .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
+        lazy.deref_mut().as_mut().map_err(|e| {
+            format!("Accessing repository key store failed: {}", e).into()
+        })
     }
 
     fn get_master_key(&self) -> Result<&NormalKey> { Ok(self.get_key_store()?.get_key()) }
@@ -169,11 +175,13 @@ impl Repository {
     pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
 
     fn commit_all(&self, message: &str, paths: &[&Path]) -> Result<()> {
-        git::commit_paths(&self.repository,
-                          Some(&get_commit_signature(&self.repository)),
-                          Some(&get_commit_signature(&self.repository)),
-                          message,
-                          paths)?;
+        git::commit_paths(
+            &self.repository,
+            Some(&get_commit_signature(&self.repository)),
+            Some(&get_commit_signature(&self.repository)),
+            message,
+            paths,
+        )?;
         Ok(())
     }
 
@@ -185,7 +193,8 @@ impl Repository {
         let default_path_filter = self.path("")?;
         let path_filter: &RepositoryPath = path_filter.unwrap_or(&default_path_filter);
         let entries = git::get_repository_listing(&self.repository, path_filter.relative_path())?;
-        entries.into_iter()
+        entries
+            .into_iter()
             .filter(|entry| entry != CRYPTO_CONFIGURATION_PATH.as_path())
             .filter(|entry| entry != KEYSTORE_PATH.as_path())
             .map(|entry| self.path(entry))
@@ -234,11 +243,13 @@ impl Repository {
 impl Drop for Repository {
     fn drop(&mut self) {
         self.keystore.take();
-        self.commit_one(KEYSTORE_UPDATE_MESSAGE, KEYSTORE_PATH.as_path()).unwrap();
+        self.commit_one(KEYSTORE_UPDATE_MESSAGE, KEYSTORE_PATH.as_path())
+            .unwrap();
 
         self.crypto_configuration.take().unwrap().close().unwrap();
-        self.commit_one(CRYPTO_CONFIGURATION_UPDATE_MESSAGE,
-                        CRYPTO_CONFIGURATION_PATH.as_path())
-            .unwrap();
+        self.commit_one(
+            CRYPTO_CONFIGURATION_UPDATE_MESSAGE,
+            CRYPTO_CONFIGURATION_PATH.as_path(),
+        ).unwrap();
     }
 }

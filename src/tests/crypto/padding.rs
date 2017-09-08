@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use ::crypto::padding::*;
+use crypto::padding::*;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 

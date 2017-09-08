@@ -43,16 +43,18 @@ impl Configuration {
 
 impl Default for Configuration {
     fn default() -> Configuration {
-        Self::new(pwhash::gen_salt(),
-                  pwhash::MEMLIMIT_INTERACTIVE,
-                  pwhash::OPSLIMIT_INTERACTIVE)
+        Self::new(
+            pwhash::gen_salt(),
+            pwhash::MEMLIMIT_INTERACTIVE,
+            pwhash::OPSLIMIT_INTERACTIVE,
+        )
     }
 }
 
 impl PartialEq for Configuration {
     fn eq(&self, other: &Configuration) -> bool {
         self.salt == other.salt && self.mem_limit == other.mem_limit &&
-        self.ops_limit == other.ops_limit
+            self.ops_limit == other.ops_limit
     }
 }
 
@@ -70,9 +72,11 @@ impl ConfigurationInstance {
                 name: path.as_ref().to_string_lossy().into_owned(),
             },
         };
-        bdrck_config::new(instance.identifier.clone(),
-                          Configuration::default(),
-                          Some(path.as_ref()))?;
+        bdrck_config::new(
+            instance.identifier.clone(),
+            Configuration::default(),
+            Some(path.as_ref()),
+        )?;
         Ok(instance)
     }
 

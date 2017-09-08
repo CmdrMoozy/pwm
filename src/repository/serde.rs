@@ -24,11 +24,15 @@ pub struct Contents {
 }
 
 pub fn export(repository: &Repository) -> Result<Contents> {
-    let mut contents: Contents = Contents { contents: HashMap::new() };
+    let mut contents: Contents = Contents {
+        contents: HashMap::new(),
+    };
 
     for path in repository.list(None)? {
         let plaintext: String = repository.read_decrypt(&path)?.encode();
-        contents.contents.insert(path.to_str()?.to_owned(), plaintext);
+        contents
+            .contents
+            .insert(path.to_str()?.to_owned(), plaintext);
     }
 
     Ok(contents)

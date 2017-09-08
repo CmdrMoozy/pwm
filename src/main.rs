@@ -55,19 +55,23 @@ fn init_pwm() -> Result<configuration::SingletonHandle> {
 
 fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
     let config = configuration::get()?;
-    match options.get("repository").or_else(|| config.default_repository.as_ref()) {
+    match options
+        .get("repository")
+        .or_else(|| config.default_repository.as_ref())
+    {
         Some(p) => Ok(p.clone()),
-        None => {
-            bail!("No repository path specified. Try the 'repository' command option, or setting \
-                   the 'default_repository' configuration key.")
-        },
+        None => bail!(
+            "No repository path specified. Try the 'repository' command option, or setting \
+             the 'default_repository' configuration key."
+        ),
     }
 }
 
-fn config(options: HashMap<String, String>,
-          _: HashMap<String, bool>,
-          _: HashMap<String, Vec<String>>)
-          -> Result<()> {
+fn config(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    _: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let k: Optional<&String> = options.get("key");
@@ -78,8 +82,10 @@ fn config(options: HashMap<String, String>,
             bail!("A 'key' must be provided when 'set'ting a configuration value.");
         }
 
-        info!("{}",
-              serde_json::to_string_pretty(&configuration::get().unwrap()).unwrap());
+        info!(
+            "{}",
+            serde_json::to_string_pretty(&configuration::get().unwrap()).unwrap()
+        );
         return Ok(());
     }
 
@@ -88,30 +94,36 @@ fn config(options: HashMap<String, String>,
         configuration::set(key.as_str(), set.as_str()).unwrap();
     }
 
-    info!("{} = {}",
-          key,
-          configuration::get_value_as_str(key.as_str())?);
+    info!(
+        "{} = {}",
+        key,
+        configuration::get_value_as_str(key.as_str())?
+    );
 
     Ok(())
 }
 
-fn init(options: HashMap<String, String>,
-        _: HashMap<String, bool>,
-        _: HashMap<String, Vec<String>>)
-        -> Result<()> {
+fn init(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    _: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&options)?, true, None)?;
-    info!("Initialized repository: {}",
-          repository.workdir().unwrap().display());
+    info!(
+        "Initialized repository: {}",
+        repository.workdir().unwrap().display()
+    );
 
     Ok(())
 }
 
-fn addkey(options: HashMap<String, String>,
-          _: HashMap<String, bool>,
-          _: HashMap<String, Vec<String>>)
-          -> Result<()> {
+fn addkey(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    _: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let mut repository = Repository::new(get_repository_path(&options)?, false, None)?;
@@ -120,10 +132,11 @@ fn addkey(options: HashMap<String, String>,
     Ok(())
 }
 
-fn rmkey(options: HashMap<String, String>,
-         _: HashMap<String, bool>,
-         _: HashMap<String, Vec<String>>)
-         -> Result<()> {
+fn rmkey(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    _: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let mut repository = Repository::new(get_repository_path(&options)?, false, None)?;
@@ -132,10 +145,11 @@ fn rmkey(options: HashMap<String, String>,
     Ok(())
 }
 
-fn ls(options: HashMap<String, String>,
-      _: HashMap<String, bool>,
-      arguments: HashMap<String, Vec<String>>)
-      -> Result<()> {
+fn ls(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    arguments: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&options)?, false, None)?;
@@ -150,7 +164,9 @@ fn ls(options: HashMap<String, String>,
 fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()> {
     let tty = isatty::stdout_isatty();
     let display: Optional<String> = retrieved.display(force_binary, tty);
-    let bytes: &[u8] = display.as_ref().map_or_else(|| &retrieved[..], |s| s.as_bytes());
+    let bytes: &[u8] = display
+        .as_ref()
+        .map_or_else(|| &retrieved[..], |s| s.as_bytes());
 
     if tty {
         info!("{}", String::from_utf8_lossy(bytes));
@@ -163,10 +179,11 @@ fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()>
     Ok(())
 }
 
-fn get(options: HashMap<String, String>,
-       flags: HashMap<String, bool>,
-       arguments: HashMap<String, Vec<String>>)
-       -> Result<()> {
+fn get(
+    options: HashMap<String, String>,
+    flags: HashMap<String, bool>,
+    arguments: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&options)?, false, None)?;
@@ -177,12 +194,10 @@ fn get(options: HashMap<String, String>,
 
     match () {
         #[cfg(feature = "clipboard")]
-        () => {
-            if flags["clipboard"] {
-                pwm_lib::util::clipboard::set_contents(retrieved, force_binary)?;
-            } else {
-                print_stored_data(retrieved, force_binary)?;
-            }
+        () => if flags["clipboard"] {
+            pwm_lib::util::clipboard::set_contents(retrieved, force_binary)?;
+        } else {
+            print_stored_data(retrieved, force_binary)?;
         },
 
         #[cfg(not(feature = "clipboard"))]
@@ -194,10 +209,11 @@ fn get(options: HashMap<String, String>,
     Ok(())
 }
 
-fn set(options: HashMap<String, String>,
-       flags: HashMap<String, bool>,
-       arguments: HashMap<String, Vec<String>>)
-       -> Result<()> {
+fn set(
+    options: HashMap<String, String>,
+    flags: HashMap<String, bool>,
+    arguments: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&options)?, false, None)?;
@@ -216,20 +232,23 @@ fn set(options: HashMap<String, String>,
     } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
-        repository.write_encrypt(&path,
-                           match multiline {
-                               false => password_prompt(NEW_PASSWORD_PROMPT, true)?,
-                               true => multiline_password_prompt(MULTILINE_PASSWORD_PROMPT)?,
-                           })?;
+        repository.write_encrypt(
+            &path,
+            match multiline {
+                false => password_prompt(NEW_PASSWORD_PROMPT, true)?,
+                true => multiline_password_prompt(MULTILINE_PASSWORD_PROMPT)?,
+            },
+        )?;
     }
 
     Ok(())
 }
 
-fn rm(options: HashMap<String, String>,
-      _: HashMap<String, bool>,
-      arguments: HashMap<String, Vec<String>>)
-      -> Result<()> {
+fn rm(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    arguments: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&options)?, false, None)?;
@@ -238,10 +257,11 @@ fn rm(options: HashMap<String, String>,
     Ok(())
 }
 
-fn generate(options: HashMap<String, String>,
-            flags: HashMap<String, bool>,
-            _: HashMap<String, Vec<String>>)
-            -> Result<()> {
+fn generate(
+    options: HashMap<String, String>,
+    flags: HashMap<String, bool>,
+    _: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
@@ -256,22 +276,25 @@ fn generate(options: HashMap<String, String>,
     }
 
     let length: usize = options["password_length"].parse::<usize>()?;
-    let custom_exclude: Vec<char> = options.get("custom_exclude")
+    let custom_exclude: Vec<char> = options
+        .get("custom_exclude")
         .map_or(Vec::new(), |x| x.chars().collect());
 
-    info!("{}",
-          pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice())
-              ?
-              .display(false, false)
-              .unwrap());
+    info!(
+        "{}",
+        pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice())?
+            .display(false, false)
+            .unwrap()
+    );
 
     Ok(())
 }
 
-fn export(options: HashMap<String, String>,
-          _: HashMap<String, bool>,
-          _: HashMap<String, Vec<String>>)
-          -> Result<()> {
+fn export(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    _: HashMap<String, Vec<String>>,
+) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&options)?, false, None)?;
@@ -279,10 +302,11 @@ fn export(options: HashMap<String, String>,
     Ok(())
 }
 
-fn import(options: HashMap<String, String>,
-          _: HashMap<String, bool>,
-          _: HashMap<String, Vec<String>>)
-          -> Result<()> {
+fn import(
+    options: HashMap<String, String>,
+    _: HashMap<String, bool>,
+    _: HashMap<String, Vec<String>>,
+) -> Result<()> {
     use std::io::Read;
 
     let _handle = init_pwm()?;

@@ -53,9 +53,11 @@ pub struct SingletonHandle;
 
 impl SingletonHandle {
     pub fn new(custom_path: Option<&Path>) -> Result<SingletonHandle> {
-        bdrck_config::new(get_identifier().clone(),
-                          DEFAULT_CONFIGURATION.clone(),
-                          custom_path)?;
+        bdrck_config::new(
+            get_identifier().clone(),
+            DEFAULT_CONFIGURATION.clone(),
+            custom_path,
+        )?;
         Ok(SingletonHandle {})
     }
 }
@@ -69,18 +71,20 @@ impl Drop for SingletonHandle {
 }
 
 pub fn set(key: &str, value: &str) -> Result<()> {
-    let err = bdrck_config::instance_apply_mut(get_identifier(),
+    let err = bdrck_config::instance_apply_mut(
+        get_identifier(),
         |instance: &mut bdrck_config::Configuration<Configuration>| -> Option<Error> {
-        let mut config = instance.get().clone();
-        if key == DEFAULT_REPOSITORY_KEY {
-            config.default_repository = Some(value.to_owned());
-        } else {
-            let e: Error = format!("Invalid configuration key '{}'", key).into();
-            return Some(e);
-        }
-        instance.set(config);
-        None
-    })?;
+            let mut config = instance.get().clone();
+            if key == DEFAULT_REPOSITORY_KEY {
+                config.default_repository = Some(value.to_owned());
+            } else {
+                let e: Error = format!("Invalid configuration key '{}'", key).into();
+                return Some(e);
+            }
+            instance.set(config);
+            None
+        },
+    )?;
 
     match err {
         Some(err) => Err(err),

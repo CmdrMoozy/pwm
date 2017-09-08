@@ -74,7 +74,8 @@ impl EncryptedContents {
         if self.wrapped_keys
             .iter()
             .filter(|k| k.get_signature() == wrapped_key.get_signature())
-            .count() > 0 {
+            .count() > 0
+        {
             return false;
         }
         self.wrapped_keys.push(wrapped_key);
@@ -150,7 +151,10 @@ impl KeyStore {
     pub fn get_key(&self) -> &NormalKey { &self.master_key }
 
     pub fn add(&mut self, key: &NormalKey) -> Result<bool> {
-        Ok(self.encrypted_contents.add(self.master_key.clone().wrap(key)?))
+        Ok(
+            self.encrypted_contents
+                .add(self.master_key.clone().wrap(key)?),
+        )
     }
 
     pub fn remove(&mut self, key: &NormalKey) -> Result<bool> {
