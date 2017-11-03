@@ -53,8 +53,8 @@ impl Default for Configuration {
 
 impl PartialEq for Configuration {
     fn eq(&self, other: &Configuration) -> bool {
-        self.salt == other.salt && self.mem_limit == other.mem_limit &&
-            self.ops_limit == other.ops_limit
+        self.salt == other.salt && self.mem_limit == other.mem_limit
+            && self.ops_limit == other.ops_limit
     }
 }
 

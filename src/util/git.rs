@@ -28,9 +28,9 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
     let path = path.as_ref();
     match Repository::open(path) {
         Ok(repository) => Ok(repository),
-        Err(error) => if create &&
-            (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository) &&
-            error.code() == ErrorCode::NotFound
+        Err(error) => if create
+            && (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository)
+            && error.code() == ErrorCode::NotFound
         {
             Ok(Repository::init(path)?)
         } else {
@@ -64,11 +64,9 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
         Ok(r) => {
             let resolved = r.resolve()?;
             let object = resolved.peel(ObjectType::Commit)?;
-            Ok(Some(
-                object
-                    .into_commit()
-                    .map_err(|_| git2::Error::from_str("Resolving head commit failed."))?,
-            ))
+            Ok(Some(object
+                .into_commit()
+                .map_err(|_| git2::Error::from_str("Resolving head commit failed."))?))
         },
         Err(e) => if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
             Ok(None)

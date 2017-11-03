@@ -23,11 +23,12 @@ const PAD_BLOCK_SIZE_BYTES: usize = 1024;
 
 fn get_padded_size(original_size: usize) -> usize {
     let padded_size = original_size + mem::size_of::<u64>();
-    let blocks = (padded_size / PAD_BLOCK_SIZE_BYTES) + if padded_size % PAD_BLOCK_SIZE_BYTES == 0 {
-        0
-    } else {
-        1
-    };
+    let blocks = (padded_size / PAD_BLOCK_SIZE_BYTES)
+        + if padded_size % PAD_BLOCK_SIZE_BYTES == 0 {
+            0
+        } else {
+            1
+        };
     blocks * PAD_BLOCK_SIZE_BYTES
 }
 
