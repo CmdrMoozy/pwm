@@ -70,9 +70,9 @@ fn config(values: Values) -> Result<()> {
             bail!("A 'key' must be provided when 'set'ting a configuration value.");
         }
 
-        info!(
+        println!(
             "{}",
-            serde_json::to_string_pretty(&configuration::get().unwrap()).unwrap()
+            serde_json::to_string_pretty(&configuration::get().unwrap())?
         );
         return Ok(());
     }
@@ -82,7 +82,7 @@ fn config(values: Values) -> Result<()> {
         configuration::set(key, set).unwrap();
     }
 
-    info!("{} = {}", key, configuration::get_value_as_str(key)?);
+    println!("{} = {}", key, configuration::get_value_as_str(key)?);
 
     Ok(())
 }
@@ -91,7 +91,7 @@ fn init(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&values)?, true, None)?;
-    info!(
+    println!(
         "Initialized repository: {}",
         repository.workdir().unwrap().display()
     );
@@ -123,7 +123,7 @@ fn ls(values: Values) -> Result<()> {
     let repository = Repository::new(get_repository_path(&values)?, false, None)?;
     let path = repository.path(values.get_positional_single("path"))?;
     for entry in &repository.list(Some(&path))? {
-        info!("{}", entry.to_str().unwrap());
+        println!("{}", entry.to_str().unwrap());
     }
 
     Ok(())
@@ -137,7 +137,7 @@ fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()>
         .map_or_else(|| &retrieved[..], |s| s.as_bytes());
 
     if tty {
-        info!("{}", String::from_utf8_lossy(bytes));
+        println!("{}", String::from_utf8_lossy(bytes));
     } else {
         use std::io::Write;
         let mut stdout = io::stdout();
@@ -232,7 +232,7 @@ fn generate(values: Values) -> Result<()> {
         .get_single("custom_exclude")
         .map_or(vec![], |x| x.chars().collect());
 
-    info!(
+    println!(
         "{}",
         pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice())?
             .display(false, false)
@@ -246,7 +246,7 @@ fn export(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
     let repository = Repository::new(get_repository_path(&values)?, false, None)?;
-    info!("{}", export_serialize(&repository)?);
+    println!("{}", export_serialize(&repository)?);
     Ok(())
 }
 
