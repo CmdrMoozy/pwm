@@ -14,7 +14,7 @@
 
 error_chain! {
     foreign_links {
-        Configuration(::bdrck_config::error::Error);
+        Bdrck(::bdrck::error::Error);
         Encoding(::data_encoding::DecodeError);
         Git(::git2::Error);
         Io(::std::io::Error);
