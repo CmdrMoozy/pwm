@@ -5,9 +5,7 @@ authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 license = "Apache-2.0"
 
 [dependencies]
-bdrck_config = "0.2"
-bdrck_log = "0.3"
-bdrck_params = "0.3"
+bdrck = "0.4"
 bincode = "0.9"
 byteorder = "1.2"
 clipboard = { version = "0.4", optional = true }

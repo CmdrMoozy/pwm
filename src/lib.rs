@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate bdrck_config;
-extern crate bdrck_log;
+extern crate bdrck;
 extern crate bincode;
 extern crate byteorder;
 #[cfg(feature = "clipboard")]

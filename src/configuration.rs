@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use bdrck_config::configuration as bdrck_config;
+use bdrck::configuration as bdrck_config;
 use error::{Error, Result};
 use std::path::Path;
 

@@ -12,19 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::option::Option as Optional;
 
-extern crate bdrck_log;
-
-extern crate bdrck_params;
-use bdrck_params::argument::Argument;
-use bdrck_params::command::Command;
-use bdrck_params::command::ExecutableCommand;
-use bdrck_params::main_impl::main_impl_multiple_commands;
-use bdrck_params::option::Option;
+extern crate bdrck;
+use bdrck::flags::*;
 
 #[macro_use]
 extern crate error_chain;
@@ -53,13 +46,13 @@ fn init_pwm() -> Result<configuration::SingletonHandle> {
     Ok(configuration::SingletonHandle::new(None)?)
 }
 
-fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
+fn get_repository_path(values: &Values) -> Result<String> {
     let config = configuration::get()?;
-    match options
-        .get("repository")
-        .or_else(|| config.default_repository.as_ref())
+    match values
+        .get_single("repository")
+        .or_else(|| config.default_repository.as_ref().map(|dr| dr.as_str()))
     {
-        Some(p) => Ok(p.clone()),
+        Some(p) => Ok(p.to_owned()),
         None => bail!(
             "No repository path specified. Try the 'repository' command option, or setting \
              the 'default_repository' configuration key."
@@ -67,16 +60,11 @@ fn get_repository_path(options: &HashMap<String, String>) -> Result<String> {
     }
 }
 
-fn config(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    _: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn config(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let k: Optional<&String> = options.get("key");
-    let s: Optional<&String> = options.get("set");
-
+    let k = values.get_single("key");
+    let s = values.get_single("set");
     if k.is_none() {
         if s.is_some() {
             bail!("A 'key' must be provided when 'set'ting a configuration value.");
@@ -91,26 +79,18 @@ fn config(
 
     let key = k.unwrap();
     if let Some(set) = s {
-        configuration::set(key.as_str(), set.as_str()).unwrap();
+        configuration::set(key, set).unwrap();
     }
 
-    info!(
-        "{} = {}",
-        key,
-        configuration::get_value_as_str(key.as_str())?
-    );
+    info!("{} = {}", key, configuration::get_value_as_str(key)?);
 
     Ok(())
 }
 
-fn init(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    _: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn init(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&options)?, true, None)?;
+    let repository = Repository::new(get_repository_path(&values)?, true, None)?;
     info!(
         "Initialized repository: {}",
         repository.workdir().unwrap().display()
@@ -119,41 +99,29 @@ fn init(
     Ok(())
 }
 
-fn addkey(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    _: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn addkey(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let mut repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
     repository.add_key(None)?;
 
     Ok(())
 }
 
-fn rmkey(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    _: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn rmkey(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let mut repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
     repository.remove_key(None)?;
 
     Ok(())
 }
 
-fn ls(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    arguments: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn ls(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
-    let path = repository.path(&arguments.get("path").unwrap()[0])?;
+    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let path = repository.path(values.get_positional_single("path"))?;
     for entry in &repository.list(Some(&path))? {
         info!("{}", entry.to_str().unwrap());
     }
@@ -179,22 +147,18 @@ fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()>
     Ok(())
 }
 
-fn get(
-    options: HashMap<String, String>,
-    flags: HashMap<String, bool>,
-    arguments: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn get(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
-    let path = repository.path(&arguments.get("path").unwrap()[0])?;
-    let force_binary = flags["binary"];
+    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let path = repository.path(values.get_positional_single("path"))?;
+    let force_binary = values.get_boolean("binary");
 
     let retrieved = repository.read_decrypt(&path)?;
 
     match () {
         #[cfg(feature = "clipboard")]
-        () => if flags["clipboard"] {
+        () => if values.get_boolean("clipboard") {
             pwm_lib::util::clipboard::set_contents(retrieved, force_binary)?;
         } else {
             print_stored_data(retrieved, force_binary)?;
@@ -209,17 +173,13 @@ fn get(
     Ok(())
 }
 
-fn set(
-    options: HashMap<String, String>,
-    flags: HashMap<String, bool>,
-    arguments: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn set(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
-    let path = repository.path(&arguments.get("path").unwrap()[0])?;
-    let key_file = options.get("key_file");
-    let multiline = flags["multiline"];
+    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let path = repository.path(values.get_positional_single("path"))?;
+    let key_file = values.get_single("key_file");
+    let multiline = values.get_boolean("multiline");
 
     if key_file.is_some() && multiline {
         bail!("The 'key_file' and 'multiline' options are mutually exclusive.");
@@ -244,41 +204,33 @@ fn set(
     Ok(())
 }
 
-fn rm(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    arguments: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn rm(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
-    let path = repository.path(&arguments.get("path").unwrap()[0])?;
+    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let path = repository.path(values.get_positional_single("path"))?;
     repository.remove(&path)?;
     Ok(())
 }
 
-fn generate(
-    options: HashMap<String, String>,
-    flags: HashMap<String, bool>,
-    _: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn generate(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
     let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
-    if !flags["exclude_letters"] {
+    if !values.get_boolean("exclude_letters") {
         charsets.push(pwgen::CharacterSet::Letters);
     }
-    if !flags["exclude_numbers"] {
+    if !values.get_boolean("exclude_numbers") {
         charsets.push(pwgen::CharacterSet::Numbers);
     }
-    if flags["include_symbols"] {
+    if values.get_boolean("include_symbols") {
         charsets.push(pwgen::CharacterSet::Symbols);
     }
 
-    let length: usize = options["password_length"].parse::<usize>()?;
-    let custom_exclude: Vec<char> = options
-        .get("custom_exclude")
-        .map_or(Vec::new(), |x| x.chars().collect());
+    let length: usize = values.get_required_parsed("password_length")?;
+    let custom_exclude: Vec<char> = values
+        .get_single("custom_exclude")
+        .map_or(vec![], |x| x.chars().collect());
 
     info!(
         "{}",
@@ -290,32 +242,24 @@ fn generate(
     Ok(())
 }
 
-fn export(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    _: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn export(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
     info!("{}", export_serialize(&repository)?);
     Ok(())
 }
 
-fn import(
-    options: HashMap<String, String>,
-    _: HashMap<String, bool>,
-    _: HashMap<String, Vec<String>>,
-) -> Result<()> {
+fn import(values: Values) -> Result<()> {
     use std::io::Read;
 
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&options)?, false, None)?;
+    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
 
-    let input_path = &options["input"];
+    let input_path = values.get_required("input");
     let mut input = String::new();
-    let mut f = File::open(&input_path)?;
+    let mut f = File::open(input_path)?;
     f.read_to_string(&mut input)?;
 
     import_deserialize(&repository, input.as_str())?;
@@ -325,174 +269,154 @@ fn import(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 fn main() {
-    bdrck_log::init_cli_logger().unwrap();
+    bdrck::logging::init(None);
 
     main_impl_multiple_commands(vec![
-        ExecutableCommand::new(
-            Command::new(
-                "config",
-                "Get or set a configuration value",
-                vec![
-                    Option::optional("set", "Set the key to this new value", Some('s')),
-                    Option::optional("key", "The specific key to view / set", Some('k')),
-                ],
-                vec![],
-                false).unwrap(),
+        Command::new(
+            "config",
+            "Get or set a configuration value",
+            Specs::new(vec![
+                Spec::optional("set", "The new value to set the key to", Some('s')),
+                Spec::optional("key", "The specific key to get or set", Some('k')),
+            ]).unwrap(),
             Box::new(config)),
-        ExecutableCommand::new(
-            Command::new(
-                "init",
-                "Initialize a new pwm repository",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
-                ],
-                vec![],
-                false).unwrap(),
+        Command::new(
+            "init",
+            "Initialize a new pwm repository",
+            Specs::new(vec![
+                Spec::optional("repository", "The path to the repository to initialize", Some('r')),
+            ]).unwrap(),
             Box::new(init)),
-        ExecutableCommand::new(
-            Command::new(
-                "addkey",
-                "Add a new master key to an existing repository",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
-                ],
-                vec![],
-                false).unwrap(),
+        Command::new(
+            "addkey",
+            "Add a new master key to an existing repository",
+            Specs::new(vec![
+                Spec::optional(
+                    "repository", "The path to the repository to add a key to", Some('r')),
+            ]).unwrap(),
             Box::new(addkey)),
-        ExecutableCommand::new(
-            Command::new(
-                "rmkey",
-                "Remove an existing master key from an existing repository",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
-                ],
-                vec![],
-                false).unwrap(),
+        Command::new(
+            "rmkey",
+            "Remove an existing master key from an existing repository",
+            Specs::new(vec![
+                Spec::optional(
+                    "repository", "The path to the repository to remove a key from", Some('r')),
+            ]).unwrap(),
             Box::new(rmkey)),
-        ExecutableCommand::new(
-            Command::new(
-                "ls",
-                "List passwords stored in a pwm repository",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to initialize", Some('r')),
-                ],
-                vec![
-                Argument::new(
+        Command::new(
+            "ls",
+            "List passwords stored in a pwm repository",
+            Specs::new(vec![
+                Spec::optional(
+                    "repository", "The path to the repository to list the contents of", Some('r')),
+                Spec::positional(
                     "path",
                     "The path to list, relative to the repository's root",
-                    Some(vec!["".to_owned()])),
-                ],
-                false).unwrap(),
+                    Some(&[""]),
+                    false,
+                ).unwrap(),
+            ]).unwrap(),
             Box::new(ls)),
-        ExecutableCommand::new(
-            Command::new(
-                "get",
-                "Retrieve a password or key from a pwm repository",
-                if cfg!(feature = "clipboard") {
-                    vec![
-                        Option::optional(
-                            "repository", "The path to the repository to read from", Some('r')),
-                        Option::flag(
-                            "binary", "Treat the retrieved password or key as binary", Some('b')),
-                        Option::flag(
-                            "clipboard", "Copy the password or key to the clipboard", Some('c')),
-                    ]
-                } else {
-                    vec![
-                        Option::optional(
-                            "repository", "The path to the repository to read from", Some('r')),
-                        Option::flag(
-                            "binary", "Treat the retrieved password or key as binary", Some('b')),
-                    ]
-                },
+        Command::new(
+            "get",
+            "Retrieve a password or key from a pwm repository",
+            Specs::new(if cfg!(feature = "clipboard") {
                 vec![
-                    Argument::new(
+                    Spec::optional(
+                        "repository",
+                        "The path to the repository to retrieve the password or key from",
+                        Some('r'),
+                    ),
+                    Spec::boolean(
+                        "binary", "Treat the retrieved password or key as binary", Some('b')),
+                    Spec::boolean(
+                        "clipboard", "Copy the password or key to the clipboard", Some('c')),
+                    Spec::positional(
                         "path",
                         "The path to retrieve, relative to the repository's root",
-                        None),
-                ],
-                false).unwrap(),
+                        None,
+                        false,
+                    ).unwrap(),
+                ]
+            } else {
+                vec![
+                    Spec::optional(
+                        "repository",
+                        "The path to the repository to retrieve the password or key from",
+                        Some('r'),
+                    ),
+                    Spec::boolean(
+                        "binary", "Treat the retrieved password or key as binary", Some('b')),
+                    Spec::positional(
+                        "path",
+                        "The path to retrieve, relative to the repository's root",
+                        None,
+                        false,
+                    ).unwrap(),
+                ]
+            }).unwrap(),
             Box::new(get)),
-        ExecutableCommand::new(
-            Command::new(
-                "set",
-                "Store a password or key in a pwm repository",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to modify", Some('r')),
-                    Option::optional(
-                        "key_file", "Store a key file instead of a password", Some('k')),
-                    Option::flag(
-                        "multiline", "Read multiple lines of input data, until 'EOF'", Some('m')),
-                ],
-                vec![
-                    Argument::new(
-                        "path",
-                        "The path to set, relative to the repository's root",
-                        None),
-                ],
-                false).unwrap(),
+        Command::new(
+            "set",
+            "Store a password or key in a pwm repository",
+            Specs::new(vec![
+                Spec::optional("repository", "The path to the repository to modify", Some('r')),
+                Spec::optional("key_file", "Store a key file instead of a password", Some('k')),
+                Spec::boolean(
+                    "multiline", "Read multiple lines of input data, until 'EOF'", Some('m')),
+                Spec::positional(
+                    "path",
+                    "The path to set, relative to the repository's root",
+                    None,
+                    false,
+                ).unwrap(),
+            ]).unwrap(),
             Box::new(set)),
-        ExecutableCommand::new(
-            Command::new(
-                "rm",
-                "Remove a password or key from a pwm repository",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to modify", Some('r')),
-                ],
-                vec![
-                    Argument::new(
-                        "path",
-                        "The path to remove, relative to the repository's root",
-                        None),
-                ],
-                false).unwrap(),
+        Command::new(
+            "rm",
+            "Remove a password or key from a pwm repository",
+            Specs::new(vec![
+                Spec::optional("repository", "The path to the repository to modify", Some('r')),
+                Spec::positional(
+                    "path",
+                    "The path to remove, relative to the repository's root",
+                    None,
+                    false,
+                ).unwrap(),
+            ]).unwrap(),
             Box::new(rm)),
-        ExecutableCommand::new(
-            Command::new(
-                "generate",
-                "Generate a random password",
-                vec![
-                    Option::required(
-                        "password_length", "The length of the password to generate", Some('l'),
-                        Some(pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH.to_string().as_str())),
-                    Option::flag("exclude_letters", "Exclude letters from the password", Some('A')),
-                    Option::flag("exclude_numbers", "Exclude numbers from the password", Some('N')),
-                    Option::flag("include_symbols", "Include symbols in the password", Some('s')),
-                    Option::optional(
-                        "custom_exclude", "Exclude a custom set of characters", Some('x')),
-                ],
-                vec![],
-                false).unwrap(),
+        Command::new(
+            "generate",
+            "Generate a random password",
+            Specs::new(vec![
+                Spec::required(
+                    "password_length",
+                    "The length of the password to generate",
+                    Some('l'),
+                    Some(pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH.to_string().as_str()),
+                ),
+                Spec::boolean("exclude_letters", "Exclude letters from the password", Some('A')),
+                Spec::boolean("exclude_numbers", "Exclude numbers from the password", Some('N')),
+                Spec::boolean("include symbols", "Include symbols in the password", Some('s')),
+                Spec::optional("custom_exclude", "Exclute a custom set of characters", Some('x')),
+            ]).unwrap(),
             Box::new(generate)),
-        ExecutableCommand::new(
-            Command::new(
-                "export",
-                "Export all stored passwords as plaintext JSON for backup purposes",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to export from", Some('r')),
-                ],
-                vec![],
-                false).unwrap(),
+        Command::new(
+            "export",
+            "Export all stored passwords as plaintext JSON for backup purposes",
+            Specs::new(vec![
+                Spec::optional(
+                    "repository", "The path to the repository to export from", Some('r')),
+            ]).unwrap(),
             Box::new(export)),
-        ExecutableCommand::new(
-            Command::new(
-                "import",
-                "Import stored passwords previously 'export'ed",
-                vec![
-                    Option::optional(
-                        "repository", "The path to the repository to import into", Some('r')),
-                    Option::required(
-                        "input", "The input file to import from", Some('i'), None),
-                ],
-                vec![],
-                false).unwrap(),
+        Command::new(
+            "import",
+            "Import stored passwords previously 'export'ed",
+            Specs::new(vec![
+                Spec::optional(
+                    "repository", "The path to the repository to import into", Some('r')),
+                Spec::required("input", "The input file to import from", Some('i'), None),
+            ]).unwrap(),
             Box::new(import)),
     ]);
 }
