@@ -8,17 +8,17 @@ license = "Apache-2.0"
 bdrck_config = "0.2"
 bdrck_log = "0.3"
 bdrck_params = "0.3"
-bincode = "0.8"
-byteorder = "1.1"
+bincode = "0.9"
+byteorder = "1.2"
 clipboard = { version = "0.4", optional = true }
-data-encoding = "2.0.0-rc.2"
+data-encoding = "2.1"
 error-chain = "0.11"
 git2 = { version = "0.6", default-features = false, features = [] }
 isatty = "0.1"
-lazy_static = "0.2"
+lazy_static = "1.0"
 log = "0.3"
 rand = "0.3"
-rpassword = "1.0"
+rpassword = "2.0"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
@@ -26,7 +26,7 @@ sodiumoxide = "0.0.15"
 
 [dev-dependencies]
 tempdir = "0.3"
-tempfile = "2.1"
+tempfile = "2.2"
 
 [features]
 default = ["clipboard"]
