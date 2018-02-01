@@ -269,7 +269,7 @@ fn import(values: Values) -> Result<()> {
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 fn main() {
-    bdrck::logging::init(None);
+    bdrck::logging::init(None, None, false);
 
     main_impl_multiple_commands(vec![
         Command::new(
