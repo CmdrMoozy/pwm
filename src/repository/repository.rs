@@ -165,9 +165,9 @@ impl Repository {
     fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
         use std::ops::DerefMut;
         let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
-        lazy.deref_mut().as_mut().map_err(|e| {
-            format!("Accessing repository key store failed: {}", e).into()
-        })
+        lazy.deref_mut()
+            .as_mut()
+            .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
     }
 
     fn get_master_key(&self) -> Result<&NormalKey> { Ok(self.get_key_store()?.get_key()) }
