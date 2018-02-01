@@ -14,7 +14,6 @@
 
 use crypto::pwgen::*;
 
-
 fn generate_password_str(
     length: Option<usize>,
     charsets: &[CharacterSet],

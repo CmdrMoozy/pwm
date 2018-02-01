@@ -27,7 +27,6 @@ impl<'a, T> Lazy<'a, T> {
         }
     }
 
-
     fn force(&self) {
         unsafe {
             match *self.state.get() {

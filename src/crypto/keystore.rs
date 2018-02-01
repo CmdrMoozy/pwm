@@ -151,10 +151,8 @@ impl KeyStore {
     pub fn get_key(&self) -> &NormalKey { &self.master_key }
 
     pub fn add(&mut self, key: &NormalKey) -> Result<bool> {
-        Ok(
-            self.encrypted_contents
-                .add(self.master_key.clone().wrap(key)?),
-        )
+        Ok(self.encrypted_contents
+            .add(self.master_key.clone().wrap(key)?))
     }
 
     pub fn remove(&mut self, key: &NormalKey) -> Result<bool> {

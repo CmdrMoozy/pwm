@@ -64,9 +64,9 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
         Ok(r) => {
             let resolved = r.resolve()?;
             let object = resolved.peel(ObjectType::Commit)?;
-            Ok(Some(object
-                .into_commit()
-                .map_err(|_| git2::Error::from_str("Resolving head commit failed."))?))
+            Ok(Some(object.into_commit().map_err(|_| {
+                git2::Error::from_str("Resolving head commit failed.")
+            })?))
         },
         Err(e) => if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
             Ok(None)
@@ -78,7 +78,9 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
 
 fn get_head_tree(repository: &Repository) -> Result<Tree> {
     let tree_id = get_head_commit(repository)?
-        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| c.tree_id());
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| {
+            c.tree_id()
+        });
     Ok(repository.find_tree(tree_id)?)
 }
 
@@ -93,9 +95,7 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
         let (tree, prefix) = pending_trees.pop_front().unwrap();
 
         let mut subtrees: VecDeque<(Tree, PathBuf)> = tree.iter()
-            .filter(|entry| {
-                entry.kind().unwrap_or(ObjectType::Any) == ObjectType::Tree
-            })
+            .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) == ObjectType::Tree)
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
                 path.push(entry.name().unwrap());
@@ -113,9 +113,7 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
         pending_trees.append(&mut subtrees);
 
         let mut entries: Vec<PathBuf> = tree.iter()
-            .filter(|entry| {
-                entry.kind().unwrap_or(ObjectType::Any) != ObjectType::Tree
-            })
+            .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) != ObjectType::Tree)
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
                 path.push(entry.name().unwrap());
@@ -145,7 +143,9 @@ fn commit_tree(
     let parent_refs = parents.iter().collect::<Vec<&Commit>>();
     let parent_tree_id: Oid = parent_refs
         .get(0)
-        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| p.tree_id());
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| {
+            p.tree_id()
+        });
 
     // If this commit is empty (e.g., its tree is identical to its parent's), don't
     // create a new commit.
