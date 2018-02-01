@@ -397,7 +397,7 @@ fn main() {
                 ),
                 Spec::boolean("exclude_letters", "Exclude letters from the password", Some('A')),
                 Spec::boolean("exclude_numbers", "Exclude numbers from the password", Some('N')),
-                Spec::boolean("include symbols", "Include symbols in the password", Some('s')),
+                Spec::boolean("include_symbols", "Include symbols in the password", Some('s')),
                 Spec::optional("custom_exclude", "Exclute a custom set of characters", Some('x')),
             ]).unwrap(),
             Box::new(generate)),
