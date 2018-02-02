@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::testing::temp;
 use git2::{Oid, Repository, Signature};
 use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
-use tests::tempdir::TempDir;
 use util::git::*;
 
 fn get_test_signature() -> Signature<'static> { Signature::now("test", "test@test.com").unwrap() }
 
 #[test]
 fn test_open_repository() {
-    let tmp_dir = TempDir::new("pwm-tests").unwrap();
+    let tmp_dir = temp::Dir::new("pwm-tests").unwrap();
     assert!(tmp_dir.path().exists());
     assert!(open_repository(tmp_dir.path(), false).is_err());
     let repository = open_repository(tmp_dir.path(), true).unwrap();
@@ -53,7 +53,7 @@ fn write_and_commit(relative_path: &str, contents: &str, repository: &Repository
 
 #[test]
 fn test_commit_paths_and_listing() {
-    let tmp_dir = TempDir::new("pwm-tests").unwrap();
+    let tmp_dir = temp::Dir::new("pwm-tests").unwrap();
     assert!(tmp_dir.path().exists());
     let repository = open_repository(tmp_dir.path(), true).unwrap();
 

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::testing::temp;
 use error::*;
 use repository::*;
 use sodiumoxide::randombytes::randombytes;
 use std::ops::{Deref, DerefMut};
-use tests::tempdir::TempDir;
 use util::data::SensitiveData;
 
 static TEST_REPO_DIR: &'static str = "pwm-test";
@@ -24,7 +24,7 @@ static TEST_REPO_DIR: &'static str = "pwm-test";
 fn to_password(s: &str) -> SensitiveData { SensitiveData::from(s.as_bytes().to_vec()) }
 
 struct TestRepository {
-    _directory: TempDir,
+    _directory: temp::Dir,
     repository: Option<Repository>,
 }
 
@@ -47,7 +47,7 @@ impl Drop for TestRepository {
 
 impl TestRepository {
     pub fn new(password: &str) -> Result<TestRepository> {
-        let directory = TempDir::new(TEST_REPO_DIR)?;
+        let directory = temp::Dir::new(TEST_REPO_DIR)?;
         let repository = Repository::new(directory.path(), true, Some(to_password(password)))?;
         Ok(TestRepository {
             _directory: directory,
@@ -58,7 +58,7 @@ impl TestRepository {
 
 #[test]
 fn test_wrong_master_password_fails() {
-    let repository_dir = TempDir::new(TEST_REPO_DIR).unwrap();
+    let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let good = to_password("foobar");
     let bad = to_password("barbaz");
     let path = "test";
@@ -79,7 +79,7 @@ fn test_wrong_master_password_fails() {
 
 #[test]
 fn test_write_read_round_trip() {
-    let repository_dir = TempDir::new(TEST_REPO_DIR).unwrap();
+    let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pw = to_password("foobar");
     let path = "test";
     let plaintext = SensitiveData::from(randombytes(1024));
@@ -161,7 +161,7 @@ fn test_adding_duplicate_key() {
 
 #[test]
 fn test_adding_key_succeeds() {
-    let repository_dir = TempDir::new(TEST_REPO_DIR).unwrap();
+    let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";
@@ -195,7 +195,7 @@ fn test_removing_unused_key() {
 
 #[test]
 fn test_removing_key_succeeds() {
-    let repository_dir = TempDir::new(TEST_REPO_DIR).unwrap();
+    let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";

@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::testing::temp;
 use sodiumoxide::randombytes::randombytes;
-use std::io::SeekFrom;
-use tests::tempfile::tempfile;
+use std::fs::File;
 use util::data::*;
 
 #[test]
 fn test_from_file() {
-    use std::io::{Seek, Write};
+    use std::io::Write;
 
     let data: Vec<u8> = Vec::from("Some arbitrary test string.".as_bytes());
-    let mut file = tempfile().unwrap();
+    let temp_file = temp::File::new_file().unwrap();
 
-    file.write_all(data.as_slice()).unwrap();
-    file.flush().unwrap();
-    file.seek(SeekFrom::Start(0)).unwrap();
+    {
+        let mut file = File::create(temp_file.path()).unwrap();
+        file.write_all(data.as_slice()).unwrap();
+    }
 
+    let mut file = File::open(temp_file.path()).unwrap();
     let loaded_data = SensitiveData::from_file(&mut file).unwrap();
     assert_eq!(data.len(), loaded_data.len());
     assert_eq!(data.as_slice(), &loaded_data[..]);
