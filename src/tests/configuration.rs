@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::testing::temp;
 use configuration::*;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tests::tempfile;
 
 lazy_static! {
     // The unit tests in this file MUST be run one-at-a-time, since they all access our
@@ -31,7 +31,7 @@ fn test_get_and_set() {
         Err(poisoned) => poisoned.into_inner(),
     };
 
-    let file = tempfile::NamedTempFile::new().ok().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path: PathBuf = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized configuration struct.
     fs::remove_file(path.as_path()).unwrap();
@@ -61,7 +61,7 @@ fn test_get_value_as_str() {
         Err(poisoned) => poisoned.into_inner(),
     };
 
-    let file = tempfile::NamedTempFile::new().ok().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path: PathBuf = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized configuration struct.
     fs::remove_file(path.as_path()).unwrap();
@@ -93,7 +93,7 @@ fn test_reset() {
         Err(poisoned) => poisoned.into_inner(),
     };
 
-    let file = tempfile::NamedTempFile::new().ok().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path: PathBuf = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized configuration struct.
     fs::remove_file(path.as_path()).unwrap();

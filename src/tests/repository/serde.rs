@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::testing::temp;
 use repository::Repository;
 use repository::serde::*;
 use sodiumoxide::randombytes::randombytes;
-use tests::tempdir::TempDir;
 use util::data::SensitiveData;
 
 #[test]
@@ -27,7 +27,7 @@ fn test_export_import_round_trip_ascii() {
     let paths: Vec<&'static str> = vec!["foo/1", "bar/2", "3", "foo/bar/4"];
 
     {
-        let repository_dir = TempDir::new("pwm-test").unwrap();
+        let repository_dir = temp::Dir::new("pwm-test").unwrap();
         let repository = Repository::new(
             repository_dir.path(),
             true,
@@ -41,7 +41,7 @@ fn test_export_import_round_trip_ascii() {
         serialized = export_serialize(&repository).unwrap();
     }
 
-    let repository_dir = TempDir::new("pwm-test").unwrap();
+    let repository_dir = temp::Dir::new("pwm-test").unwrap();
     let repository = Repository::new(
         repository_dir.path(),
         true,
@@ -67,7 +67,7 @@ fn test_export_import_round_trip_binary() {
     let paths: Vec<&'static str> = vec!["foo/1", "bar/2", "3", "foo/bar/4"];
 
     {
-        let repository_dir = TempDir::new("pwm-test").unwrap();
+        let repository_dir = temp::Dir::new("pwm-test").unwrap();
         let repository = Repository::new(
             repository_dir.path(),
             true,
@@ -81,7 +81,7 @@ fn test_export_import_round_trip_binary() {
         serialized = export_serialize(&repository).unwrap();
     }
 
-    let repository_dir = TempDir::new("pwm-test").unwrap();
+    let repository_dir = temp::Dir::new("pwm-test").unwrap();
     let repository = Repository::new(
         repository_dir.path(),
         true,

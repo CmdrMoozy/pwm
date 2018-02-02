@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::testing::temp;
 use crypto::key::*;
 use crypto::keystore::*;
 use std::fs;
-use tests::tempfile;
 
 #[test]
 fn test_keystore_save_round_trip() {
-    let file = tempfile::NamedTempFile::new().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized KeyStore.
     fs::remove_file(path.as_path()).unwrap();
@@ -43,7 +43,7 @@ fn test_keystore_save_round_trip() {
 
 #[test]
 fn test_keystore_open_with_added_key() {
-    let file = tempfile::NamedTempFile::new().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized KeyStore.
     fs::remove_file(path.as_path()).unwrap();
@@ -71,7 +71,7 @@ fn test_keystore_open_with_added_key() {
 
 #[test]
 fn test_add_duplicate_key() {
-    let file = tempfile::NamedTempFile::new().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized KeyStore.
     fs::remove_file(path.as_path()).unwrap();
@@ -85,7 +85,7 @@ fn test_add_duplicate_key() {
 
 #[test]
 fn test_remove_unused_key() {
-    let file = tempfile::NamedTempFile::new().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized KeyStore.
     fs::remove_file(path.as_path()).unwrap();
@@ -100,7 +100,7 @@ fn test_remove_unused_key() {
 
 #[test]
 fn test_remove_only_key() {
-    let file = tempfile::NamedTempFile::new().unwrap();
+    let file = temp::File::new_file().unwrap();
     let path = file.path().to_owned();
     // Remove the file: an empty file isn't a valid serialized KeyStore.
     fs::remove_file(path.as_path()).unwrap();
