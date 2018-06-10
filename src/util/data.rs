@@ -98,7 +98,7 @@ impl SensitiveData {
         Ok(SensitiveData::from(data))
     }
 
-    fn as_slice(&self) -> &[u8] {
+    pub fn as_slice(&self) -> &[u8] {
         &self.data
     }
 

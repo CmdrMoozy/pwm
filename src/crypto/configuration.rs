@@ -13,58 +13,48 @@
 // limitations under the License.
 
 use bdrck::configuration as bdrck_config;
+use bdrck::crypto::key::*;
 use error::Result;
-use sodiumoxide::crypto::pwhash;
-use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt, SALTBYTES};
 use std::path::Path;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Configuration {
-    salt: [u8; SALTBYTES],
+    salt: Salt,
     mem_limit: usize,
     ops_limit: usize,
 }
 
 impl Configuration {
-    pub fn new(salt: Salt, mem_limit: MemLimit, ops_limit: OpsLimit) -> Configuration {
+    pub fn new(salt: Salt, mem_limit: usize, ops_limit: usize) -> Configuration {
         Configuration {
-            salt: salt.0,
-            mem_limit: mem_limit.0,
-            ops_limit: ops_limit.0,
+            salt: salt,
+            mem_limit: mem_limit,
+            ops_limit: ops_limit,
         }
     }
 
     pub fn get_salt(&self) -> Salt {
-        Salt(self.salt)
+        self.salt.clone()
     }
 
-    pub fn get_mem_limit(&self) -> MemLimit {
-        MemLimit(self.mem_limit)
+    pub fn get_mem_limit(&self) -> usize {
+        self.mem_limit
     }
 
-    pub fn get_ops_limit(&self) -> OpsLimit {
-        OpsLimit(self.ops_limit)
+    pub fn get_ops_limit(&self) -> usize {
+        self.ops_limit
     }
 }
 
 impl Default for Configuration {
     fn default() -> Configuration {
         Self::new(
-            pwhash::gen_salt(),
-            pwhash::MEMLIMIT_INTERACTIVE,
-            pwhash::OPSLIMIT_INTERACTIVE,
+            Salt::default(),
+            MEM_LIMIT_INTERACTIVE,
+            OPS_LIMIT_INTERACTIVE,
         )
     }
 }
-
-impl PartialEq for Configuration {
-    fn eq(&self, other: &Configuration) -> bool {
-        self.salt == other.salt && self.mem_limit == other.mem_limit
-            && self.ops_limit == other.ops_limit
-    }
-}
-
-impl Eq for Configuration {}
 
 pub struct ConfigurationInstance {
     identifier: bdrck_config::Identifier,

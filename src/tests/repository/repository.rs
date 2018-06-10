@@ -70,14 +70,14 @@ fn test_wrong_master_password_fails() {
     let path = "test";
 
     {
-        let repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
+        let mut repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
         let path = repository.path(path).unwrap();
         repository
             .write_encrypt(&path, to_password("Hello, world!"))
             .unwrap();
     }
 
-    let repository = Repository::new(repository_dir.path(), false, Some(bad)).unwrap();
+    let mut repository = Repository::new(repository_dir.path(), false, Some(bad)).unwrap();
     let path = repository.path(path).unwrap();
     let read_result = repository.read_decrypt(&path);
     assert!(read_result.is_err());
@@ -91,32 +91,33 @@ fn test_write_read_round_trip() {
     let plaintext = SensitiveData::from(randombytes(1024));
 
     {
-        let repository = Repository::new(repository_dir.path(), true, Some(pw.clone())).unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(), true, Some(pw.clone())).unwrap();
+        let absolute_path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&repository.path(path).unwrap(), plaintext.clone())
+            .write_encrypt(&absolute_path, plaintext.clone())
             .unwrap();
     }
 
-    let repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
-    let output_plaintext = repository
-        .read_decrypt(&repository.path(path).unwrap())
-        .unwrap();
+    let mut repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
+    let absolute_path = repository.path(path).unwrap();
+    let output_plaintext = repository.read_decrypt(&absolute_path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
 }
 
 #[test]
 fn test_repository_listing() {
-    let t = TestRepository::new("foobar").unwrap();
+    let mut t = TestRepository::new("foobar").unwrap();
     let plaintext = SensitiveData::from(randombytes(1024));
 
-    t.write_encrypt(&t.path("foo/1").unwrap(), plaintext.clone())
-        .unwrap();
-    t.write_encrypt(&t.path("bar/2").unwrap(), plaintext.clone())
-        .unwrap();
-    t.write_encrypt(&t.path("3").unwrap(), plaintext.clone())
-        .unwrap();
-    t.write_encrypt(&t.path("foo/bar/4").unwrap(), plaintext.clone())
-        .unwrap();
+    let absolute_path = t.path("foo/1").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    let absolute_path = t.path("bar/2").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    let absolute_path = t.path("3").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    let absolute_path = t.path("foo/bar/4").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
 
     let listing: Vec<String> = t.list(None)
         .unwrap()
@@ -137,11 +138,10 @@ fn test_repository_listing() {
 
 #[test]
 fn test_remove() {
-    let t = TestRepository::new("foobar").unwrap();
-    t.write_encrypt(
-        &t.path("test").unwrap(),
-        SensitiveData::from(randombytes(1024)),
-    ).unwrap();
+    let mut t = TestRepository::new("foobar").unwrap();
+    let absolute_path = t.path("test").unwrap();
+    t.write_encrypt(&absolute_path, SensitiveData::from(randombytes(1024)))
+        .unwrap();
 
     let listing: Vec<String> = t.list(None)
         .unwrap()
@@ -181,7 +181,7 @@ fn test_adding_key_succeeds() {
         repository.add_key(Some(pwb.clone())).unwrap();
     }
 
-    let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
+    let mut repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
@@ -219,13 +219,14 @@ fn test_removing_key_succeeds() {
 
     {
         // Accessing the repository with the old key should fail.
-        let repository = Repository::new(repository_dir.path(), false, Some(pwa.clone())).unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(), false, Some(pwa.clone())).unwrap();
         let path = repository.path(path).unwrap();
         assert!(repository.read_decrypt(&path).is_err());
     }
 
     // Accessing the repository with the new key should still succeed.
-    let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
+    let mut repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);

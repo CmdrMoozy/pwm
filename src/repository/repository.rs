@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::crypto::key::{AbstractKey, Key, Nonce};
+use bdrck::crypto::keystore::KeyStore;
+use bincode;
 use crypto::configuration::{Configuration, ConfigurationInstance};
-use crypto::key::NormalKey;
-use crypto::keystore::KeyStore;
 use crypto::padding;
 use error::Result;
 use git2;
 use repository::path::Path as RepositoryPath;
-use sodiumoxide::crypto::secretbox;
 use std::fs;
 use std::fs::File;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use util::data::SensitiveData;
 use util::git;
@@ -66,34 +67,33 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     ConfigurationInstance::new(path.as_path())
 }
 
-fn open_keystore(repository: &git2::Repository, key: &NormalKey) -> Result<KeyStore> {
+fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &mut K) -> Result<KeyStore> {
     let mut path = PathBuf::from(git::get_repository_workdir(repository)?);
     path.push(KEYSTORE_PATH.as_path());
-    KeyStore::open_or_new(path.as_path(), &key)
+    Ok(KeyStore::open_or_new(path.as_path(), key)?)
 }
 
 fn write_encrypt(
     path: &RepositoryPath,
     plaintext: SensitiveData,
-    master_key: &NormalKey,
+    master_key: &mut Key,
 ) -> Result<()> {
-    let (nonce, data) = master_key.encrypt(padding::pad(plaintext));
+    let encrypted_tuple: (Option<Nonce>, Vec<u8>) =
+        master_key.encrypt(padding::pad(plaintext).as_slice())?;
 
     if let Some(parent) = path.absolute_path().parent() {
         fs::create_dir_all(parent)?;
     }
 
-    use std::io::Write;
     let mut file = File::create(path.absolute_path())?;
-    file.write_all(&nonce.0)?;
-    file.write_all(data.as_slice())?;
+    if let Err(e) = bincode::serialize_into(&mut file, &encrypted_tuple) {
+        bail!("Serializing failed: {}", e);
+    }
     file.flush()?;
     Ok(())
 }
 
-fn read_decrypt(path: &RepositoryPath, master_key: &NormalKey) -> Result<SensitiveData> {
-    use std::io::Read;
-
+fn read_decrypt(path: &RepositoryPath, master_key: &mut Key) -> Result<SensitiveData> {
     if !path.absolute_path().exists() {
         bail!(
             "No stored password at path '{}'",
@@ -102,12 +102,15 @@ fn read_decrypt(path: &RepositoryPath, master_key: &NormalKey) -> Result<Sensiti
     }
 
     let mut file = File::open(path.absolute_path())?;
-    let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
-    let mut data: Vec<u8> = vec![];
-    file.read_exact(&mut nonce.0)?;
-    file.read_to_end(&mut data)?;
-
-    padding::unpad(master_key.decrypt(data.as_slice(), &nonce)?)
+    let encrypted_tuple: (Option<Nonce>, Vec<u8>) = match bincode::deserialize_from(&mut file) {
+        Err(e) => bail!("Deserializing failed: {}", e),
+        Ok(et) => et,
+    };
+    padding::unpad(
+        master_key
+            .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?
+            .into(),
+    )
 }
 
 pub struct Repository {
@@ -133,11 +136,15 @@ impl Repository {
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
         let keystore = Lazy::new(move || -> Result<KeyStore> {
-            let master_password =
-                unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
-            let master_key = NormalKey::new_password(master_password, Some(c))?;
+            let password = unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
+            let mut key = Key::new_password(
+                password.as_slice(),
+                &c.get_salt(),
+                c.get_ops_limit(),
+                c.get_mem_limit(),
+            )?;
             let repository = git::open_repository(path.as_path(), false)?;
-            open_keystore(&repository, &master_key)
+            open_keystore(&repository, &mut key)
         });
 
         Ok(Repository {
@@ -155,13 +162,6 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    fn get_key_store(&self) -> Result<&KeyStore> {
-        match self.keystore.as_ref().unwrap().as_ref() {
-            Ok(ks) => Ok(ks),
-            Err(e) => bail!("Accessing repository key store failed: {}", e),
-        }
-    }
-
     fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
         use std::ops::DerefMut;
         let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
@@ -170,8 +170,8 @@ impl Repository {
             .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
     }
 
-    fn get_master_key(&self) -> Result<&NormalKey> {
-        Ok(self.get_key_store()?.get_key())
+    fn get_master_key_mut(&mut self) -> Result<&mut Key> {
+        Ok(self.get_key_store_mut()?.get_master_key_mut())
     }
 
     pub fn workdir(&self) -> Result<&Path> {
@@ -208,8 +208,13 @@ impl Repository {
     pub fn add_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
         let config = self.get_crypto_configuration();
         let password = unwrap_password_or_prompt(password, ADD_KEY_PROMPT, true)?;
-        let key = NormalKey::new_password(password, Some(config))?;
-        let was_added = self.get_key_store_mut()?.add(&key)?;
+        let mut key = Key::new_password(
+            password.as_slice(),
+            &config.get_salt(),
+            config.get_ops_limit(),
+            config.get_mem_limit(),
+        )?;
+        let was_added = self.get_key_store_mut()?.add_key(&mut key)?;
         if !was_added {
             bail!("The specified key is already in use, so it was not re-added");
         }
@@ -219,22 +224,27 @@ impl Repository {
     pub fn remove_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
         let config = self.get_crypto_configuration();
         let password = unwrap_password_or_prompt(password, REMOVE_KEY_PROMPT, true)?;
-        let key = NormalKey::new_password(password, Some(config))?;
-        let was_removed = self.get_key_store_mut()?.remove(&key)?;
+        let key = Key::new_password(
+            password.as_slice(),
+            &config.get_salt(),
+            config.get_ops_limit(),
+            config.get_mem_limit(),
+        )?;
+        let was_removed = self.get_key_store_mut()?.remove_key(&key)?;
         if !was_removed {
             bail!("The specified key is not registered with this repository");
         }
         Ok(())
     }
 
-    pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
-        write_encrypt(path, plaintext, self.get_master_key()?)?;
+    pub fn write_encrypt(&mut self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
+        write_encrypt(path, plaintext, self.get_master_key_mut()?)?;
         self.commit_one(STORED_PASSWORD_UPDATE_MESSAGE, path.relative_path())?;
         Ok(())
     }
 
-    pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
-        read_decrypt(path, self.get_master_key()?)
+    pub fn read_decrypt(&mut self, path: &RepositoryPath) -> Result<SensitiveData> {
+        read_decrypt(path, self.get_master_key_mut()?)
     }
 
     pub fn remove(&self, path: &RepositoryPath) -> Result<()> {

@@ -150,7 +150,7 @@ fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()>
 fn get(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
     let path = repository.path(values.get_positional_single("path"))?;
     let force_binary = values.get_boolean("binary");
 
@@ -176,7 +176,7 @@ fn get(values: Values) -> Result<()> {
 fn set(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
     let path = repository.path(values.get_positional_single("path"))?;
     let key_file = values.get_single("key_file");
     let multiline = values.get_boolean("multiline");
@@ -245,8 +245,8 @@ fn generate(values: Values) -> Result<()> {
 fn export(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
-    println!("{}", export_serialize(&repository)?);
+    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    println!("{}", export_serialize(&mut repository)?);
     Ok(())
 }
 
@@ -255,14 +255,14 @@ fn import(values: Values) -> Result<()> {
 
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
 
     let input_path = values.get_required("input");
     let mut input = String::new();
     let mut f = File::open(input_path)?;
     f.read_to_string(&mut input)?;
 
-    import_deserialize(&repository, input.as_str())?;
+    import_deserialize(&mut repository, input.as_str())?;
 
     Ok(())
 }

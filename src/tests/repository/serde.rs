@@ -28,33 +28,33 @@ fn test_export_import_round_trip_ascii() {
 
     {
         let repository_dir = temp::Dir::new("pwm-test").unwrap();
-        let repository = Repository::new(
+        let mut repository = Repository::new(
             repository_dir.path(),
             true,
             Some(SensitiveData::from("foobar".as_bytes().to_vec())),
         ).unwrap();
         for path in &paths {
+            let absolute_path = repository.path(path).unwrap();
             repository
-                .write_encrypt(&repository.path(path).unwrap(), plaintext_sd.clone())
+                .write_encrypt(&absolute_path, plaintext_sd.clone())
                 .unwrap();
         }
-        serialized = export_serialize(&repository).unwrap();
+        serialized = export_serialize(&mut repository).unwrap();
     }
 
     let repository_dir = temp::Dir::new("pwm-test").unwrap();
-    let repository = Repository::new(
+    let mut repository = Repository::new(
         repository_dir.path(),
         true,
         Some(SensitiveData::from("raboof".as_bytes().to_vec())),
     ).unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
-    import_deserialize(&repository, serialized.as_str()).unwrap();
+    import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
+        let absolute_path = repository.path(path).unwrap();
         assert_eq!(
             plaintext_sd,
-            repository
-                .read_decrypt(&repository.path(path).unwrap())
-                .unwrap()
+            repository.read_decrypt(&absolute_path).unwrap()
         );
     }
 }
@@ -68,33 +68,30 @@ fn test_export_import_round_trip_binary() {
 
     {
         let repository_dir = temp::Dir::new("pwm-test").unwrap();
-        let repository = Repository::new(
+        let mut repository = Repository::new(
             repository_dir.path(),
             true,
             Some(SensitiveData::from("foobar".as_bytes().to_vec())),
         ).unwrap();
         for path in &paths {
+            let absolute_path = repository.path(path).unwrap();
             repository
-                .write_encrypt(&repository.path(path).unwrap(), plaintext.clone())
+                .write_encrypt(&absolute_path, plaintext.clone())
                 .unwrap();
         }
-        serialized = export_serialize(&repository).unwrap();
+        serialized = export_serialize(&mut repository).unwrap();
     }
 
     let repository_dir = temp::Dir::new("pwm-test").unwrap();
-    let repository = Repository::new(
+    let mut repository = Repository::new(
         repository_dir.path(),
         true,
         Some(SensitiveData::from("raboof".as_bytes().to_vec())),
     ).unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
-    import_deserialize(&repository, serialized.as_str()).unwrap();
+    import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
-        assert_eq!(
-            plaintext,
-            repository
-                .read_decrypt(&repository.path(path).unwrap())
-                .unwrap()
-        );
+        let absolute_path = repository.path(path).unwrap();
+        assert_eq!(plaintext, repository.read_decrypt(&absolute_path).unwrap());
     }
 }

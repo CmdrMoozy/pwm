@@ -23,7 +23,7 @@ pub struct Contents {
     pub contents: HashMap<String, String>,
 }
 
-pub fn export(repository: &Repository) -> Result<Contents> {
+pub fn export(repository: &mut Repository) -> Result<Contents> {
     let mut contents: Contents = Contents {
         contents: HashMap::new(),
     };
@@ -38,11 +38,11 @@ pub fn export(repository: &Repository) -> Result<Contents> {
     Ok(contents)
 }
 
-pub fn export_serialize(repository: &Repository) -> Result<String> {
+pub fn export_serialize(repository: &mut Repository) -> Result<String> {
     Ok(to_string_pretty(&export(repository)?)?)
 }
 
-pub fn import(repository: &Repository, contents: Contents) -> Result<()> {
+pub fn import(repository: &mut Repository, contents: Contents) -> Result<()> {
     for (path, plaintext) in contents.contents {
         let path = repository.path(path)?;
         repository.write_encrypt(&path, SensitiveData::decode(plaintext)?)?;
@@ -50,6 +50,6 @@ pub fn import(repository: &Repository, contents: Contents) -> Result<()> {
     Ok(())
 }
 
-pub fn import_deserialize(repository: &Repository, s: &str) -> Result<()> {
+pub fn import_deserialize(repository: &mut Repository, s: &str) -> Result<()> {
     import(repository, from_str(s)?)
 }

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use bincode::{self, deserialize, serialize};
+use bincode::{deserialize, serialize};
 use error::Result;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 pub fn serialize_binary<T: Serialize>(data: &T) -> Result<Vec<u8>> {
-    match serialize(data, bincode::Infinite) {
+    match serialize(data) {
         Err(e) => bail!("Binary serialization failed: {}", e),
         Ok(s) => Ok(s),
     }
