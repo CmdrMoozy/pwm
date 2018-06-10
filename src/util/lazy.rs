@@ -38,7 +38,7 @@ impl<'a, T> Lazy<'a, T> {
             match ptr::replace(self.state.get(), LazyState::Evaluating) {
                 LazyState::Unevaluated(factory) => {
                     *self.state.get() = LazyState::Evaluated(factory.build())
-                },
+                }
                 _ => unreachable!(),
             };
         }
@@ -46,11 +46,9 @@ impl<'a, T> Lazy<'a, T> {
 
     pub fn into_inner(self) -> T {
         self.force();
-        unsafe {
-            match self.state.into_inner() {
-                LazyState::Evaluated(val) => val,
-                _ => unreachable!(),
-            }
+        match self.state.into_inner() {
+            LazyState::Evaluated(val) => val,
+            _ => unreachable!(),
         }
     }
 }
@@ -70,7 +68,9 @@ impl<'a, T> Factory<'a, T> {
         }
     }
 
-    fn build(mut self) -> T { (self.f)() }
+    fn build(mut self) -> T {
+        (self.f)()
+    }
 }
 
 enum LazyState<'a, T> {
