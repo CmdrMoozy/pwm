@@ -14,8 +14,8 @@
 
 use bincode::{self, deserialize, serialize};
 use error::Result;
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 pub fn serialize_binary<T: Serialize>(data: &T) -> Result<Vec<u8>> {
     match serialize(data, bincode::Infinite) {

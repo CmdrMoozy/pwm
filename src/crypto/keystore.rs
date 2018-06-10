@@ -148,7 +148,9 @@ impl KeyStore {
         }
     }
 
-    pub fn get_key(&self) -> &NormalKey { &self.master_key }
+    pub fn get_key(&self) -> &NormalKey {
+        &self.master_key
+    }
 
     pub fn add(&mut self, key: &NormalKey) -> Result<bool> {
         Ok(self.encrypted_contents
@@ -161,5 +163,7 @@ impl KeyStore {
 }
 
 impl Drop for KeyStore {
-    fn drop(&mut self) { self.encrypted_contents.save(self.path.as_path()).unwrap(); }
+    fn drop(&mut self) {
+        self.encrypted_contents.save(self.path.as_path()).unwrap();
+    }
 }

@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use bdrck::testing::temp;
-use repository::Repository;
 use repository::serde::*;
+use repository::Repository;
 use sodiumoxide::randombytes::randombytes;
 use util::data::SensitiveData;
 

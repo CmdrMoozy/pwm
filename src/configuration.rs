@@ -35,7 +35,6 @@ fn get_identifier() -> &'static bdrck_config::Identifier {
             application: "pwm".to_owned(),
             name: "pwm".to_owned(),
         };
-
         static ref DEBUG_IDENTIFIER: bdrck_config::Identifier = bdrck_config::Identifier {
             application: "pwm".to_owned(),
             name: "pwm-debug".to_owned(),
@@ -92,7 +91,9 @@ pub fn set(key: &str, value: &str) -> Result<()> {
     }
 }
 
-pub fn get() -> Result<Configuration> { Ok(bdrck_config::get::<Configuration>(get_identifier())?) }
+pub fn get() -> Result<Configuration> {
+    Ok(bdrck_config::get::<Configuration>(get_identifier())?)
+}
 
 pub fn get_value_as_str(key: &str) -> Result<String> {
     let config = get()?;
@@ -106,4 +107,6 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
     }
 }
 
-pub fn reset() -> Result<()> { Ok(bdrck_config::reset::<Configuration>(get_identifier())?) }
+pub fn reset() -> Result<()> {
+    Ok(bdrck_config::reset::<Configuration>(get_identifier())?)
+}

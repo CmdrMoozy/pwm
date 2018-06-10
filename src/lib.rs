@@ -44,6 +44,8 @@ pub mod util;
 mod tests;
 
 pub fn init() -> ::error::Result<()> {
+    bdrck::init()?;
+
     if !sodiumoxide::init() {
         bail!("sodiumoxide initialization failed");
     }

@@ -31,10 +31,10 @@ extern crate pwm_lib;
 use pwm_lib::configuration;
 use pwm_lib::crypto::pwgen;
 use pwm_lib::error::Result;
-use pwm_lib::repository::Repository;
 use pwm_lib::repository::serde::{export_serialize, import_deserialize};
-use pwm_lib::util::{multiline_password_prompt, password_prompt};
+use pwm_lib::repository::Repository;
 use pwm_lib::util::data::SensitiveData;
+use pwm_lib::util::{multiline_password_prompt, password_prompt};
 
 extern crate serde_json;
 
@@ -167,7 +167,7 @@ fn get(values: Values) -> Result<()> {
         #[cfg(not(feature = "clipboard"))]
         () => {
             print_stored_data(retrieved, force_binary)?;
-        },
+        }
     }
 
     Ok(())
@@ -269,7 +269,18 @@ fn import(values: Values) -> Result<()> {
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 fn main() {
-    bdrck::logging::init(None, None, false);
+    let debug: bool = cfg!(debug_assertions);
+    bdrck::logging::init(
+        bdrck::logging::OptionsBuilder::new()
+            .set_filters(match debug {
+                false => "warn".parse().unwrap(),
+                true => "debug".parse().unwrap(),
+            })
+            .set_panic_on_output_failure(debug)
+            .set_always_flush(true)
+            .build()
+            .unwrap(),
+    );
 
     main_impl_multiple_commands(vec![
         Command::new(

@@ -52,7 +52,9 @@ impl NormalKey {
         })
     }
 
-    pub fn new_random() -> Result<NormalKey> { Self::from_bytes(randombytes(secretbox::KEYBYTES)) }
+    pub fn new_random() -> Result<NormalKey> {
+        Self::from_bytes(randombytes(secretbox::KEYBYTES))
+    }
 
     pub fn new_password(
         password: SensitiveData,
@@ -105,7 +107,9 @@ impl NormalKey {
 }
 
 impl Key for NormalKey {
-    fn get_signature(&self) -> &Digest { &self.signature }
+    fn get_signature(&self) -> &Digest {
+        &self.signature
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -127,5 +131,7 @@ impl WrappedKey {
 }
 
 impl Key for WrappedKey {
-    fn get_signature(&self) -> &Digest { &self.signature }
+    fn get_signature(&self) -> &Digest {
+        &self.signature
+    }
 }

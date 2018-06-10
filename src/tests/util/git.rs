@@ -19,7 +19,9 @@ use std::fs::File;
 use std::path::PathBuf;
 use util::git::*;
 
-fn get_test_signature() -> Signature<'static> { Signature::now("test", "test@test.com").unwrap() }
+fn get_test_signature() -> Signature<'static> {
+    Signature::now("test", "test@test.com").unwrap()
+}
 
 #[test]
 fn test_open_repository() {

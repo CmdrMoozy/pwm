@@ -67,7 +67,7 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
             Ok(Some(object.into_commit().map_err(|_| {
                 git2::Error::from_str("Resolving head commit failed.")
             })?))
-        },
+        }
         Err(e) => if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
             Ok(None)
         } else {

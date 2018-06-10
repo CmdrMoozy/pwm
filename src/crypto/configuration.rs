@@ -34,11 +34,17 @@ impl Configuration {
         }
     }
 
-    pub fn get_salt(&self) -> Salt { Salt(self.salt) }
+    pub fn get_salt(&self) -> Salt {
+        Salt(self.salt)
+    }
 
-    pub fn get_mem_limit(&self) -> MemLimit { MemLimit(self.mem_limit) }
+    pub fn get_mem_limit(&self) -> MemLimit {
+        MemLimit(self.mem_limit)
+    }
 
-    pub fn get_ops_limit(&self) -> OpsLimit { OpsLimit(self.ops_limit) }
+    pub fn get_ops_limit(&self) -> OpsLimit {
+        OpsLimit(self.ops_limit)
+    }
 }
 
 impl Default for Configuration {
@@ -93,5 +99,7 @@ impl ConfigurationInstance {
         bdrck_config::set(&self.identifier, config).unwrap()
     }
 
-    pub fn reset(&self) { bdrck_config::reset::<Configuration>(&self.identifier).unwrap() }
+    pub fn reset(&self) {
+        bdrck_config::reset::<Configuration>(&self.identifier).unwrap()
+    }
 }

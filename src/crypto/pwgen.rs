@@ -28,10 +28,17 @@ pub enum CharacterSet {
 lazy_static! {
     static ref CHARACTER_SET: HashMap<CharacterSet, Vec<char>> = {
         let mut m = HashMap::new();
-        m.insert(CharacterSet::Letters,
-                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().collect());
+        m.insert(
+            CharacterSet::Letters,
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                .chars()
+                .collect(),
+        );
         m.insert(CharacterSet::Numbers, "0123456789".chars().collect());
-        m.insert(CharacterSet::Symbols, "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".chars().collect());
+        m.insert(
+            CharacterSet::Symbols,
+            "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".chars().collect(),
+        );
         m
     };
 }

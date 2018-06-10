@@ -21,7 +21,9 @@ use util::data::SensitiveData;
 
 static TEST_REPO_DIR: &'static str = "pwm-test";
 
-fn to_password(s: &str) -> SensitiveData { SensitiveData::from(s.as_bytes().to_vec()) }
+fn to_password(s: &str) -> SensitiveData {
+    SensitiveData::from(s.as_bytes().to_vec())
+}
 
 struct TestRepository {
     _directory: temp::Dir,
@@ -30,11 +32,15 @@ struct TestRepository {
 
 impl Deref for TestRepository {
     type Target = Repository;
-    fn deref(&self) -> &Self::Target { self.repository.as_ref().unwrap() }
+    fn deref(&self) -> &Self::Target {
+        self.repository.as_ref().unwrap()
+    }
 }
 
 impl DerefMut for TestRepository {
-    fn deref_mut(&mut self) -> &mut Self::Target { self.repository.as_mut().unwrap() }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.repository.as_mut().unwrap()
+    }
 }
 
 impl Drop for TestRepository {

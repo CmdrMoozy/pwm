@@ -170,9 +170,13 @@ impl Repository {
             .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
     }
 
-    fn get_master_key(&self) -> Result<&NormalKey> { Ok(self.get_key_store()?.get_key()) }
+    fn get_master_key(&self) -> Result<&NormalKey> {
+        Ok(self.get_key_store()?.get_key())
+    }
 
-    pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
+    pub fn workdir(&self) -> Result<&Path> {
+        git::get_repository_workdir(&self.repository)
+    }
 
     fn commit_all(&self, message: &str, paths: &[&Path]) -> Result<()> {
         git::commit_paths(

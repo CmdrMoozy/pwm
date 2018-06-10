@@ -49,12 +49,16 @@ impl SensitiveData {
     /// Return an encoded version of this struct's data as a String. The
     /// returned string is not human-readable, but it is suitable for use
     /// with decode.
-    pub fn encode(&self) -> String { BASE64.encode(&self.data) }
+    pub fn encode(&self) -> String {
+        BASE64.encode(&self.data)
+    }
 
     /// Try to return a String which interprets this structure's bytes as a
     /// UTF8-encoded string. If decoding is not possible, an error is returned
     /// instead.
-    fn to_utf8(&self) -> Result<String> { Ok(String::from_utf8((&self[..]).to_vec())?) }
+    fn to_utf8(&self) -> Result<String> {
+        Ok(String::from_utf8((&self[..]).to_vec())?)
+    }
 
     /// Return a copy of this structure's data in a format which is suitable
     /// for being displayed to a human. There are several cases being handled
@@ -94,10 +98,16 @@ impl SensitiveData {
         Ok(SensitiveData::from(data))
     }
 
-    fn as_slice(&self) -> &[u8] { &self.data }
+    fn as_slice(&self) -> &[u8] {
+        &self.data
+    }
 
-    pub fn is_empty(&self) -> bool { self.data.is_empty() }
-    pub fn len(&self) -> usize { self.data.len() }
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
 
     /// Return a new SensitiveData which contains the concatenation of the
     /// contents of this struct and the given other struct.
@@ -129,7 +139,9 @@ impl SensitiveData {
 }
 
 impl Drop for SensitiveData {
-    fn drop(&mut self) { memzero(&mut self.data); }
+    fn drop(&mut self) {
+        memzero(&mut self.data);
+    }
 }
 
 impl From<Vec<u8>> for SensitiveData {
@@ -143,29 +155,39 @@ impl From<Vec<u8>> for SensitiveData {
 impl Index<usize> for SensitiveData {
     type Output = u8;
 
-    fn index(&self, index: usize) -> &u8 { &self.as_slice()[index] }
+    fn index(&self, index: usize) -> &u8 {
+        &self.as_slice()[index]
+    }
 }
 
 impl Index<Range<usize>> for SensitiveData {
     type Output = [u8];
 
-    fn index(&self, index: Range<usize>) -> &[u8] { self.as_slice().index(index) }
+    fn index(&self, index: Range<usize>) -> &[u8] {
+        self.as_slice().index(index)
+    }
 }
 
 impl Index<RangeTo<usize>> for SensitiveData {
     type Output = [u8];
 
-    fn index(&self, index: RangeTo<usize>) -> &[u8] { self.as_slice().index(index) }
+    fn index(&self, index: RangeTo<usize>) -> &[u8] {
+        self.as_slice().index(index)
+    }
 }
 
 impl Index<RangeFrom<usize>> for SensitiveData {
     type Output = [u8];
 
-    fn index(&self, index: RangeFrom<usize>) -> &[u8] { self.as_slice().index(index) }
+    fn index(&self, index: RangeFrom<usize>) -> &[u8] {
+        self.as_slice().index(index)
+    }
 }
 
 impl Index<RangeFull> for SensitiveData {
     type Output = [u8];
 
-    fn index(&self, index: RangeFull) -> &[u8] { self.as_slice().index(index) }
+    fn index(&self, index: RangeFull) -> &[u8] {
+        self.as_slice().index(index)
+    }
 }

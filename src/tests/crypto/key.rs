@@ -32,7 +32,9 @@ fn new_password_key(password: &str, salt: Option<Salt>) -> Result<NormalKey> {
 }
 
 #[test]
-fn test_random_key_generation() { let _key = NormalKey::new_random().unwrap(); }
+fn test_random_key_generation() {
+    let _key = NormalKey::new_random().unwrap();
+}
 
 #[test]
 fn test_password_key_derivation() {
