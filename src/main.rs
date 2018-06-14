@@ -24,7 +24,6 @@ extern crate error_chain;
 
 extern crate isatty;
 
-#[macro_use]
 extern crate log;
 
 extern crate pwm_lib;
