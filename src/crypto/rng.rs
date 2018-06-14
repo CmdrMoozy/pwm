@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use byteorder::{LittleEndian, ReadBytesExt};
-use rand::Rng;
-use sodiumoxide::randombytes::randombytes;
+use rand::{self, RngCore};
+use sodiumoxide::randombytes::{randombytes, randombytes_into};
 use std::io::Cursor;
 
 /// This structure implements the `Rng` trait from the `rand` crate using
@@ -23,10 +23,22 @@ use std::io::Cursor;
 /// suitable for generating key material or passwords).
 pub struct Generator;
 
-impl Rng for Generator {
+impl RngCore for Generator {
     fn next_u32(&mut self) -> u32 {
-        let bytes = randombytes(4);
+        self.next_u64() as u32
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        let bytes = randombytes(::std::mem::size_of::<u64>());
         let mut rdr = Cursor::new(bytes);
-        rdr.read_u32::<LittleEndian>().unwrap()
+        rdr.read_u64::<LittleEndian>().unwrap()
+    }
+
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        randombytes_into(dest);
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> ::std::result::Result<(), rand::Error> {
+        Ok(self.fill_bytes(dest))
     }
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crypto::rng::Generator;
-use rand::Rng;
+use rand::{Rng, RngCore};
 use std::collections::HashSet;
 
 #[test]
