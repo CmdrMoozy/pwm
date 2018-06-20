@@ -23,7 +23,7 @@ pub struct Contents {
     pub contents: HashMap<String, String>,
 }
 
-pub fn export(repository: &mut Repository) -> Result<Contents> {
+pub fn export(repository: &Repository) -> Result<Contents> {
     let mut contents: Contents = Contents {
         contents: HashMap::new(),
     };
@@ -38,7 +38,7 @@ pub fn export(repository: &mut Repository) -> Result<Contents> {
     Ok(contents)
 }
 
-pub fn export_serialize(repository: &mut Repository) -> Result<String> {
+pub fn export_serialize(repository: &Repository) -> Result<String> {
     Ok(to_string_pretty(&export(repository)?)?)
 }
 

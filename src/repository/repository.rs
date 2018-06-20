@@ -67,7 +67,7 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     ConfigurationInstance::new(path.as_path())
 }
 
-fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &mut K) -> Result<KeyStore> {
+fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &K) -> Result<KeyStore> {
     let mut path = PathBuf::from(git::get_repository_workdir(repository)?);
     path.push(KEYSTORE_PATH.as_path());
     Ok(KeyStore::open_or_new(path.as_path(), key)?)
@@ -128,14 +128,14 @@ impl Repository {
         let path = path.as_ref().to_path_buf();
         let keystore = Lazy::new(move || -> Result<KeyStore> {
             let password = unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
-            let mut key = Key::new_password(
+            let key = Key::new_password(
                 password.as_slice(),
                 &c.get_salt(),
                 c.get_ops_limit(),
                 c.get_mem_limit(),
             )?;
             let repository = git::open_repository(path.as_path(), false)?;
-            open_keystore(&repository, &mut key)
+            open_keystore(&repository, &key)
         });
 
         Ok(Repository {
@@ -153,16 +153,26 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
-        use std::ops::DerefMut;
-        let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
-        lazy.deref_mut().as_mut().map_err(|e| {
+    fn get_key_store(&self) -> Result<&KeyStore> {
+        use std::ops::Deref;
+        let lazy: &Lazy<'static, Result<KeyStore>> = self.keystore.as_ref().unwrap();
+        let result: &Result<KeyStore> = lazy.deref();
+        result.as_ref().map_err(|e| {
             Error::Internal(format_err!("Accessing repository key store failed: {}", e))
         })
     }
 
-    fn get_master_key(&mut self) -> Result<&Key> {
-        Ok(self.get_key_store_mut()?.get_master_key())
+    fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
+        use std::ops::DerefMut;
+        let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
+        let result: &mut Result<KeyStore> = lazy.deref_mut();
+        result.as_mut().map_err(|e| {
+            Error::Internal(format_err!("Accessing repository key store failed: {}", e))
+        })
+    }
+
+    fn get_master_key(&self) -> Result<&Key> {
+        Ok(self.get_key_store()?.get_master_key())
     }
 
     pub fn workdir(&self) -> Result<&Path> {
@@ -199,13 +209,13 @@ impl Repository {
     pub fn add_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
         let config = self.get_crypto_configuration();
         let password = unwrap_password_or_prompt(password, ADD_KEY_PROMPT, true)?;
-        let mut key = Key::new_password(
+        let key = Key::new_password(
             password.as_slice(),
             &config.get_salt(),
             config.get_ops_limit(),
             config.get_mem_limit(),
         )?;
-        let was_added = self.get_key_store_mut()?.add_key(&mut key)?;
+        let was_added = self.get_key_store_mut()?.add_key(&key)?;
         if !was_added {
             return Err(Error::InvalidArgument(format_err!(
                 "The specified key is already in use, so it was not re-added"
@@ -238,11 +248,11 @@ impl Repository {
         Ok(())
     }
 
-    pub fn read_decrypt(&mut self, path: &RepositoryPath) -> Result<SensitiveData> {
+    pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
         read_decrypt(path, self.get_master_key()?)
     }
 
-    pub fn remove(&self, path: &RepositoryPath) -> Result<()> {
+    pub fn remove(&mut self, path: &RepositoryPath) -> Result<()> {
         fs::remove_file(path.absolute_path())?;
         self.commit_one(STORED_PASSWORD_REMOVE_MESSAGE, path.relative_path())?;
         Ok(())

@@ -148,7 +148,7 @@ fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()>
 fn get(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
     let path = repository.path(values.get_positional_single("path"))?;
     let force_binary = values.get_boolean("binary");
 
@@ -207,7 +207,7 @@ fn set(values: Values) -> Result<()> {
 fn rm(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
 
-    let repository = Repository::new(get_repository_path(&values)?, false, None)?;
+    let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
     let path = repository.path(values.get_positional_single("path"))?;
     repository.remove(&path)?;
     Ok(())

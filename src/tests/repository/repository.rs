@@ -77,7 +77,7 @@ fn test_wrong_master_password_fails() {
             .unwrap();
     }
 
-    let mut repository = Repository::new(repository_dir.path(), false, Some(bad)).unwrap();
+    let repository = Repository::new(repository_dir.path(), false, Some(bad)).unwrap();
     let path = repository.path(path).unwrap();
     let read_result = repository.read_decrypt(&path);
     assert!(read_result.is_err());
@@ -99,7 +99,7 @@ fn test_write_read_round_trip() {
             .unwrap();
     }
 
-    let mut repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
+    let repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
     let absolute_path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&absolute_path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
@@ -150,7 +150,8 @@ fn test_remove() {
         .collect();
     assert_eq!(vec!["test".to_owned()], listing);
 
-    t.remove(&t.path("test").unwrap()).unwrap();
+    let path = t.path("test").unwrap();
+    t.remove(&path).unwrap();
     let listing: Vec<String> = t.list(None)
         .unwrap()
         .iter()
@@ -181,7 +182,7 @@ fn test_adding_key_succeeds() {
         repository.add_key(Some(pwb.clone())).unwrap();
     }
 
-    let mut repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
+    let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
@@ -219,14 +220,13 @@ fn test_removing_key_succeeds() {
 
     {
         // Accessing the repository with the old key should fail.
-        let mut repository =
-            Repository::new(repository_dir.path(), false, Some(pwa.clone())).unwrap();
+        let repository = Repository::new(repository_dir.path(), false, Some(pwa.clone())).unwrap();
         let path = repository.path(path).unwrap();
         assert!(repository.read_decrypt(&path).is_err());
     }
 
     // Accessing the repository with the new key should still succeed.
-    let mut repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
+    let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
