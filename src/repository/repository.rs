@@ -73,11 +73,7 @@ fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &mut K) -> 
     Ok(KeyStore::open_or_new(path.as_path(), key)?)
 }
 
-fn write_encrypt(
-    path: &RepositoryPath,
-    plaintext: SensitiveData,
-    master_key: &mut Key,
-) -> Result<()> {
+fn write_encrypt(path: &RepositoryPath, plaintext: SensitiveData, master_key: &Key) -> Result<()> {
     let encrypted_tuple: (Option<Nonce>, Vec<u8>) =
         master_key.encrypt(padding::pad(plaintext).as_slice())?;
 
@@ -93,7 +89,7 @@ fn write_encrypt(
     Ok(())
 }
 
-fn read_decrypt(path: &RepositoryPath, master_key: &mut Key) -> Result<SensitiveData> {
+fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData> {
     if !path.absolute_path().exists() {
         bail!(
             "No stored password at path '{}'",
@@ -170,8 +166,8 @@ impl Repository {
             .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
     }
 
-    fn get_master_key_mut(&mut self) -> Result<&mut Key> {
-        Ok(self.get_key_store_mut()?.get_master_key_mut())
+    fn get_master_key(&mut self) -> Result<&Key> {
+        Ok(self.get_key_store_mut()?.get_master_key())
     }
 
     pub fn workdir(&self) -> Result<&Path> {
@@ -238,13 +234,13 @@ impl Repository {
     }
 
     pub fn write_encrypt(&mut self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
-        write_encrypt(path, plaintext, self.get_master_key_mut()?)?;
+        write_encrypt(path, plaintext, self.get_master_key()?)?;
         self.commit_one(STORED_PASSWORD_UPDATE_MESSAGE, path.relative_path())?;
         Ok(())
     }
 
     pub fn read_decrypt(&mut self, path: &RepositoryPath) -> Result<SensitiveData> {
-        read_decrypt(path, self.get_master_key_mut()?)
+        read_decrypt(path, self.get_master_key()?)
     }
 
     pub fn remove(&self, path: &RepositoryPath) -> Result<()> {
