@@ -46,7 +46,11 @@ impl Path {
     pub fn to_str(&self) -> Result<&str> {
         match self.relative_path.to_str() {
             Some(s) => Ok(s),
-            None => bail!("Path contains non-unicode characters"),
+            None => {
+                return Err(Error::InvalidArgument(format_err!(
+                    "Path contains non-unicode characters"
+                )))
+            }
         }
     }
 }

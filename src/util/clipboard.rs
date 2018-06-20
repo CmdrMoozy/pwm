@@ -25,7 +25,11 @@ lazy_static! {
 fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> Result<()> {
     match cp.set_contents(contents) {
         Ok(_) => Ok(()),
-        Err(_) => bail!("Failed to set clipboard contents"),
+        Err(_) => {
+            return Err(Error::Internal(format_err!(
+                "Failed to set clipboard contents"
+            )))
+        }
     }
 }
 
@@ -38,7 +42,11 @@ pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
         clipboard::x11_clipboard::Clipboard,
     > = match clipboard::x11_clipboard::X11ClipboardContext::new() {
         Ok(cp) => cp,
-        Err(_) => bail!("Failed to get clipboard context"),
+        Err(_) => {
+            return Err(Error::Internal(format_err!(
+                "Failed to get clipboard context"
+            )))
+        }
     };
 
     set_contents_string(&mut cp, data.display(force_binary, true).unwrap())?;

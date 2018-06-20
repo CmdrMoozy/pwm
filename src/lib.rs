@@ -19,7 +19,7 @@ extern crate byteorder;
 extern crate clipboard;
 extern crate data_encoding;
 #[macro_use]
-extern crate error_chain;
+extern crate failure;
 extern crate git2;
 extern crate isatty;
 #[macro_use]

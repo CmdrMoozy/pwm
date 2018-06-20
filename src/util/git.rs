@@ -45,7 +45,11 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
 pub fn get_repository_workdir(repository: &Repository) -> Result<&Path> {
     match repository.workdir() {
         Some(path) => Ok(path),
-        None => bail!("Repository has no workdir"),
+        None => {
+            return Err(Error::InvalidArgument(format_err!(
+                "Repository has no workdir"
+            )))
+        }
     }
 }
 

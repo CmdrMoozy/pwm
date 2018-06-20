@@ -51,7 +51,9 @@ pub fn generate_password(
     exclude: &[char],
 ) -> Result<SensitiveData> {
     if length == 0 {
-        bail!("Refusing to generate a password of length 0");
+        return Err(Error::InvalidArgument(format_err!(
+            "Refusing to generate a password of length 0"
+        )));
     }
 
     let exclude: HashSet<char> = exclude.iter().cloned().collect();
@@ -62,7 +64,9 @@ pub fn generate_password(
         .cloned()
         .collect();
     if chars.is_empty() {
-        bail!("Cannot generate passwords from an empty character set");
+        return Err(Error::InvalidArgument(format_err!(
+            "Cannot generate passwords from an empty character set"
+        )));
     }
 
     let mut generator = Generator;

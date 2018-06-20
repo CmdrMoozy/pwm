@@ -17,7 +17,7 @@ use bdrck::crypto::keystore::KeyStore;
 use bincode;
 use crypto::configuration::{Configuration, ConfigurationInstance};
 use crypto::padding;
-use error::Result;
+use error::*;
 use git2;
 use repository::path::Path as RepositoryPath;
 use std::fs;
@@ -82,26 +82,21 @@ fn write_encrypt(path: &RepositoryPath, plaintext: SensitiveData, master_key: &K
     }
 
     let mut file = File::create(path.absolute_path())?;
-    if let Err(e) = bincode::serialize_into(&mut file, &encrypted_tuple) {
-        bail!("Serializing failed: {}", e);
-    }
+    bincode::serialize_into(&mut file, &encrypted_tuple)?;
     file.flush()?;
     Ok(())
 }
 
 fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData> {
     if !path.absolute_path().exists() {
-        bail!(
+        return Err(Error::NotFound(format_err!(
             "No stored password at path '{}'",
             path.relative_path().display()
-        );
+        )));
     }
 
     let mut file = File::open(path.absolute_path())?;
-    let encrypted_tuple: (Option<Nonce>, Vec<u8>) = match bincode::deserialize_from(&mut file) {
-        Err(e) => bail!("Deserializing failed: {}", e),
-        Ok(et) => et,
-    };
+    let encrypted_tuple: (Option<Nonce>, Vec<u8>) = bincode::deserialize_from(&mut file)?;
     padding::unpad(
         master_key
             .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?
@@ -161,9 +156,9 @@ impl Repository {
     fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
         use std::ops::DerefMut;
         let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
-        lazy.deref_mut()
-            .as_mut()
-            .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
+        lazy.deref_mut().as_mut().map_err(|e| {
+            Error::Internal(format_err!("Accessing repository key store failed: {}", e))
+        })
     }
 
     fn get_master_key(&mut self) -> Result<&Key> {
@@ -212,7 +207,9 @@ impl Repository {
         )?;
         let was_added = self.get_key_store_mut()?.add_key(&mut key)?;
         if !was_added {
-            bail!("The specified key is already in use, so it was not re-added");
+            return Err(Error::InvalidArgument(format_err!(
+                "The specified key is already in use, so it was not re-added"
+            )));
         }
         Ok(())
     }
@@ -228,7 +225,9 @@ impl Repository {
         )?;
         let was_removed = self.get_key_store_mut()?.remove_key(&key)?;
         if !was_removed {
-            bail!("The specified key is not registered with this repository");
+            return Err(Error::NotFound(format_err!(
+                "The specified key is not registered with this repository"
+            )));
         }
         Ok(())
     }

@@ -18,15 +18,9 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 pub fn serialize_binary<T: Serialize>(data: &T) -> Result<Vec<u8>> {
-    match serialize(data) {
-        Err(e) => bail!("Binary serialization failed: {}", e),
-        Ok(s) => Ok(s),
-    }
+    Ok(serialize(data)?)
 }
 
 pub fn deserialize_binary<T: DeserializeOwned>(data: &[u8]) -> Result<T> {
-    match deserialize(data) {
-        Err(e) => bail!("Binary deserialization failed: {}", e),
-        Ok(d) => Ok(d),
-    }
+    Ok(deserialize(data)?)
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use data_encoding::BASE64;
-use error::Result;
+use error::*;
 use sodiumoxide::utils::memzero;
 use std::fs::File;
 use std::ops::{Index, Range, RangeFrom, RangeFull, RangeTo};
@@ -43,7 +43,12 @@ impl SensitiveData {
     /// behavior of this function is undefined (most likely an error will be
     /// returned).
     pub fn decode(s: String) -> Result<SensitiveData> {
-        Ok(SensitiveData::from(BASE64.decode(&s.into_bytes()[..])?))
+        Ok(SensitiveData::from(
+            match BASE64.decode(&s.into_bytes()[..]) {
+                Ok(data) => data,
+                Err(e) => return Err(Error::Base64(e)),
+            },
+        ))
     }
 
     /// Return an encoded version of this struct's data as a String. The

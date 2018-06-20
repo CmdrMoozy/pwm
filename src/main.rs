@@ -20,7 +20,7 @@ extern crate bdrck;
 use bdrck::flags::*;
 
 #[macro_use]
-extern crate error_chain;
+extern crate failure;
 
 extern crate isatty;
 
@@ -29,7 +29,7 @@ extern crate log;
 extern crate pwm_lib;
 use pwm_lib::configuration;
 use pwm_lib::crypto::pwgen;
-use pwm_lib::error::Result;
+use pwm_lib::error::*;
 use pwm_lib::repository::serde::{export_serialize, import_deserialize};
 use pwm_lib::repository::Repository;
 use pwm_lib::util::data::SensitiveData;
@@ -52,10 +52,7 @@ fn get_repository_path(values: &Values) -> Result<String> {
         .or_else(|| config.default_repository.as_ref().map(|dr| dr.as_str()))
     {
         Some(p) => Ok(p.to_owned()),
-        None => bail!(
-            "No repository path specified. Try the 'repository' command option, or setting \
-             the 'default_repository' configuration key."
-        ),
+        None => return Err(Error::InvalidArgument(format_err!("No repository path specified. Try the 'repository' command option, or setting the 'default_repository' configuration key."))),
     }
 }
 
@@ -66,7 +63,9 @@ fn config(values: Values) -> Result<()> {
     let s = values.get_single("set");
     if k.is_none() {
         if s.is_some() {
-            bail!("A 'key' must be provided when 'set'ting a configuration value.");
+            return Err(Error::InvalidArgument(format_err!(
+                "A 'key' must be provided when 'set'ting a configuration value."
+            )));
         }
 
         println!(
@@ -181,7 +180,9 @@ fn set(values: Values) -> Result<()> {
     let multiline = values.get_boolean("multiline");
 
     if key_file.is_some() && multiline {
-        bail!("The 'key_file' and 'multiline' options are mutually exclusive.");
+        return Err(Error::InvalidArgument(format_err!(
+            "The 'key_file' and 'multiline' options are mutually exclusive."
+        )));
     }
 
     if let Some(key_file) = key_file {
