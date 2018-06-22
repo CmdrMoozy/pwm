@@ -52,7 +52,7 @@ impl Drop for TestRepository {
 }
 
 impl TestRepository {
-    pub fn new(password: &str) -> Result<TestRepository> {
+    fn new(password: &str) -> Result<TestRepository> {
         let directory = temp::Dir::new(TEST_REPO_DIR)?;
         let repository = Repository::new(directory.path(), true, Some(to_password(password)))?;
         Ok(TestRepository {

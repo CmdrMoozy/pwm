@@ -54,7 +54,7 @@ impl<'a, T> Lazy<'a, T> {
 }
 
 struct Factory<'a, T> {
-    f: Box<FnMut() -> T + 'a>,
+    f: Box<dyn FnMut() -> T + 'a>,
 }
 
 impl<'a, T> Factory<'a, T> {

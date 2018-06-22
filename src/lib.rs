@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![deny(
+    anonymous_parameters, trivial_casts, trivial_numeric_casts, unused_extern_crates,
+    unused_import_braces
+)]
+#![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
+
 extern crate bdrck;
 extern crate bincode;
 extern crate byteorder;
@@ -21,14 +27,12 @@ extern crate data_encoding;
 #[macro_use]
 extern crate failure;
 extern crate git2;
-extern crate isatty;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
 extern crate rand;
 extern crate rpassword;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;

@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![deny(
+    anonymous_parameters, trivial_casts, trivial_numeric_casts, unused_extern_crates,
+    unused_import_braces
+)]
+#![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
+
 use std::fs::File;
 use std::io;
 use std::option::Option as Optional;
@@ -23,8 +29,6 @@ use bdrck::flags::*;
 extern crate failure;
 
 extern crate isatty;
-
-extern crate log;
 
 extern crate pwm_lib;
 use pwm_lib::configuration;
