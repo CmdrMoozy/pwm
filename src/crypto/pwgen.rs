@@ -16,7 +16,7 @@ use crypto::rng::Generator;
 use error::*;
 use rand::Rng;
 use std::collections::{HashMap, HashSet};
-use util::data::SensitiveData;
+use util::data::Secret;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum CharacterSet {
@@ -49,7 +49,7 @@ pub fn generate_password(
     length: usize,
     charsets: &[CharacterSet],
     exclude: &[char],
-) -> Result<SensitiveData> {
+) -> Result<Secret> {
     if length == 0 {
         return Err(Error::InvalidArgument(format_err!(
             "Refusing to generate a password of length 0"
@@ -73,5 +73,5 @@ pub fn generate_password(
     let password: String = (0..length)
         .map(|_| chars[generator.gen_range(0, chars.len())])
         .collect();
-    Ok(SensitiveData::from(password.into_bytes()))
+    Ok(password.into_bytes())
 }

@@ -24,7 +24,7 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use util::data::SensitiveData;
+use util::data::Secret;
 use util::git;
 use util::lazy::Lazy;
 use util::password_prompt;
@@ -44,10 +44,10 @@ static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / 
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
 
 fn unwrap_password_or_prompt(
-    password: Option<SensitiveData>,
+    password: Option<Secret>,
     prompt: &str,
     confirm: bool,
-) -> Result<SensitiveData> {
+) -> Result<Secret> {
     Ok(if let Some(p) = password {
         p
     } else {
@@ -73,9 +73,9 @@ fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &K) -> Resu
     Ok(KeyStore::open_or_new(path.as_path(), key)?)
 }
 
-fn write_encrypt(path: &RepositoryPath, plaintext: SensitiveData, master_key: &Key) -> Result<()> {
-    let encrypted_tuple: (Option<Nonce>, Vec<u8>) =
-        master_key.encrypt(padding::pad(plaintext).as_slice())?;
+fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key) -> Result<()> {
+    padding::pad(&mut plaintext);
+    let encrypted_tuple: (Option<Nonce>, Secret) = master_key.encrypt(plaintext.as_slice())?;
 
     if let Some(parent) = path.absolute_path().parent() {
         fs::create_dir_all(parent)?;
@@ -87,7 +87,7 @@ fn write_encrypt(path: &RepositoryPath, plaintext: SensitiveData, master_key: &K
     Ok(())
 }
 
-fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData> {
+fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<Secret> {
     if !path.absolute_path().exists() {
         return Err(Error::NotFound(format_err!(
             "No stored password at path '{}'",
@@ -96,12 +96,11 @@ fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<SensitiveData
     }
 
     let mut file = File::open(path.absolute_path())?;
-    let encrypted_tuple: (Option<Nonce>, Vec<u8>) = bincode::deserialize_from(&mut file)?;
-    padding::unpad(
-        master_key
-            .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?
-            .into(),
-    )
+    let encrypted_tuple: (Option<Nonce>, Secret) = bincode::deserialize_from(&mut file)?;
+    let mut decrypted: Secret =
+        master_key.decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
+    padding::unpad(&mut decrypted)?;
+    Ok(decrypted)
 }
 
 pub struct Repository {
@@ -119,7 +118,7 @@ impl Repository {
     pub fn new<P: AsRef<Path>>(
         path: P,
         create: bool,
-        password: Option<SensitiveData>,
+        password: Option<Secret>,
     ) -> Result<Repository> {
         let repository = git::open_repository(path.as_ref(), create)?;
         let crypto_configuration = open_crypto_configuration(&repository)?;
@@ -206,7 +205,7 @@ impl Repository {
             .collect()
     }
 
-    pub fn add_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
+    pub fn add_key(&mut self, password: Option<Secret>) -> Result<()> {
         let config = self.get_crypto_configuration();
         let password = unwrap_password_or_prompt(password, ADD_KEY_PROMPT, true)?;
         let key = Key::new_password(
@@ -224,7 +223,7 @@ impl Repository {
         Ok(())
     }
 
-    pub fn remove_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
+    pub fn remove_key(&mut self, password: Option<Secret>) -> Result<()> {
         let config = self.get_crypto_configuration();
         let password = unwrap_password_or_prompt(password, REMOVE_KEY_PROMPT, true)?;
         let key = Key::new_password(
@@ -242,13 +241,13 @@ impl Repository {
         Ok(())
     }
 
-    pub fn write_encrypt(&mut self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
+    pub fn write_encrypt(&mut self, path: &RepositoryPath, plaintext: Secret) -> Result<()> {
         write_encrypt(path, plaintext, self.get_master_key()?)?;
         self.commit_one(STORED_PASSWORD_UPDATE_MESSAGE, path.relative_path())?;
         Ok(())
     }
 
-    pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
+    pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<Secret> {
         read_decrypt(path, self.get_master_key()?)
     }
 

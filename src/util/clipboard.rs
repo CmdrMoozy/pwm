@@ -16,7 +16,7 @@ use clipboard::{self, ClipboardProvider};
 use error::*;
 use std::thread::sleep;
 use std::time::Duration;
-use util::data::SensitiveData;
+use util::data::{end_user_display, SecretSlice};
 
 lazy_static! {
     static ref CLIPBOARD_TIMEOUT: Duration = Duration::new(45, 0);
@@ -37,7 +37,7 @@ fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> 
 /// is true, or if the given data is determined to not be a valid UTF-8-encoded
 /// string, then the clipboard will be populated with a Base64 encoded version
 /// of the data.
-pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
+pub fn set_contents(data: &SecretSlice, force_binary: bool) -> Result<()> {
     let mut cp: clipboard::x11_clipboard::X11ClipboardContext<
         clipboard::x11_clipboard::Clipboard,
     > = match clipboard::x11_clipboard::X11ClipboardContext::new() {
@@ -49,7 +49,7 @@ pub fn set_contents(data: SensitiveData, force_binary: bool) -> Result<()> {
         }
     };
 
-    set_contents_string(&mut cp, data.display(force_binary, true).unwrap())?;
+    set_contents_string(&mut cp, end_user_display(data, force_binary, true).unwrap())?;
 
     info!(
         "Copied stored password or key to clipboard. Will clear in {} seconds.",

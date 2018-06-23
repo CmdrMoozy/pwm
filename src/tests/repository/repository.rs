@@ -17,12 +17,12 @@ use error::*;
 use repository::*;
 use sodiumoxide::randombytes::randombytes;
 use std::ops::{Deref, DerefMut};
-use util::data::SensitiveData;
+use util::data::Secret;
 
 static TEST_REPO_DIR: &'static str = "pwm-test";
 
-fn to_password(s: &str) -> SensitiveData {
-    SensitiveData::from(s.as_bytes().to_vec())
+fn to_password(s: &str) -> Secret {
+    s.as_bytes().to_vec()
 }
 
 struct TestRepository {
@@ -88,7 +88,7 @@ fn test_write_read_round_trip() {
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pw = to_password("foobar");
     let path = "test";
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let plaintext = randombytes(1024);
 
     {
         let mut repository =
@@ -108,7 +108,7 @@ fn test_write_read_round_trip() {
 #[test]
 fn test_repository_listing() {
     let mut t = TestRepository::new("foobar").unwrap();
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let plaintext = randombytes(1024);
 
     let absolute_path = t.path("foo/1").unwrap();
     t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
@@ -140,8 +140,7 @@ fn test_repository_listing() {
 fn test_remove() {
     let mut t = TestRepository::new("foobar").unwrap();
     let absolute_path = t.path("test").unwrap();
-    t.write_encrypt(&absolute_path, SensitiveData::from(randombytes(1024)))
-        .unwrap();
+    t.write_encrypt(&absolute_path, randombytes(1024)).unwrap();
 
     let listing: Vec<String> = t.list(None)
         .unwrap()
@@ -172,7 +171,7 @@ fn test_adding_key_succeeds() {
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let plaintext = randombytes(1024);
 
     {
         let mut repository = Repository::new(repository_dir.path(), true, Some(pwa)).unwrap();
@@ -206,7 +205,7 @@ fn test_removing_key_succeeds() {
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let plaintext = randombytes(1024);
 
     {
         let mut repository =

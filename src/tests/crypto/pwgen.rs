@@ -13,19 +13,22 @@
 // limitations under the License.
 
 use crypto::pwgen::*;
+use util::data::end_user_display;
 
 fn generate_password_str(
     length: Option<usize>,
     charsets: &[CharacterSet],
     exclude: &[char],
 ) -> String {
-    generate_password(
-        length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
-        charsets,
-        exclude,
+    end_user_display(
+        &generate_password(
+            length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
+            charsets,
+            exclude,
+        ).unwrap(),
+        false,
+        false,
     ).unwrap()
-        .display(false, false)
-        .unwrap()
 }
 
 #[test]

@@ -36,7 +36,7 @@ use pwm_lib::crypto::pwgen;
 use pwm_lib::error::*;
 use pwm_lib::repository::serde::{export_serialize, import_deserialize};
 use pwm_lib::repository::Repository;
-use pwm_lib::util::data::SensitiveData;
+use pwm_lib::util::data::{end_user_display, load_file, SecretSlice};
 use pwm_lib::util::{multiline_password_prompt, password_prompt};
 
 extern crate serde_json;
@@ -131,9 +131,9 @@ fn ls(values: Values) -> Result<()> {
     Ok(())
 }
 
-fn print_stored_data(retrieved: SensitiveData, force_binary: bool) -> Result<()> {
+fn print_stored_data(retrieved: &SecretSlice, force_binary: bool) -> Result<()> {
     let tty = isatty::stdout_isatty();
-    let display: Optional<String> = retrieved.display(force_binary, tty);
+    let display: Optional<String> = end_user_display(retrieved, force_binary, tty);
     let bytes: &[u8] = display
         .as_ref()
         .map_or_else(|| &retrieved[..], |s| s.as_bytes());
@@ -161,14 +161,14 @@ fn get(values: Values) -> Result<()> {
     match () {
         #[cfg(feature = "clipboard")]
         () => if values.get_boolean("clipboard") {
-            pwm_lib::util::clipboard::set_contents(retrieved, force_binary)?;
+            pwm_lib::util::clipboard::set_contents(&retrieved, force_binary)?;
         } else {
-            print_stored_data(retrieved, force_binary)?;
+            print_stored_data(&retrieved, force_binary)?;
         },
 
         #[cfg(not(feature = "clipboard"))]
         () => {
-            print_stored_data(retrieved, force_binary)?;
+            print_stored_data(&retrieved, force_binary)?;
         }
     }
 
@@ -191,8 +191,7 @@ fn set(values: Values) -> Result<()> {
 
     if let Some(key_file) = key_file {
         // The user wants to set the password using a key file.
-        let mut key_file = File::open(key_file)?;
-        repository.write_encrypt(&path, SensitiveData::from_file(&mut key_file)?)?;
+        repository.write_encrypt(&path, load_file(key_file)?)?;
     } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
@@ -238,9 +237,12 @@ fn generate(values: Values) -> Result<()> {
 
     println!(
         "{}",
-        pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice())?
-            .display(false, false)
-            .unwrap()
+        end_user_display(
+            pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice())?
+                .as_slice(),
+            false,
+            false
+        ).unwrap()
     );
 
     Ok(())

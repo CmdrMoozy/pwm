@@ -17,12 +17,16 @@ use error::*;
 use sodiumoxide::randombytes::randombytes;
 use std::io::Cursor;
 use std::mem;
-use util::data::SensitiveData;
+use util::data::{Secret, SecretSlice};
 
 const PAD_BLOCK_SIZE_BYTES: usize = 1024;
+const METADATA_BYTES: usize = mem::size_of::<u64>();
 
+/// Returns the number of bytes needed to represent `original_size` bytes, after
+/// padding and metadata have been added to it. This is the total size of the
+/// data after calling `pad` on it.
 fn get_padded_size(original_size: usize) -> usize {
-    let padded_size = original_size + mem::size_of::<u64>();
+    let padded_size = original_size + METADATA_BYTES;
     let blocks = (padded_size / PAD_BLOCK_SIZE_BYTES)
         + if padded_size % PAD_BLOCK_SIZE_BYTES == 0 {
             0
@@ -32,33 +36,35 @@ fn get_padded_size(original_size: usize) -> usize {
     blocks * PAD_BLOCK_SIZE_BYTES
 }
 
-fn read_original_size(data: &SensitiveData) -> Result<usize> {
-    if data.len() < mem::size_of::<u64>() {
+fn read_original_size(data: &SecretSlice) -> Result<usize> {
+    if data.len() % PAD_BLOCK_SIZE_BYTES != 0 {
+        return Err(Error::InvalidArgument(format_err!(
+            "Cannot unpad data which wasn't previously padded - bad length"
+        )));
+    }
+
+    if data.len() < METADATA_BYTES {
         return Err(Error::InvalidArgument(format_err!(
             "Cannot unpad data with invalid length"
         )));
     }
 
-    let original_size_encoded: &[u8] = &data[data.len() - mem::size_of::<u64>()..];
+    let original_size_encoded: &SecretSlice = &data[data.len() - METADATA_BYTES..];
     let mut reader = Cursor::new(original_size_encoded);
     Ok(reader.read_u64::<BigEndian>().unwrap() as usize)
 }
 
-pub fn pad(data: SensitiveData) -> SensitiveData {
+pub fn pad(data: &mut Secret) {
     let original_size: usize = data.len();
     let padded_size = get_padded_size(original_size);
-    let padding_bytes = padded_size - original_size - mem::size_of::<u64>();
+    let padding_bytes = padded_size - original_size - METADATA_BYTES;
 
-    let mut original_size_encoded: Vec<u8> = vec![];
-    original_size_encoded
-        .write_u64::<BigEndian>(original_size as u64)
-        .unwrap();
-
-    data.concat(SensitiveData::from(randombytes(padding_bytes)))
-        .concat(SensitiveData::from(original_size_encoded))
+    data.append(&mut randombytes(padding_bytes));
+    data.write_u64::<BigEndian>(original_size as u64).unwrap();
 }
 
-pub fn unpad(data: SensitiveData) -> Result<SensitiveData> {
+pub fn unpad(data: &mut Secret) -> Result<()> {
     let original_size = read_original_size(&data)?;
-    Ok(data.truncate(original_size))
+    data.truncate(original_size);
+    Ok(())
 }

@@ -16,7 +16,7 @@ use error::Result;
 use repository::Repository;
 use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;
-use util::data::SensitiveData;
+use util::data::{decode, encode};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Contents {
@@ -29,7 +29,7 @@ pub fn export(repository: &Repository) -> Result<Contents> {
     };
 
     for path in repository.list(None)? {
-        let plaintext: String = repository.read_decrypt(&path)?.encode();
+        let plaintext: String = encode(repository.read_decrypt(&path)?.as_slice());
         contents
             .contents
             .insert(path.to_str()?.to_owned(), plaintext);
@@ -45,7 +45,7 @@ pub fn export_serialize(repository: &Repository) -> Result<String> {
 pub fn import(repository: &mut Repository, contents: Contents) -> Result<()> {
     for (path, plaintext) in contents.contents {
         let path = repository.path(path)?;
-        repository.write_encrypt(&path, SensitiveData::decode(plaintext)?)?;
+        repository.write_encrypt(&path, decode(&plaintext)?)?;
     }
     Ok(())
 }
