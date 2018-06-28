@@ -43,6 +43,8 @@ pub mod crypto;
 pub mod error;
 pub mod repository;
 pub mod util;
+#[cfg(feature = "yubikey")]
+pub mod yubikey;
 
 #[cfg(test)]
 mod tests;
