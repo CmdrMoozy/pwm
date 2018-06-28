@@ -37,6 +37,8 @@ extern crate rpassword;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate sodiumoxide;
+#[cfg(feature = "yubikey")]
+extern crate yubirs;
 
 pub mod configuration;
 pub mod crypto;
