@@ -19,7 +19,6 @@
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
 extern crate bdrck;
-extern crate bincode;
 extern crate byteorder;
 #[cfg(feature = "clipboard")]
 extern crate clipboard;
@@ -32,6 +31,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 extern crate rand;
+extern crate rmp_serde as msgpack;
 extern crate rpassword;
 #[macro_use]
 extern crate serde_derive;

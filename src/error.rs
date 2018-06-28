@@ -19,8 +19,6 @@ pub enum Error {
     #[fail(display = "{}", _0)]
     Bdrck(#[cause] ::bdrck::error::Error),
     #[fail(display = "{}", _0)]
-    Bincode(#[cause] ::bincode::Error),
-    #[fail(display = "{}", _0)]
     Git(#[cause] ::git2::Error),
     /// An internal unrecoverable error, usually due to some underlying library.
     #[fail(display = "{}", _0)]
@@ -32,6 +30,12 @@ pub enum Error {
     Io(#[cause] ::std::io::Error),
     #[fail(display = "{}", _0)]
     Json(::serde_json::Error),
+    /// An error encountered when decoding a serialized message.
+    #[fail(display = "{}", _0)]
+    MsgDecode(#[cause] ::msgpack::decode::Error),
+    /// An error encountered when encoding a struct to a serialized message.
+    #[fail(display = "{}", _0)]
+    MsgEncode(#[cause] ::msgpack::encode::Error),
     /// Errors akin to ENOENT.
     #[fail(display = "{}", _0)]
     NotFound(::failure::Error),
@@ -44,12 +48,6 @@ pub enum Error {
 impl From<::bdrck::error::Error> for Error {
     fn from(e: ::bdrck::error::Error) -> Self {
         Error::Bdrck(e)
-    }
-}
-
-impl From<::bincode::Error> for Error {
-    fn from(e: ::bincode::Error) -> Self {
-        Error::Bincode(e)
     }
 }
 
@@ -68,6 +66,18 @@ impl From<::std::io::Error> for Error {
 impl From<::serde_json::Error> for Error {
     fn from(e: ::serde_json::Error) -> Self {
         Error::Json(e)
+    }
+}
+
+impl From<::msgpack::decode::Error> for Error {
+    fn from(e: ::msgpack::decode::Error) -> Self {
+        Error::MsgDecode(e)
+    }
+}
+
+impl From<::msgpack::encode::Error> for Error {
+    fn from(e: ::msgpack::encode::Error) -> Self {
+        Error::MsgEncode(e)
     }
 }
 

@@ -14,11 +14,11 @@
 
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::KeyStore;
-use bincode;
 use crypto::configuration::{Configuration, ConfigurationInstance};
 use crypto::padding;
 use error::*;
 use git2;
+use msgpack;
 use repository::path::Path as RepositoryPath;
 use std::fs;
 use std::fs::File;
@@ -82,7 +82,7 @@ fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key)
     }
 
     let mut file = File::create(path.absolute_path())?;
-    bincode::serialize_into(&mut file, &encrypted_tuple)?;
+    msgpack::encode::write(&mut file, &encrypted_tuple)?;
     file.flush()?;
     Ok(())
 }
@@ -96,7 +96,7 @@ fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<Secret> {
     }
 
     let mut file = File::open(path.absolute_path())?;
-    let encrypted_tuple: (Option<Nonce>, Secret) = bincode::deserialize_from(&mut file)?;
+    let encrypted_tuple: (Option<Nonce>, Secret) = msgpack::decode::from_read(&mut file)?;
     let mut decrypted: Secret =
         master_key.decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
     padding::unpad(&mut decrypted)?;

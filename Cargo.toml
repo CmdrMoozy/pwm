@@ -6,7 +6,6 @@ license = "Apache-2.0"
 
 [dependencies]
 bdrck = "0.9"
-bincode = "1.0"
 byteorder = "1.2"
 clipboard = { version = "0.4", optional = true }
 data-encoding = "2.1"
@@ -16,6 +15,7 @@ isatty = "0.1"
 lazy_static = "1.0"
 log = "0.4"
 rand = "0.5"
+rmp-serde = "0.13"
 rpassword = "2.0"
 serde = "1.0"
 serde_derive = "1.0"
