@@ -43,6 +43,10 @@ pub enum Error {
     ParseInt(#[cause] ::std::num::ParseIntError),
     #[fail(display = "{}", _0)]
     Utf8(::std::string::FromUtf8Error),
+    /// An error encountered while interacting with a YubiKey.
+    #[cfg(feature = "yubikey")]
+    #[fail(display = "{}", _0)]
+    YubiKey(#[cause] ::yubirs::error::Error),
 }
 
 impl From<::bdrck::error::Error> for Error {
@@ -90,6 +94,13 @@ impl From<::std::num::ParseIntError> for Error {
 impl From<::std::string::FromUtf8Error> for Error {
     fn from(e: ::std::string::FromUtf8Error) -> Self {
         Error::Utf8(e)
+    }
+}
+
+#[cfg(feature = "yubikey")]
+impl From<::yubirs::error::Error> for Error {
+    fn from(e: ::yubirs::error::Error) -> Self {
+        Error::YubiKey(e)
     }
 }
 

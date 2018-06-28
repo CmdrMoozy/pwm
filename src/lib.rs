@@ -53,5 +53,7 @@ mod tests;
 
 pub fn init() -> ::error::Result<()> {
     bdrck::init()?;
+    #[cfg(feature = "yubikey")]
+    yubirs::init()?;
     Ok(())
 }
