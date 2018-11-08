@@ -119,7 +119,8 @@ fn test_repository_listing() {
     let absolute_path = t.path("foo/bar/4").unwrap();
     t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
 
-    let listing: Vec<String> = t.list(None)
+    let listing: Vec<String> = t
+        .list(None)
         .unwrap()
         .iter()
         .map(|p| p.to_str().unwrap().to_owned())
@@ -142,7 +143,8 @@ fn test_remove() {
     let absolute_path = t.path("test").unwrap();
     t.write_encrypt(&absolute_path, randombytes(1024)).unwrap();
 
-    let listing: Vec<String> = t.list(None)
+    let listing: Vec<String> = t
+        .list(None)
         .unwrap()
         .iter()
         .map(|p| p.to_str().unwrap().to_owned())
@@ -151,7 +153,8 @@ fn test_remove() {
 
     let path = t.path("test").unwrap();
     t.remove(&path).unwrap();
-    let listing: Vec<String> = t.list(None)
+    let listing: Vec<String> = t
+        .list(None)
         .unwrap()
         .iter()
         .map(|p| p.to_str().unwrap().to_owned())

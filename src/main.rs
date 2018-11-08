@@ -13,7 +13,10 @@
 // limitations under the License.
 
 #![deny(
-    anonymous_parameters, trivial_casts, trivial_numeric_casts, unused_extern_crates,
+    anonymous_parameters,
+    trivial_casts,
+    trivial_numeric_casts,
+    unused_extern_crates,
     unused_import_braces
 )]
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
@@ -22,13 +25,13 @@ use std::fs::File;
 use std::io;
 use std::option::Option as Optional;
 
+extern crate atty;
+
 extern crate bdrck;
 use bdrck::flags::*;
 
 #[macro_use]
 extern crate failure;
-
-extern crate isatty;
 
 extern crate pwm_lib;
 use pwm_lib::configuration;
@@ -132,7 +135,7 @@ fn ls(values: Values) -> Result<()> {
 }
 
 fn print_stored_data(retrieved: &SecretSlice, force_binary: bool) -> Result<()> {
-    let tty = isatty::stdout_isatty();
+    let tty = atty::is(atty::Stream::Stdout);
     let display: Optional<String> = end_user_display(retrieved, force_binary, tty);
     let bytes: &[u8] = display
         .as_ref()

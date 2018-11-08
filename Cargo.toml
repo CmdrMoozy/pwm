@@ -5,14 +5,14 @@ authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 license = "Apache-2.0"
 
 [dependencies]
-bdrck = "0.9"
+atty = "0.2"
+bdrck = "0.11"
 byteorder = "1.2"
-clipboard = { version = "0.4", optional = true }
+clipboard = { version = "0.5", optional = true }
 data-encoding = "2.1"
 failure = "0.1"
 git2 = { version = "0.7", default-features = false, features = [] }
-isatty = "0.1"
-lazy_static = "1.0"
+lazy_static = "1.1"
 log = "0.4"
 rand = "0.5"
 rmp-serde = "0.13"
@@ -21,7 +21,7 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 sodiumoxide = "0.1"
-yubirs = { version = "0.3", optional = true }
+yubirs = { version = "0.4", optional = true }
 
 [features]
 default = ["clipboard", "yubikey"]

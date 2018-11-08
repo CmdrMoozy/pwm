@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
-use bdrck::crypto::keystore::KeyStore;
+use bdrck::crypto::keystore::DiskKeyStore;
 use crypto::configuration::{Configuration, ConfigurationInstance};
 use crypto::padding;
 use error::*;
@@ -67,15 +67,16 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     ConfigurationInstance::new(path.as_path())
 }
 
-fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &K) -> Result<KeyStore> {
+fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &K) -> Result<DiskKeyStore> {
     let mut path = PathBuf::from(git::get_repository_workdir(repository)?);
     path.push(KEYSTORE_PATH.as_path());
-    Ok(KeyStore::open_or_new(path.as_path(), key)?)
+    Ok(DiskKeyStore::open_or_new(path.as_path(), key)?)
 }
 
 fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key) -> Result<()> {
     padding::pad(&mut plaintext);
-    let encrypted_tuple: (Option<Nonce>, Secret) = master_key.encrypt(plaintext.as_slice())?;
+    let encrypted_tuple: (Option<Nonce>, Secret) =
+        master_key.encrypt(plaintext.as_slice(), None)?;
 
     if let Some(parent) = path.absolute_path().parent() {
         fs::create_dir_all(parent)?;
@@ -108,7 +109,7 @@ pub struct Repository {
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<ConfigurationInstance>,
     // NOTE: keystore is guaranteed to be Some() everywhere except within drop().
-    keystore: Option<Lazy<'static, Result<KeyStore>>>,
+    keystore: Option<Lazy<'static, Result<DiskKeyStore>>>,
 }
 
 impl Repository {
@@ -125,7 +126,7 @@ impl Repository {
 
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
-        let keystore = Lazy::new(move || -> Result<KeyStore> {
+        let keystore = Lazy::new(move || -> Result<DiskKeyStore> {
             let password = unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
             let key = Key::new_password(
                 password.as_slice(),
@@ -152,19 +153,19 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    fn get_key_store(&self) -> Result<&KeyStore> {
+    fn get_key_store(&self) -> Result<&DiskKeyStore> {
         use std::ops::Deref;
-        let lazy: &Lazy<'static, Result<KeyStore>> = self.keystore.as_ref().unwrap();
-        let result: &Result<KeyStore> = lazy.deref();
+        let lazy: &Lazy<'static, Result<DiskKeyStore>> = self.keystore.as_ref().unwrap();
+        let result: &Result<DiskKeyStore> = lazy.deref();
         result.as_ref().map_err(|e| {
             Error::Internal(format_err!("Accessing repository key store failed: {}", e))
         })
     }
 
-    fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
+    fn get_key_store_mut(&mut self) -> Result<&mut DiskKeyStore> {
         use std::ops::DerefMut;
-        let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
-        let result: &mut Result<KeyStore> = lazy.deref_mut();
+        let lazy: &mut Lazy<'static, Result<DiskKeyStore>> = self.keystore.as_mut().unwrap();
+        let result: &mut Result<DiskKeyStore> = lazy.deref_mut();
         result.as_mut().map_err(|e| {
             Error::Internal(format_err!("Accessing repository key store failed: {}", e))
         })

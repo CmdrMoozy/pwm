@@ -82,9 +82,7 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
 
 fn get_head_tree(repository: &Repository) -> Result<Tree> {
     let tree_id = get_head_commit(repository)?
-        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| {
-            c.tree_id()
-        });
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| c.tree_id());
     Ok(repository.find_tree(tree_id)?)
 }
 
@@ -98,7 +96,8 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
     while !pending_trees.is_empty() {
         let (tree, prefix) = pending_trees.pop_front().unwrap();
 
-        let mut subtrees: VecDeque<(Tree, PathBuf)> = tree.iter()
+        let mut subtrees: VecDeque<(Tree, PathBuf)> = tree
+            .iter()
             .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) == ObjectType::Tree)
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
@@ -112,18 +111,17 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
                         .unwrap(),
                     path,
                 )
-            })
-            .collect();
+            }).collect();
         pending_trees.append(&mut subtrees);
 
-        let mut entries: Vec<PathBuf> = tree.iter()
+        let mut entries: Vec<PathBuf> = tree
+            .iter()
             .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) != ObjectType::Tree)
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
                 path.push(entry.name().unwrap());
                 path
-            })
-            .filter(|entry| entry.starts_with(path_filter))
+            }).filter(|entry| entry.starts_with(path_filter))
             .collect();
         listing.append(&mut entries);
     }
@@ -147,9 +145,7 @@ fn commit_tree(
     let parent_refs = parents.iter().collect::<Vec<&Commit>>();
     let parent_tree_id: Oid = parent_refs
         .get(0)
-        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| {
-            p.tree_id()
-        });
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| p.tree_id());
 
     // If this commit is empty (e.g., its tree is identical to its parent's), don't
     // create a new commit.
