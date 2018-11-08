@@ -4,11 +4,12 @@ language: rust
 addons:
   apt:
     packages:
-      - python3
-      - xorg-dev
+      - libpcsclite-dev
       - libx11-xcb-dev
+      - python3
       - xcb
       - xcb-proto
+      - xorg-dev
 
 rust:
   - stable
