@@ -42,6 +42,8 @@ pub enum Error {
     #[fail(display = "{}", _0)]
     ParseInt(#[cause] ::std::num::ParseIntError),
     #[fail(display = "{}", _0)]
+    Unknown(::failure::Error),
+    #[fail(display = "{}", _0)]
     Utf8(::std::string::FromUtf8Error),
     /// An error encountered while interacting with a YubiKey.
     #[cfg(feature = "yubikey")]
@@ -88,6 +90,12 @@ impl From<::msgpack::encode::Error> for Error {
 impl From<::std::num::ParseIntError> for Error {
     fn from(e: ::std::num::ParseIntError) -> Self {
         Error::ParseInt(e)
+    }
+}
+
+impl From<::failure::Error> for Error {
+    fn from(e: ::failure::Error) -> Self {
+        Error::Unknown(e)
     }
 }
 

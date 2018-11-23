@@ -20,14 +20,18 @@ use error::*;
 use git2;
 use msgpack;
 use repository::path::Path as RepositoryPath;
+use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 use util::data::Secret;
 use util::git;
 use util::lazy::Lazy;
 use util::password_prompt;
+use yubirs::piv;
+use yubirs::piv::hal::PcscHardware;
 
 lazy_static! {
     static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
@@ -55,6 +59,77 @@ fn unwrap_password_or_prompt(
     })
 }
 
+fn get_keystore_key_password(
+    create: bool,
+    password: Option<Secret>,
+    crypto_config: &Configuration,
+) -> Result<Box<dyn AbstractKey>> {
+    let password = unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
+    Ok(Box::new(Key::new_password(
+        password.as_slice(),
+        &crypto_config.get_salt(),
+        crypto_config.get_ops_limit(),
+        crypto_config.get_mem_limit(),
+    )?))
+}
+
+#[cfg(feature = "yubikey")]
+fn get_keystore_key(
+    create: bool,
+    password: Option<Secret>,
+    crypto_config: &Configuration,
+) -> Result<Box<dyn AbstractKey>> {
+    // Don't try using a YubiKey if a password was given explicitly.
+    if password.is_none() {
+        let config = ::configuration::get()?;
+        if let Some(config) = config.yubikey {
+            let handle: piv::Handle<PcscHardware> = piv::Handle::new()?;
+            let readers: HashSet<String> = HashSet::from_iter(handle.list_readers()?.into_iter());
+
+            for config in config.keys {
+                let reader: String = config
+                    .reader
+                    .unwrap_or_else(|| piv::DEFAULT_READER.to_owned());
+                if readers.contains(&reader) {
+                    let key: piv::key::Key<PcscHardware> = piv::key::Key::new(
+                        Some(reader.as_str()),
+                        None,
+                        config.slot,
+                        config.public_key.as_path(),
+                    )?;
+                    return Ok(Box::new(key));
+                }
+            }
+        }
+    }
+
+    get_keystore_key_password(create, password, crypto_config)
+}
+
+#[cfg(not(feature = "yubikey"))]
+fn get_keystore_key(
+    create: bool,
+    password: Option<Secret>,
+    crypto_config: &Configuration,
+) -> Result<Box<AbstractKey>> {
+    get_keystore_key_password(create, password, crypto_config)
+}
+
+fn open_keystore(
+    path: PathBuf,
+    create: bool,
+    password: Option<Secret>,
+    crypto_config: Configuration,
+) -> Result<DiskKeyStore> {
+    let repository = git::open_repository(path.as_path(), false)?;
+    let mut path = PathBuf::from(git::get_repository_workdir(&repository)?);
+    path.push(KEYSTORE_PATH.as_path());
+
+    let key = get_keystore_key(create, password, &crypto_config)?;
+
+    Ok(DiskKeyStore::open_or_new(path.as_path(), &key)?)
+}
+
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
     repository
         .signature()
@@ -65,12 +140,6 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     let mut path = PathBuf::from(git::get_repository_workdir(repository)?);
     path.push(CRYPTO_CONFIGURATION_PATH.as_path());
     ConfigurationInstance::new(path.as_path())
-}
-
-fn open_keystore<K: AbstractKey>(repository: &git2::Repository, key: &K) -> Result<DiskKeyStore> {
-    let mut path = PathBuf::from(git::get_repository_workdir(repository)?);
-    path.push(KEYSTORE_PATH.as_path());
-    Ok(DiskKeyStore::open_or_new(path.as_path(), key)?)
 }
 
 fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key) -> Result<()> {
@@ -126,17 +195,7 @@ impl Repository {
 
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
-        let keystore = Lazy::new(move || -> Result<DiskKeyStore> {
-            let password = unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
-            let key = Key::new_password(
-                password.as_slice(),
-                &c.get_salt(),
-                c.get_ops_limit(),
-                c.get_mem_limit(),
-            )?;
-            let repository = git::open_repository(path.as_path(), false)?;
-            open_keystore(&repository, &key)
-        });
+        let keystore = Lazy::new(move || open_keystore(path, create, password, c));
 
         Ok(Repository {
             repository: repository,

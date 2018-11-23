@@ -6,7 +6,6 @@ license = "Apache-2.0"
 
 [dependencies]
 atty = "0.2"
-bdrck = "0.11"
 byteorder = "1.2"
 clipboard = { version = "0.5", optional = true }
 data-encoding = "2.1"
@@ -21,7 +20,12 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 sodiumoxide = "0.1"
-yubirs = { version = "0.4", optional = true }
+yubirs = { version = "0.5", optional = true }
+
+[dependencies.bdrck]
+version = "0.12"
+default_features = false
+features = ["configuration", "crypto", "flags", "logging", "testing"]
 
 [features]
 default = ["clipboard", "yubikey"]
