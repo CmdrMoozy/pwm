@@ -44,6 +44,8 @@ use pwm_lib::util::{multiline_password_prompt, password_prompt};
 
 extern crate serde_json;
 
+extern crate yubirs;
+
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EOF' is read:";
 
@@ -119,6 +121,16 @@ fn rmkey(values: Values) -> Result<()> {
     let mut repository = Repository::new(get_repository_path(&values)?, false, None)?;
     repository.remove_key(None)?;
 
+    Ok(())
+}
+
+fn setuppiv(_values: Values) -> Result<()> {
+    let _handle = init_pwm()?;
+    Ok(())
+}
+
+fn addpiv(_values: Values) -> Result<()> {
+    let _handle = init_pwm()?;
     Ok(())
 }
 
@@ -323,6 +335,28 @@ fn main() {
                     "repository", "The path to the repository to remove a key from", Some('r')),
             ]).unwrap(),
             Box::new(rmkey)),
+        Command::new(
+            "setuppiv",
+            "Set up a PIV device and add it to an existing repository",
+            Specs::new(vec![
+                Spec::optional("repository", "The path to the repository to remove a key from", Some('r')),
+                Spec::required(
+                    "slot", "The slot containing the certificate to use", Some('s'),
+                    Some(&::yubirs::piv::id::Key::KeyManagement.to_string())),
+                Spec::required("public_key", "The path to write the public key to", Some('p'), None),
+            ]).unwrap(),
+            Box::new(setuppiv)),
+        Command::new(
+            "addpiv",
+            "Add an already set up PIV device to an existing repository",
+            Specs::new(vec![
+                Spec::optional("repository", "The path to the repository to remove a key from", Some('r')),
+                Spec::required(
+                    "slot", "The slot containing the certificate to use", Some('s'),
+                    Some(&::yubirs::piv::id::Key::KeyManagement.to_string())),
+                Spec::required("public_key", "The path to write the public key to", Some('p'), None),
+            ]).unwrap(),
+            Box::new(addpiv)),
         Command::new(
             "ls",
             "List passwords stored in a pwm repository",
