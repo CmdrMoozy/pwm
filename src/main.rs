@@ -25,8 +25,6 @@ use std::fs::File;
 use std::io;
 use std::option::Option as Optional;
 
-extern crate atty;
-
 extern crate bdrck;
 use bdrck::flags::*;
 
@@ -147,7 +145,7 @@ fn ls(values: Values) -> Result<()> {
 }
 
 fn print_stored_data(retrieved: &SecretSlice, force_binary: bool) -> Result<()> {
-    let tty = atty::is(atty::Stream::Stdout);
+    let tty = bdrck::cli::isatty(bdrck::cli::Stream::Stdout);
     let display: Optional<String> = end_user_display(retrieved, force_binary, tty);
     let bytes: &[u8] = display
         .as_ref()

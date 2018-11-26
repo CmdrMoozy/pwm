@@ -18,20 +18,18 @@ pub mod data;
 pub mod git;
 pub mod lazy;
 
+use bdrck;
 use error::Result;
-use rpassword;
 use std::io;
 
 /// Prompt the user for a password using the given prompt on stderr, and then
 /// read the result on stdin. If confirm is set, we'll prompt for the password
 /// twice, and make sure they copies match.
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::Secret> {
-    loop {
-        let password = rpassword::prompt_password_stderr(prompt)?.into_bytes();
-        if !confirm || rpassword::prompt_password_stderr("Confirm: ")?.into_bytes() == password {
-            return Ok(password);
-        }
-    }
+    Ok(match confirm {
+        false => bdrck::cli::prompt_for_string(bdrck::cli::Stream::Stderr, prompt, true)?,
+        true => bdrck::cli::prompt_for_string_confirm(bdrck::cli::Stream::Stderr, prompt, true)?,
+    }.into())
 }
 
 /// Prompt the user for multiple lines of password data using the given prompt

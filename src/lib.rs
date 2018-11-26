@@ -35,7 +35,6 @@ extern crate lazy_static;
 extern crate log;
 extern crate rand;
 extern crate rmp_serde as msgpack;
-extern crate rpassword;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
