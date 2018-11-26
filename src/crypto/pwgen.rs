@@ -14,7 +14,7 @@
 
 use crypto::rng::Generator;
 use error::*;
-use rand::Rng;
+use rand::{Rng, RngCore};
 use std::collections::{HashMap, HashSet};
 use util::data::Secret;
 
@@ -74,4 +74,15 @@ pub fn generate_password(
         .map(|_| chars[generator.gen_range(0, chars.len())])
         .collect();
     Ok(password.into_bytes())
+}
+
+pub fn generate_hex(byte_length: usize) -> String {
+    let mut generator = Generator;
+    let mut bytes = vec![0_u8; byte_length];
+    generator.fill_bytes(&mut bytes);
+    bytes
+        .iter()
+        .map(|b| format!("{:02X}", b))
+        .collect::<Vec<_>>()
+        .concat()
 }

@@ -23,7 +23,7 @@
 
 use std::fs::File;
 use std::io::{self, Write};
-use std::option::Option as Optional;
+use std::path::PathBuf;
 
 extern crate bdrck;
 use bdrck::flags::*;
@@ -175,7 +175,7 @@ fn prompt_for_reader() -> Result<String> {
 }
 
 #[cfg(feature = "yubikey")]
-fn setuppiv(_values: Values) -> Result<()> {
+fn setuppiv(values: Values) -> Result<()> {
     use yubirs::piv;
 
     let _handle = init_pwm()?;
@@ -194,6 +194,44 @@ fn setuppiv(_values: Values) -> Result<()> {
     let mut handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
     handle.connect(Some(reader.as_str()))?;
     handle.force_reset()?;
+
+    // Generate the various new access keys and configure the device.
+    let new_pin = pwgen::generate_hex(3);
+    let new_puk = pwgen::generate_hex(4);
+    let new_mgm_key = pwgen::generate_hex(24);
+    println!("Your new PIN is: {}", new_pin);
+    println!("Your new PUK is: {}", new_puk);
+    println!("Your new management key is: {}", new_mgm_key);
+    handle.change_pin(Some(piv::DEFAULT_PIN), Some(new_pin.as_str()))?;
+    handle.change_puk(Some(piv::DEFAULT_PUK), Some(new_puk.as_str()))?;
+    handle.set_management_key(
+        Some(piv::DEFAULT_MGM_KEY),
+        Some(new_mgm_key.as_str()),
+        false,
+    )?;
+
+    // Generate a CHUID and CCC, each of which are required by some OSes before
+    // they will fully recognize the PIV hardware.
+    handle.set_chuid(Some(new_mgm_key.as_str()))?;
+    handle.set_ccc(Some(new_mgm_key.as_str()))?;
+
+    // Generate the certificate pair which will be used to wrap the
+    // repository's master key.
+    let public_key = handle.generate(
+        Some(new_mgm_key.as_str()),
+        values.get_required_parsed("slot")?,
+        values.get_required_parsed("algorithm")?,
+        values.get_required_parsed("pin_policy")?,
+        values.get_required_parsed("touch_policy")?,
+    )?;
+    let public_key_data = public_key.format(piv::pkey::Format::Pem)?;
+
+    // Write the public key to a file.
+    let public_key_path: PathBuf = values.get_required_as("public_key");
+    {
+        let mut public_key_file = File::create(public_key_path.as_path())?;
+        public_key_file.write_all(&public_key_data)?;
+    }
 
     Ok(())
 }
@@ -218,7 +256,7 @@ fn ls(values: Values) -> Result<()> {
 
 fn print_stored_data(retrieved: &SecretSlice, force_binary: bool) -> Result<()> {
     let tty = bdrck::cli::isatty(bdrck::cli::Stream::Stdout);
-    let display: Optional<String> = end_user_display(retrieved, force_binary, tty);
+    let display: Option<String> = end_user_display(retrieved, force_binary, tty);
     let bytes: &[u8] = display
         .as_ref()
         .map_or_else(|| &retrieved[..], |s| s.as_bytes());
@@ -414,6 +452,15 @@ fn main() {
                 Spec::required(
                     "slot", "The slot containing the certificate to use", Some('s'),
                     Some(&::yubirs::piv::id::Key::KeyManagement.to_string())),
+                Spec::required(
+                    "algorithm", "The key algorithm to use", Some('a'),
+                    Some(&::yubirs::piv::id::Algorithm::Rsa2048.to_string())),
+                Spec::required(
+                    "pin_policy", "The PIN verification policy to use for this key", None,
+                    Some(&::yubirs::piv::id::PinPolicy::Default.to_string())),
+                Spec::required(
+                    "touch_policy", "The touch policy to use for this key", None,
+                    Some(&::yubirs::piv::id::TouchPolicy::Default.to_string())),
                 Spec::required("public_key", "The path to write the public key to", Some('p'), None),
             ]).unwrap(),
             Box::new(setuppiv)),
