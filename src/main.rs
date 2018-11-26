@@ -22,7 +22,7 @@
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
 use std::fs::File;
-use std::io;
+use std::io::{self, Write};
 use std::option::Option as Optional;
 
 extern crate bdrck;
@@ -42,6 +42,7 @@ use pwm_lib::util::{multiline_password_prompt, password_prompt};
 
 extern crate serde_json;
 
+#[cfg(feature = "yubikey")]
 extern crate yubirs;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
@@ -122,11 +123,82 @@ fn rmkey(values: Values) -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "yubikey")]
+fn prompt_for_reader() -> Result<String> {
+    use yubirs::piv;
+
+    let handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
+    let mut readers = handle.list_readers()?;
+    Ok(match readers.len() {
+        0 => {
+            return Err(Error::InvalidArgument(format_err!(
+                "No PIV devices found on this system"
+            )))
+        }
+        1 => readers.pop().unwrap(),
+        _ => {
+            let mut stderr = io::stderr();
+            let mut i: usize = 1;
+            for reader in &readers {
+                write!(stderr, "{}: {}\n", i, reader)?;
+                i += 1;
+            }
+            stderr.flush()?;
+
+            let mut reader: Option<String>;
+            let prompt = format!("Which PIV device to set up? [1..{}] ", readers.len());
+            loop {
+                let choice = bdrck::cli::prompt_for_string(
+                    bdrck::cli::Stream::Stderr,
+                    prompt.as_str(),
+                    false,
+                )?;
+                match choice.parse::<usize>() {
+                    Err(_) => {
+                        write!(stderr, "Invalid number '{}'.\n", choice)?;
+                        stderr.flush()?;
+                    }
+                    Ok(idx) => {
+                        if idx < 1 || idx > readers.len() {
+                            write!(stderr, "Invalid choice '{}'.\n", idx)?;
+                            stderr.flush()?;
+                        } else {
+                            reader = Some(readers.get(idx - 1).unwrap().clone());
+                            break;
+                        }
+                    }
+                };
+            }
+            reader.unwrap()
+        }
+    })
+}
+
+#[cfg(feature = "yubikey")]
 fn setuppiv(_values: Values) -> Result<()> {
+    use yubirs::piv;
+
     let _handle = init_pwm()?;
+
+    // This is a very destructive operation; confirm with the user first before
+    // proceeding.
+    if !bdrck::cli::continue_confirmation(
+        bdrck::cli::Stream::Stderr,
+        "This will reset all PIV device data (certificates, ...) to factory defaults. ",
+    )? {
+        return Ok(());
+    }
+
+    let reader = prompt_for_reader()?;
+
+    let mut handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
+    handle.connect(Some(reader.as_str()))?;
+    handle.force_reset()?;
+
     Ok(())
 }
 
+#[cfg(feature = "yubikey")]
 fn addpiv(_values: Values) -> Result<()> {
     let _handle = init_pwm()?;
     Ok(())
@@ -333,6 +405,7 @@ fn main() {
                     "repository", "The path to the repository to remove a key from", Some('r')),
             ]).unwrap(),
             Box::new(rmkey)),
+        #[cfg(feature = "yubikey")]
         Command::new(
             "setuppiv",
             "Set up a PIV device and add it to an existing repository",
@@ -344,6 +417,7 @@ fn main() {
                 Spec::required("public_key", "The path to write the public key to", Some('p'), None),
             ]).unwrap(),
             Box::new(setuppiv)),
+        #[cfg(feature = "yubikey")]
         Command::new(
             "addpiv",
             "Add an already set up PIV device to an existing repository",
