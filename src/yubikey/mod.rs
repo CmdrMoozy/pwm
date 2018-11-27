@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod command;
+
 use std::path::PathBuf;
 use yubirs::piv::id;
 
