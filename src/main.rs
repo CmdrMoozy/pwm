@@ -41,7 +41,7 @@ use pwm_lib::util::{multiline_password_prompt, password_prompt};
 
 extern crate serde_json;
 
-#[cfg(feature = "yubikey")]
+#[cfg(feature = "piv")]
 extern crate yubirs;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
@@ -122,16 +122,16 @@ fn rmkey(values: Values) -> Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "yubikey")]
+#[cfg(feature = "piv")]
 fn setuppiv(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
-    pwm_lib::yubikey::command::setuppiv(values)
+    pwm_lib::piv::command::setuppiv(values)
 }
 
-#[cfg(feature = "yubikey")]
+#[cfg(feature = "piv")]
 fn addpiv(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
-    pwm_lib::yubikey::command::addpiv(values)
+    pwm_lib::piv::command::addpiv(values)
 }
 
 fn ls(values: Values) -> Result<()> {
@@ -335,7 +335,7 @@ fn main() {
                     "repository", "The path to the repository to remove a key from", Some('r')),
             ]).unwrap(),
             Box::new(rmkey)),
-        #[cfg(feature = "yubikey")]
+        #[cfg(feature = "piv")]
         Command::new(
             "setuppiv",
             "Set up a PIV device and add it to an existing repository",
@@ -356,7 +356,7 @@ fn main() {
                 Spec::required("public_key", "The path to write the public key to", Some('p'), None),
             ]).unwrap(),
             Box::new(setuppiv)),
-        #[cfg(feature = "yubikey")]
+        #[cfg(feature = "piv")]
         Command::new(
             "addpiv",
             "Add an already set up PIV device to an existing repository",

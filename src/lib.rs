@@ -39,23 +39,23 @@ extern crate rmp_serde as msgpack;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate sodiumoxide;
-#[cfg(feature = "yubikey")]
+#[cfg(feature = "piv")]
 extern crate yubirs;
 
 pub mod configuration;
 pub mod crypto;
 pub mod error;
+#[cfg(feature = "piv")]
+pub mod piv;
 pub mod repository;
 pub mod util;
-#[cfg(feature = "yubikey")]
-pub mod yubikey;
 
 #[cfg(test)]
 mod tests;
 
 pub fn init() -> ::error::Result<()> {
     bdrck::init()?;
-    #[cfg(feature = "yubikey")]
+    #[cfg(feature = "piv")]
     yubirs::init()?;
     Ok(())
 }

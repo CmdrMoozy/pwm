@@ -26,8 +26,8 @@ default_features = false
 features = ["cli", "configuration", "crypto", "flags", "logging", "testing"]
 
 [features]
-default = ["clipboard", "yubikey"]
-yubikey = ["yubirs"]
+default = ["clipboard", "piv"]
+piv = ["yubirs"]
 
 [lib]
 name = "pwm_lib"

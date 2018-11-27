@@ -21,7 +21,7 @@ use yubirs::piv::id;
 pub struct KeyConfiguration {
     /// The name of the SmartCard reader this key is found on. Generally an
     /// explicit value is not needed (the default is fine), assuming only one
-    /// SmartCard is plugged into the system at a time, and it is a YubiKey.
+    /// SmartCard is plugged into the system at a time.
     pub reader: Option<String>,
     /// The SmartCard slot in which the private key resides.
     pub slot: id::Key,

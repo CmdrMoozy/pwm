@@ -73,16 +73,16 @@ fn get_keystore_key_password(
     )?))
 }
 
-#[cfg(feature = "yubikey")]
+#[cfg(feature = "piv")]
 fn get_keystore_key(
     create: bool,
     password: Option<Secret>,
     crypto_config: &Configuration,
 ) -> Result<Box<dyn AbstractKey>> {
-    // Don't try using a YubiKey if a password was given explicitly.
+    // Don't try using a PIV device if a password was given explicitly.
     if password.is_none() {
         let config = ::configuration::get()?;
-        if let Some(config) = config.yubikey {
+        if let Some(config) = config.piv {
             let handle: piv::Handle<PcscHardware> = piv::Handle::new()?;
             let readers: HashSet<String> = HashSet::from_iter(handle.list_readers()?.into_iter());
 
@@ -106,7 +106,7 @@ fn get_keystore_key(
     get_keystore_key_password(create, password, crypto_config)
 }
 
-#[cfg(not(feature = "yubikey"))]
+#[cfg(not(feature = "piv"))]
 fn get_keystore_key(
     create: bool,
     password: Option<Secret>,

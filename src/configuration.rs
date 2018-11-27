@@ -14,9 +14,9 @@
 
 use bdrck::configuration as bdrck_config;
 use error::*;
+#[cfg(feature = "piv")]
+use piv;
 use std::path::Path;
-#[cfg(feature = "yubikey")]
-use yubikey;
 
 static IDENTIFIER_APPLICATION: &'static str = "pwm";
 #[cfg(debug_assertions)]
@@ -36,8 +36,8 @@ pub static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Configuration {
     pub default_repository: Option<String>,
-    #[cfg(feature = "yubikey")]
-    pub yubikey: Option<yubikey::Configuration>,
+    #[cfg(feature = "piv")]
+    pub piv: Option<piv::Configuration>,
 }
 
 pub struct SingletonHandle;

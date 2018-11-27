@@ -41,14 +41,14 @@ pub enum Error {
     NotFound(::failure::Error),
     #[fail(display = "{}", _0)]
     ParseInt(#[cause] ::std::num::ParseIntError),
+    /// An error encountered while interacting with a PIV device.
+    #[cfg(feature = "piv")]
+    #[fail(display = "{}", _0)]
+    PIV(#[cause] ::yubirs::error::Error),
     #[fail(display = "{}", _0)]
     Unknown(::failure::Error),
     #[fail(display = "{}", _0)]
     Utf8(::std::string::FromUtf8Error),
-    /// An error encountered while interacting with a YubiKey.
-    #[cfg(feature = "yubikey")]
-    #[fail(display = "{}", _0)]
-    YubiKey(#[cause] ::yubirs::error::Error),
 }
 
 impl From<::bdrck::error::Error> for Error {
@@ -93,6 +93,13 @@ impl From<::std::num::ParseIntError> for Error {
     }
 }
 
+#[cfg(feature = "piv")]
+impl From<::yubirs::error::Error> for Error {
+    fn from(e: ::yubirs::error::Error) -> Self {
+        Error::PIV(e)
+    }
+}
+
 impl From<::failure::Error> for Error {
     fn from(e: ::failure::Error) -> Self {
         Error::Unknown(e)
@@ -102,13 +109,6 @@ impl From<::failure::Error> for Error {
 impl From<::std::string::FromUtf8Error> for Error {
     fn from(e: ::std::string::FromUtf8Error) -> Self {
         Error::Utf8(e)
-    }
-}
-
-#[cfg(feature = "yubikey")]
-impl From<::yubirs::error::Error> for Error {
-    fn from(e: ::yubirs::error::Error) -> Self {
-        Error::YubiKey(e)
     }
 }
 
