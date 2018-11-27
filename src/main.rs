@@ -23,7 +23,7 @@
 
 use std::fs::File;
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 extern crate bdrck;
 use bdrck::flags::*;
@@ -233,13 +233,32 @@ fn setuppiv(values: Values) -> Result<()> {
         public_key_file.write_all(&public_key_data)?;
     }
 
+    // Actually add the new PIV device.
+    addpiv_impl(
+        &reader,
+        values.get_required_parsed("slot")?,
+        &public_key_path,
+    )
+}
+
+#[cfg(feature = "yubikey")]
+fn addpiv_impl<P: AsRef<Path>>(
+    _reader: &str,
+    _slot: yubirs::piv::id::Key,
+    _public_key: P,
+) -> Result<()> {
     Ok(())
 }
 
 #[cfg(feature = "yubikey")]
-fn addpiv(_values: Values) -> Result<()> {
+fn addpiv(values: Values) -> Result<()> {
     let _handle = init_pwm()?;
-    Ok(())
+
+    let reader = prompt_for_reader()?;
+    let slot: yubirs::piv::id::Key = values.get_required_parsed("slot")?;
+    let public_key: PathBuf = values.get_required_as("public_key");
+
+    addpiv_impl(&reader, slot, &public_key)
 }
 
 fn ls(values: Values) -> Result<()> {
