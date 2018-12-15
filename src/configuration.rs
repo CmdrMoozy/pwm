@@ -16,7 +16,7 @@ use bdrck::configuration as bdrck_config;
 use error::*;
 #[cfg(feature = "piv")]
 use piv;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 static IDENTIFIER_APPLICATION: &'static str = "pwm";
 #[cfg(debug_assertions)]
@@ -35,7 +35,7 @@ pub static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Configuration {
-    pub default_repository: Option<String>,
+    pub default_repository: Option<PathBuf>,
     #[cfg(feature = "piv")]
     pub piv: Option<piv::Configuration>,
 }
@@ -63,7 +63,7 @@ pub fn set(key: &str, value: &str) -> Result<()> {
         |instance: &mut bdrck_config::Configuration<Configuration>| -> Option<Error> {
             let mut config = instance.get().clone();
             if key == DEFAULT_REPOSITORY_KEY {
-                config.default_repository = Some(value.to_owned());
+                config.default_repository = Some(value.into());
             } else {
                 return Some(Error::InvalidArgument(format_err!(
                     "Invalid configuration key '{}'",
@@ -89,7 +89,10 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
     let config = get()?;
     if key == DEFAULT_REPOSITORY_KEY {
         Ok(match config.default_repository {
-            Some(v) => v.clone(),
+            Some(v) => match v.as_path().to_str() {
+                None => return Err(Error::Internal(format_err!("{} is not a valid UTF-8 string", DEFAULT_REPOSITORY_KEY))),
+                Some(v) => v.to_owned(),
+            },
             None => String::new(),
         })
     } else {

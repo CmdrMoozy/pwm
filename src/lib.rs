@@ -42,6 +42,7 @@ extern crate sodiumoxide;
 #[cfg(feature = "piv")]
 extern crate yubirs;
 
+pub mod cli;
 pub mod configuration;
 pub mod crypto;
 pub mod error;
@@ -58,4 +59,9 @@ pub fn init() -> ::error::Result<()> {
     #[cfg(feature = "piv")]
     yubirs::init()?;
     Ok(())
+}
+
+pub fn init_with_configuration() -> ::error::Result<::configuration::SingletonHandle> {
+    init()?;
+    Ok(::configuration::SingletonHandle::new(None)?)
 }
