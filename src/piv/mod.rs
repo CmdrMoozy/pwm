@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod command;
+mod commands;
+mod impls;
 
 use crate::cli;
 use crate::error::*;
@@ -89,7 +90,7 @@ pub fn build_setuppiv_command() -> Command<'static, Error> {
             PUBLIC_KEY_SPEC.clone(),
         ])
         .unwrap(),
-        cli::to_command_fn(self::command::setuppiv),
+        cli::to_command_fn(commands::setuppiv),
     )
 }
 
@@ -103,6 +104,6 @@ pub fn build_addpiv_command() -> Command<'static, Error> {
             PUBLIC_KEY_SPEC.clone(),
         ])
         .unwrap(),
-        cli::to_command_fn(self::command::addpiv),
+        cli::to_command_fn(commands::addpiv),
     )
 }

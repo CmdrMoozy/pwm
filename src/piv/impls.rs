@@ -14,12 +14,12 @@
 
 use crate::crypto::pwgen;
 use crate::error::*;
-use bdrck::flags::Values;
 use failure::format_err;
 use std::fs::File;
 use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use yubirs::piv;
+use yubirs::piv::id::{Algorithm, Key, PinPolicy, TouchPolicy};
 
 fn prompt_for_reader() -> Result<String> {
     let handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
@@ -69,7 +69,23 @@ fn prompt_for_reader() -> Result<String> {
     })
 }
 
-pub fn setuppiv(values: Values) -> Result<()> {
+fn addpiv_impl<RP: AsRef<Path>, KP: AsRef<Path>>(
+    _repository_path: RP,
+    _reader: &str,
+    _slot: Key,
+    _public_key_path: KP,
+) -> Result<()> {
+    Ok(())
+}
+
+pub(crate) fn setuppiv<RP: AsRef<Path>, KP: AsRef<Path>>(
+    repository_path: RP,
+    slot: Key,
+    algorithm: Algorithm,
+    pin_policy: PinPolicy,
+    touch_policy: TouchPolicy,
+    public_key_path: KP,
+) -> Result<()> {
     // This is a very destructive operation; confirm with the user first before
     // proceeding.
     if !bdrck::cli::continue_confirmation(
@@ -109,36 +125,28 @@ pub fn setuppiv(values: Values) -> Result<()> {
     // repository's master key.
     let public_key = handle.generate(
         Some(new_mgm_key.as_str()),
-        values.get_required_parsed("slot")?,
-        values.get_required_parsed("algorithm")?,
-        values.get_required_parsed("pin_policy")?,
-        values.get_required_parsed("touch_policy")?,
+        slot,
+        algorithm,
+        pin_policy,
+        touch_policy,
     )?;
     let public_key_data = public_key.format(piv::pkey::Format::Pem)?;
 
     // Write the public key to a file.
-    let public_key_path: PathBuf = values.get_required_as("public_key");
     {
-        let mut public_key_file = File::create(public_key_path.as_path())?;
+        let mut public_key_file = File::create(public_key_path.as_ref())?;
         public_key_file.write_all(&public_key_data)?;
     }
 
     // Actually add the new PIV device.
-    addpiv_impl(
-        &reader,
-        values.get_required_parsed("slot")?,
-        &public_key_path,
-    )
+    addpiv_impl(repository_path, &reader, slot, public_key_path)
 }
 
-fn addpiv_impl<P: AsRef<Path>>(_reader: &str, _slot: piv::id::Key, _public_key: P) -> Result<()> {
-    Ok(())
-}
-
-pub fn addpiv(values: Values) -> Result<()> {
+pub(crate) fn addpiv<RP: AsRef<Path>, KP: AsRef<Path>>(
+    repository_path: RP,
+    slot: Key,
+    public_key_path: KP,
+) -> Result<()> {
     let reader = prompt_for_reader()?;
-    let slot: piv::id::Key = values.get_required_parsed("slot")?;
-    let public_key: PathBuf = values.get_required_as("public_key");
-
-    addpiv_impl(&reader, slot, &public_key)
+    addpiv_impl(repository_path, &reader, slot, public_key_path)
 }
