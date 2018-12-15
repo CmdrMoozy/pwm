@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use error::{Error, Result};
-use git2;
-use git2::{Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree};
+use crate::error::{Error, Result};
+use failure::format_err;
+use git2::{
+    self, Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree,
+};
 use std::collections::vec_deque::VecDeque;
 use std::path::{Path, PathBuf};
 

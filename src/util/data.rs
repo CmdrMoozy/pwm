@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::*;
 use data_encoding::BASE64;
-use error::*;
+use failure::format_err;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;

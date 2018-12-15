@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::util::data::*;
 use bdrck::testing::temp;
 use std::fs::File;
-use util::data::*;
 
 #[test]
 fn test_from_file() {

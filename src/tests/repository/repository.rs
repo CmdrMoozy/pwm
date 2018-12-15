@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::*;
+use crate::repository::*;
+use crate::util::data::Secret;
 use bdrck::testing::temp;
-use error::*;
-use repository::*;
 use sodiumoxide::randombytes::randombytes;
 use std::ops::{Deref, DerefMut};
-use util::data::Secret;
 
 static TEST_REPO_DIR: &'static str = "pwm-test";
 

@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::*;
+use crate::util::data::{Secret, SecretSlice};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use error::*;
+use failure::format_err;
 use sodiumoxide::randombytes::randombytes;
 use std::io::Cursor;
 use std::mem;
-use util::data::{Secret, SecretSlice};
 
 const PAD_BLOCK_SIZE_BYTES: usize = 1024;
 const METADATA_BYTES: usize = mem::size_of::<u64>();

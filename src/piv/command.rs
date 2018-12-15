@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::crypto::pwgen;
+use crate::error::*;
 use bdrck::flags::Values;
-use crypto::pwgen;
-use error::*;
+use failure::format_err;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -39,7 +40,7 @@ fn prompt_for_reader() -> Result<String> {
             }
             stderr.flush()?;
 
-            let mut reader: Option<String>;
+            let reader: Option<String>;
             let prompt = format!("Which PIV device to set up? [1..{}] ", readers.len());
             loop {
                 let choice = bdrck::cli::prompt_for_string(

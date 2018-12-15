@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use failure::Fail;
+
 #[derive(Fail, Debug)]
 pub enum Error {
     #[fail(display = "{}", _0)]
@@ -32,10 +34,10 @@ pub enum Error {
     Json(::serde_json::Error),
     /// An error encountered when decoding a serialized message.
     #[fail(display = "{}", _0)]
-    MsgDecode(#[cause] ::msgpack::decode::Error),
+    MsgDecode(#[cause] ::rmp_serde::decode::Error),
     /// An error encountered when encoding a struct to a serialized message.
     #[fail(display = "{}", _0)]
-    MsgEncode(#[cause] ::msgpack::encode::Error),
+    MsgEncode(#[cause] ::rmp_serde::encode::Error),
     /// Errors akin to ENOENT.
     #[fail(display = "{}", _0)]
     NotFound(::failure::Error),
@@ -75,14 +77,14 @@ impl From<::serde_json::Error> for Error {
     }
 }
 
-impl From<::msgpack::decode::Error> for Error {
-    fn from(e: ::msgpack::decode::Error) -> Self {
+impl From<::rmp_serde::decode::Error> for Error {
+    fn from(e: ::rmp_serde::decode::Error) -> Self {
         Error::MsgDecode(e)
     }
 }
 
-impl From<::msgpack::encode::Error> for Error {
-    fn from(e: ::msgpack::encode::Error) -> Self {
+impl From<::rmp_serde::encode::Error> for Error {
+    fn from(e: ::rmp_serde::encode::Error) -> Self {
         Error::MsgEncode(e)
     }
 }

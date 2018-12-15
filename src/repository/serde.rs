@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use error::Result;
-use repository::Repository;
+use crate::error::Result;
+use crate::repository::Repository;
+use crate::util::data::{decode, encode};
+use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;
-use util::data::{decode, encode};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Contents {

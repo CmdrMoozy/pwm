@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::*;
+use crate::util::data::{end_user_display, SecretSlice};
 use clipboard::{self, ClipboardProvider};
-use error::*;
+use failure::format_err;
+use lazy_static::lazy_static;
+use log::info;
 use std::thread::sleep;
 use std::time::Duration;
-use util::data::{end_user_display, SecretSlice};
 
 lazy_static! {
     static ref CLIPBOARD_TIMEOUT: Duration = Duration::new(45, 0);

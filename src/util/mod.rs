@@ -18,8 +18,8 @@ pub mod data;
 pub mod git;
 pub mod lazy;
 
+use crate::error::Result;
 use bdrck;
-use error::Result;
 use std::io;
 
 /// Prompt the user for a password using the given prompt on stderr, and then

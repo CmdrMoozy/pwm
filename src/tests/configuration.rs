@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::configuration::*;
 use bdrck::testing::temp;
-use configuration::*;
+use lazy_static::lazy_static;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;

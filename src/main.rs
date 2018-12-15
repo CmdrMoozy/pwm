@@ -21,10 +21,7 @@
 )]
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
-extern crate bdrck;
 use bdrck::flags::*;
-
-extern crate pwm_lib;
 
 fn main() {
     let debug: bool = cfg!(debug_assertions);

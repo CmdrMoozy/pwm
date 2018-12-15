@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crypto::rng::Generator;
-use error::*;
+use crate::crypto::rng::Generator;
+use crate::error::*;
+use crate::util::data::Secret;
+use failure::format_err;
+use lazy_static::lazy_static;
 use rand::{Rng, RngCore};
 use std::collections::{HashMap, HashSet};
-use util::data::Secret;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum CharacterSet {

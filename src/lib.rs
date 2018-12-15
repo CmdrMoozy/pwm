@@ -21,27 +21,6 @@
 )]
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
-extern crate bdrck;
-extern crate byteorder;
-#[cfg(feature = "clipboard")]
-extern crate clipboard;
-extern crate data_encoding;
-#[macro_use]
-extern crate failure;
-extern crate git2;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-extern crate rand;
-extern crate rmp_serde as msgpack;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-extern crate sodiumoxide;
-#[cfg(feature = "piv")]
-extern crate yubirs;
-
 pub mod cli;
 pub mod configuration;
 pub mod crypto;
@@ -54,14 +33,14 @@ pub mod util;
 #[cfg(test)]
 mod tests;
 
-pub fn init() -> ::error::Result<()> {
+pub fn init() -> crate::error::Result<()> {
     bdrck::init()?;
     #[cfg(feature = "piv")]
     yubirs::init()?;
     Ok(())
 }
 
-pub fn init_with_configuration() -> ::error::Result<::configuration::SingletonHandle> {
+pub fn init_with_configuration() -> crate::error::Result<crate::configuration::SingletonHandle> {
     init()?;
-    Ok(::configuration::SingletonHandle::new(None)?)
+    Ok(crate::configuration::SingletonHandle::new(None)?)
 }

@@ -16,16 +16,17 @@ mod commands;
 mod impls;
 pub mod util;
 
+use crate::error::*;
 use bdrck::flags::command::{Command, CommandCallback};
 use bdrck::flags::spec::{Spec, Specs};
 use bdrck::flags::value::Values;
-use error::*;
+use lazy_static::lazy_static;
 
 pub(crate) fn to_command_fn<F: 'static + FnMut(Values) -> Result<()>>(
     mut f: F,
 ) -> CommandCallback<'static, Error> {
     Box::new(move |values| {
-        let _handle = ::init_with_configuration()?;
+        let _handle = crate::init_with_configuration()?;
         f(values)
     })
 }
@@ -79,7 +80,7 @@ lazy_static! {
         "The length of the password to generate",
         Some('l'),
         Some(
-            ::crypto::pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH
+            crate::crypto::pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH
                 .to_string()
                 .as_str()
         )

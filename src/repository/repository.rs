@@ -12,24 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::crypto::configuration::{Configuration, ConfigurationInstance};
+use crate::crypto::padding;
+use crate::error::*;
+use crate::repository::path::Path as RepositoryPath;
+use crate::util::data::Secret;
+use crate::util::git;
+use crate::util::lazy::Lazy;
+use crate::util::password_prompt;
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
-use crypto::configuration::{Configuration, ConfigurationInstance};
-use crypto::padding;
-use error::*;
+use failure::format_err;
 use git2;
-use msgpack;
-use repository::path::Path as RepositoryPath;
+use lazy_static::lazy_static;
 use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
-use util::data::Secret;
-use util::git;
-use util::lazy::Lazy;
-use util::password_prompt;
 use yubirs::piv;
 use yubirs::piv::hal::PcscHardware;
 
@@ -81,7 +82,7 @@ fn get_keystore_key(
 ) -> Result<Box<dyn AbstractKey>> {
     // Don't try using a PIV device if a password was given explicitly.
     if password.is_none() {
-        let config = ::configuration::get()?;
+        let config = crate::configuration::get()?;
         if let Some(config) = config.piv {
             let handle: piv::Handle<PcscHardware> = piv::Handle::new()?;
             let readers: HashSet<String> = HashSet::from_iter(handle.list_readers()?.into_iter());
@@ -152,7 +153,7 @@ fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key)
     }
 
     let mut file = File::create(path.absolute_path())?;
-    msgpack::encode::write(&mut file, &encrypted_tuple)?;
+    rmp_serde::encode::write(&mut file, &encrypted_tuple)?;
     file.flush()?;
     Ok(())
 }
@@ -166,7 +167,7 @@ fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<Secret> {
     }
 
     let mut file = File::open(path.absolute_path())?;
-    let encrypted_tuple: (Option<Nonce>, Secret) = msgpack::decode::from_read(&mut file)?;
+    let encrypted_tuple: (Option<Nonce>, Secret) = rmp_serde::decode::from_read(&mut file)?;
     let mut decrypted: Secret =
         master_key.decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
     padding::unpad(&mut decrypted)?;

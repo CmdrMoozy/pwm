@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use error::*;
+use crate::error::*;
+use failure::format_err;
 use std::path::Path as StdPath;
 use std::path::PathBuf;
 

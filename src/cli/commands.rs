@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::cli::{self, impls, util};
+use crate::error::*;
 use bdrck::flags::value::Values;
-use cli::{self, impls, util};
-use error::*;
 use std::path::PathBuf;
 
 pub(crate) fn config(values: Values) -> Result<()> {

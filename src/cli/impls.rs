@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use configuration;
-use crypto::pwgen;
-use error::*;
-use repository::serde::{export_serialize, import_deserialize};
-use repository::Repository;
+use crate::configuration;
+use crate::crypto::pwgen;
+use crate::error::*;
+use crate::repository::serde::{export_serialize, import_deserialize};
+use crate::repository::Repository;
+use crate::util::data::{end_user_display, load_file, SecretSlice};
+use crate::util::{self, multiline_password_prompt, password_prompt};
+use failure::format_err;
 use std::fs::File;
 use std::io;
 use std::path::Path;
-use util::data::{end_user_display, load_file, SecretSlice};
-use util::{self, multiline_password_prompt, password_prompt};
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EOF' is read:";

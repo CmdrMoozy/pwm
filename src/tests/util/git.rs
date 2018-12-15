@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::util::git::*;
 use bdrck::testing::temp;
 use git2::{Oid, Repository, Signature};
 use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
-use util::git::*;
 
 fn get_test_signature() -> Signature<'static> {
     Signature::now("test", "test@test.com").unwrap()

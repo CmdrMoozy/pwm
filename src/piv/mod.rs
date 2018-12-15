@@ -14,10 +14,12 @@
 
 pub mod command;
 
+use crate::cli;
+use crate::error::*;
 use bdrck::flags::command::Command;
 use bdrck::flags::spec::{Spec, Specs};
-use cli;
-use error::*;
+use lazy_static::lazy_static;
+use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
 use yubirs::piv::id;
 

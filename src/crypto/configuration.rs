@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::Result;
 use bdrck::configuration as bdrck_config;
 use bdrck::crypto::key::*;
-use error::Result;
+use serde_derive::{Deserialize, Serialize};
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

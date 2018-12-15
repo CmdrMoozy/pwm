@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::repository::serde::*;
+use crate::repository::Repository;
 use bdrck::testing::temp;
-use repository::serde::*;
-use repository::Repository;
 use sodiumoxide::randombytes::randombytes;
 
 #[test]

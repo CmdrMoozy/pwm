@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use bdrck::configuration as bdrck_config;
-use error::*;
+use crate::error::*;
 #[cfg(feature = "piv")]
-use piv;
+use crate::piv;
+use bdrck::configuration as bdrck_config;
+use failure::format_err;
+use lazy_static::lazy_static;
+use log::error;
+use serde_derive::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 static IDENTIFIER_APPLICATION: &'static str = "pwm";

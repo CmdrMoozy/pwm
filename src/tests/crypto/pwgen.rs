@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crypto::pwgen::*;
-use util::data::end_user_display;
+use crate::crypto::pwgen::*;
+use crate::util::data::end_user_display;
 
 fn generate_password_str(
     length: Option<usize>,
