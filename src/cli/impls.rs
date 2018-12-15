@@ -15,13 +15,13 @@
 use configuration;
 use crypto::pwgen;
 use error::*;
-use repository::Repository;
 use repository::serde::{export_serialize, import_deserialize};
+use repository::Repository;
 use std::fs::File;
 use std::io;
 use std::path::Path;
-use util::{self, multiline_password_prompt, password_prompt};
 use util::data::{end_user_display, load_file, SecretSlice};
+use util::{self, multiline_password_prompt, password_prompt};
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EOF' is read:";
@@ -103,7 +103,12 @@ fn print_stored_data(retrieved: &SecretSlice, force_binary: bool) -> Result<()> 
     Ok(())
 }
 
-pub(crate) fn get<RP: AsRef<Path>>(repository_path: RP, force_binary: bool, clipboard: bool, path: &str) -> Result<()> {
+pub(crate) fn get<RP: AsRef<Path>>(
+    repository_path: RP,
+    force_binary: bool,
+    clipboard: bool,
+    path: &str,
+) -> Result<()> {
     let repository = Repository::new(repository_path.as_ref(), false, None)?;
     let path = repository.path(path)?;
 
@@ -111,11 +116,13 @@ pub(crate) fn get<RP: AsRef<Path>>(repository_path: RP, force_binary: bool, clip
 
     match () {
         #[cfg(feature = "clipboard")]
-        () => if clipboard {
-            util::clipboard::set_contents(&retrieved, force_binary)?;
-        } else {
-            print_stored_data(&retrieved, force_binary)?;
-        },
+        () => {
+            if clipboard {
+                util::clipboard::set_contents(&retrieved, force_binary)?;
+            } else {
+                print_stored_data(&retrieved, force_binary)?;
+            }
+        }
 
         #[cfg(not(feature = "clipboard"))]
         () => {
@@ -126,7 +133,12 @@ pub(crate) fn get<RP: AsRef<Path>>(repository_path: RP, force_binary: bool, clip
     Ok(())
 }
 
-pub(crate) fn set<RP: AsRef<Path>, KP: AsRef<Path>>(repository_path: RP, key_path: Option<KP>, multiline: bool, path: &str) -> Result<()> {
+pub(crate) fn set<RP: AsRef<Path>, KP: AsRef<Path>>(
+    repository_path: RP,
+    key_path: Option<KP>,
+    multiline: bool,
+    path: &str,
+) -> Result<()> {
     let mut repository = Repository::new(repository_path.as_ref(), false, None)?;
     let path = repository.path(path)?;
 
@@ -161,7 +173,13 @@ pub(crate) fn rm<RP: AsRef<Path>>(repository_path: RP, path: &str) -> Result<()>
     Ok(())
 }
 
-pub(crate) fn generate(length: usize, exclude_letters: bool, exclude_numbers: bool, include_symbols: bool, custom_exclude: Option<&str>) -> Result<()> {
+pub(crate) fn generate(
+    length: usize,
+    exclude_letters: bool,
+    exclude_numbers: bool,
+    include_symbols: bool,
+    custom_exclude: Option<&str>,
+) -> Result<()> {
     let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
     if !exclude_letters {
         charsets.push(pwgen::CharacterSet::Letters);
@@ -181,7 +199,8 @@ pub(crate) fn generate(length: usize, exclude_letters: bool, exclude_numbers: bo
                 .as_slice(),
             false,
             false
-        ).unwrap()
+        )
+        .unwrap()
     );
 
     Ok(())
@@ -193,7 +212,10 @@ pub(crate) fn export<P: AsRef<Path>>(path: P) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn import<RP: AsRef<Path>, IP: AsRef<Path>>(repository_path: RP, input_path: IP) -> Result<()> {
+pub(crate) fn import<RP: AsRef<Path>, IP: AsRef<Path>>(
+    repository_path: RP,
+    input_path: IP,
+) -> Result<()> {
     use std::io::Read;
 
     let mut repository = Repository::new(repository_path.as_ref(), false, None)?;

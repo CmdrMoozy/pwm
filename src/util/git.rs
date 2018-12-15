@@ -28,14 +28,16 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
     let path = path.as_ref();
     match Repository::open(path) {
         Ok(repository) => Ok(repository),
-        Err(error) => if create
-            && (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository)
-            && error.code() == ErrorCode::NotFound
-        {
-            Ok(Repository::init(path)?)
-        } else {
-            Err(Error::from(error))
-        },
+        Err(error) => {
+            if create
+                && (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository)
+                && error.code() == ErrorCode::NotFound
+            {
+                Ok(Repository::init(path)?)
+            } else {
+                Err(Error::from(error))
+            }
+        }
     }
 }
 
@@ -72,11 +74,13 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
                 git2::Error::from_str("Resolving head commit failed.")
             })?))
         }
-        Err(e) => if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
-            Ok(None)
-        } else {
-            Err(Error::from(e))
-        },
+        Err(e) => {
+            if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
+                Ok(None)
+            } else {
+                Err(Error::from(e))
+            }
+        }
     }
 }
 
@@ -111,7 +115,8 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
                         .unwrap(),
                     path,
                 )
-            }).collect();
+            })
+            .collect();
         pending_trees.append(&mut subtrees);
 
         let mut entries: Vec<PathBuf> = tree
@@ -121,7 +126,8 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
                 let mut path: PathBuf = prefix.clone();
                 path.push(entry.name().unwrap());
                 path
-            }).filter(|entry| entry.starts_with(path_filter))
+            })
+            .filter(|entry| entry.starts_with(path_filter))
             .collect();
         listing.append(&mut entries);
     }

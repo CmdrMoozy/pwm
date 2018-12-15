@@ -29,7 +29,8 @@ pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::Secret> {
     Ok(match confirm {
         false => bdrck::cli::prompt_for_string(bdrck::cli::Stream::Stderr, prompt, true)?,
         true => bdrck::cli::prompt_for_string_confirm(bdrck::cli::Stream::Stderr, prompt, true)?,
-    }.into())
+    }
+    .into())
 }
 
 /// Prompt the user for multiple lines of password data using the given prompt

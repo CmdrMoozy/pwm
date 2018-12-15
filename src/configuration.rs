@@ -90,7 +90,12 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
     if key == DEFAULT_REPOSITORY_KEY {
         Ok(match config.default_repository {
             Some(v) => match v.as_path().to_str() {
-                None => return Err(Error::Internal(format_err!("{} is not a valid UTF-8 string", DEFAULT_REPOSITORY_KEY))),
+                None => {
+                    return Err(Error::Internal(format_err!(
+                        "{} is not a valid UTF-8 string",
+                        DEFAULT_REPOSITORY_KEY
+                    )))
+                }
                 Some(v) => v.to_owned(),
             },
             None => String::new(),

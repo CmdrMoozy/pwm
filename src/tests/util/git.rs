@@ -50,7 +50,8 @@ fn write_and_commit(relative_path: &str, contents: &str, repository: &Repository
         Some(&get_test_signature()),
         "test commit",
         &[relative_path.as_path()],
-    ).unwrap()
+    )
+    .unwrap()
 }
 
 #[test]

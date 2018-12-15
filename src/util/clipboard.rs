@@ -38,16 +38,15 @@ fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> 
 /// string, then the clipboard will be populated with a Base64 encoded version
 /// of the data.
 pub fn set_contents(data: &SecretSlice, force_binary: bool) -> Result<()> {
-    let mut cp: clipboard::x11_clipboard::X11ClipboardContext<
-        clipboard::x11_clipboard::Clipboard,
-    > = match clipboard::x11_clipboard::X11ClipboardContext::new() {
-        Ok(cp) => cp,
-        Err(_) => {
-            return Err(Error::Internal(format_err!(
-                "Failed to get clipboard context"
-            )))
-        }
-    };
+    let mut cp: clipboard::x11_clipboard::X11ClipboardContext<clipboard::x11_clipboard::Clipboard> =
+        match clipboard::x11_clipboard::X11ClipboardContext::new() {
+            Ok(cp) => cp,
+            Err(_) => {
+                return Err(Error::Internal(format_err!(
+                    "Failed to get clipboard context"
+                )))
+            }
+        };
 
     set_contents_string(&mut cp, end_user_display(data, force_binary, true).unwrap())?;
 

@@ -51,7 +51,10 @@ fn test_get_and_set() {
     let _handle = SingletonHandle::new(Some(path.as_path())).unwrap();
 
     let config = get().unwrap();
-    assert_eq!(PathBuf::from("/home/foo/bar"), config.default_repository.unwrap());
+    assert_eq!(
+        PathBuf::from("/home/foo/bar"),
+        config.default_repository.unwrap()
+    );
 }
 
 #[test]
@@ -114,7 +117,10 @@ fn test_reset() {
         let _handle = SingletonHandle::new(Some(path.as_path())).unwrap();
 
         let config = get().unwrap();
-        assert_eq!(PathBuf::from("/home/foo/bar"), config.default_repository.unwrap());
+        assert_eq!(
+            PathBuf::from("/home/foo/bar"),
+            config.default_repository.unwrap()
+        );
 
         reset().unwrap();
     }

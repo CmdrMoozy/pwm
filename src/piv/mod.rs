@@ -42,36 +42,65 @@ pub struct Configuration {
 }
 
 lazy_static! {
-    pub static ref SLOT_SPEC: Spec = Spec::required("slot", "The slot containing the certificate to use", Some('s'), Some(&::yubirs::piv::id::Key::KeyManagement.to_string()));
-    pub static ref ALGORITHM_SPEC: Spec = Spec::required("algorithm", "The key algorithm to use", Some('a'), Some(&::yubirs::piv::id::Algorithm::Rsa2048.to_string()));
-    pub static ref PIN_POLICY_SPEC: Spec = Spec::required("pin_policy", "The PIN verification policy to use for this key", None, Some(&::yubirs::piv::id::PinPolicy::Default.to_string()));
-    pub static ref TOUCH_POLICY_SPEC: Spec = Spec::required("touch_policy", "The touch policy to use for this key", None, Some(&::yubirs::piv::id::TouchPolicy::Default.to_string()));
-    pub static ref PUBLIC_KEY_SPEC: Spec = Spec::required("public_key", "The path to write the public key to", Some('p'), None);
+    pub static ref SLOT_SPEC: Spec = Spec::required(
+        "slot",
+        "The slot containing the certificate to use",
+        Some('s'),
+        Some(&::yubirs::piv::id::Key::KeyManagement.to_string())
+    );
+    pub static ref ALGORITHM_SPEC: Spec = Spec::required(
+        "algorithm",
+        "The key algorithm to use",
+        Some('a'),
+        Some(&::yubirs::piv::id::Algorithm::Rsa2048.to_string())
+    );
+    pub static ref PIN_POLICY_SPEC: Spec = Spec::required(
+        "pin_policy",
+        "The PIN verification policy to use for this key",
+        None,
+        Some(&::yubirs::piv::id::PinPolicy::Default.to_string())
+    );
+    pub static ref TOUCH_POLICY_SPEC: Spec = Spec::required(
+        "touch_policy",
+        "The touch policy to use for this key",
+        None,
+        Some(&::yubirs::piv::id::TouchPolicy::Default.to_string())
+    );
+    pub static ref PUBLIC_KEY_SPEC: Spec = Spec::required(
+        "public_key",
+        "The path to write the public key to",
+        Some('p'),
+        None
+    );
 }
 
 pub fn build_setuppiv_command() -> Command<'static, Error> {
-        Command::new(
-            "setuppiv",
-            "Set up a PIV device and add it to an existing repository",
-            Specs::new(vec![
-                cli::REPOSITORY_SPEC.clone(),
-                SLOT_SPEC.clone(),
-                ALGORITHM_SPEC.clone(),
-                PIN_POLICY_SPEC.clone(),
-                TOUCH_POLICY_SPEC.clone(),
-                PUBLIC_KEY_SPEC.clone(),
-            ]).unwrap(),
-            cli::to_command_fn(self::command::setuppiv))
+    Command::new(
+        "setuppiv",
+        "Set up a PIV device and add it to an existing repository",
+        Specs::new(vec![
+            cli::REPOSITORY_SPEC.clone(),
+            SLOT_SPEC.clone(),
+            ALGORITHM_SPEC.clone(),
+            PIN_POLICY_SPEC.clone(),
+            TOUCH_POLICY_SPEC.clone(),
+            PUBLIC_KEY_SPEC.clone(),
+        ])
+        .unwrap(),
+        cli::to_command_fn(self::command::setuppiv),
+    )
 }
 
 pub fn build_addpiv_command() -> Command<'static, Error> {
-        Command::new(
-            "addpiv",
-            "Add an already set up PIV device to an existing repository",
-            Specs::new(vec![
-                cli::REPOSITORY_SPEC.clone(),
-                SLOT_SPEC.clone(),
-                PUBLIC_KEY_SPEC.clone(),
-            ]).unwrap(),
-            cli::to_command_fn(self::command::addpiv))
+    Command::new(
+        "addpiv",
+        "Add an already set up PIV device to an existing repository",
+        Specs::new(vec![
+            cli::REPOSITORY_SPEC.clone(),
+            SLOT_SPEC.clone(),
+            PUBLIC_KEY_SPEC.clone(),
+        ])
+        .unwrap(),
+        cli::to_command_fn(self::command::addpiv),
+    )
 }

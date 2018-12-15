@@ -328,6 +328,7 @@ impl Drop for Repository {
         self.commit_one(
             CRYPTO_CONFIGURATION_UPDATE_MESSAGE,
             CRYPTO_CONFIGURATION_PATH.as_path(),
-        ).unwrap();
+        )
+        .unwrap();
     }
 }

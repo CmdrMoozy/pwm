@@ -18,7 +18,10 @@ use error::*;
 use std::path::PathBuf;
 
 pub(crate) fn config(values: Values) -> Result<()> {
-    impls::config(values.get_single(&cli::CONFIG_KEY_SPEC.name), values.get_single(&cli::CONFIG_SET_SPEC.name))
+    impls::config(
+        values.get_single(&cli::CONFIG_KEY_SPEC.name),
+        values.get_single(&cli::CONFIG_SET_SPEC.name),
+    )
 }
 
 pub(crate) fn init(values: Values) -> Result<()> {
@@ -34,27 +37,52 @@ pub(crate) fn rmkey(values: Values) -> Result<()> {
 }
 
 pub(crate) fn ls(values: Values) -> Result<()> {
-    impls::ls(&util::get_repository_path(&values)?, values.get_positional_single(&cli::PATH_PREFIX_SPEC.name))
+    impls::ls(
+        &util::get_repository_path(&values)?,
+        values.get_positional_single(&cli::PATH_PREFIX_SPEC.name),
+    )
 }
 
 pub(crate) fn get(values: Values) -> Result<()> {
-    impls::get(&util::get_repository_path(&values)?, values.get_boolean(&cli::GET_BINARY_SPEC.name), if cfg!(feature = "clipboard") {
-        values.get_boolean(&cli::GET_CLIPBOARD_SPEC.name)
-    } else {
-        false
-    }, values.get_positional_single(&cli::PATH_SPEC.name))
+    impls::get(
+        &util::get_repository_path(&values)?,
+        values.get_boolean(&cli::GET_BINARY_SPEC.name),
+        if cfg!(feature = "clipboard") {
+            values.get_boolean(&cli::GET_CLIPBOARD_SPEC.name)
+        } else {
+            false
+        },
+        values.get_positional_single(&cli::PATH_SPEC.name),
+    )
 }
 
 pub(crate) fn set(values: Values) -> Result<()> {
-    impls::set(&util::get_repository_path(&values)?, values.get_single(&cli::SET_KEY_FILE_SPEC.name).map(|p| PathBuf::from(p)).as_ref(), values.get_boolean(&cli::SET_MULTILINE_SPEC.name), values.get_positional_single(&cli::PATH_SPEC.name))
+    impls::set(
+        &util::get_repository_path(&values)?,
+        values
+            .get_single(&cli::SET_KEY_FILE_SPEC.name)
+            .map(|p| PathBuf::from(p))
+            .as_ref(),
+        values.get_boolean(&cli::SET_MULTILINE_SPEC.name),
+        values.get_positional_single(&cli::PATH_SPEC.name),
+    )
 }
 
 pub(crate) fn rm(values: Values) -> Result<()> {
-    impls::rm(&util::get_repository_path(&values)?, values.get_positional_single(&cli::PATH_SPEC.name))
+    impls::rm(
+        &util::get_repository_path(&values)?,
+        values.get_positional_single(&cli::PATH_SPEC.name),
+    )
 }
 
 pub(crate) fn generate(values: Values) -> Result<()> {
-    impls::generate(values.get_required_parsed(&cli::GENERATE_PASSWORD_LENGTH_SPEC.name)?, values.get_boolean(&cli::GENERATE_EXCLUDE_LETTERS_SPEC.name), values.get_boolean(&cli::GENERATE_EXCLUDE_NUMBERS_SPEC.name), values.get_boolean(&cli::GENERATE_INCLUDE_SYMBOLS_SPEC.name), values.get_single(&cli::GENERATE_CUSTOM_EXCLUDE_SPEC.name))
+    impls::generate(
+        values.get_required_parsed(&cli::GENERATE_PASSWORD_LENGTH_SPEC.name)?,
+        values.get_boolean(&cli::GENERATE_EXCLUDE_LETTERS_SPEC.name),
+        values.get_boolean(&cli::GENERATE_EXCLUDE_NUMBERS_SPEC.name),
+        values.get_boolean(&cli::GENERATE_INCLUDE_SYMBOLS_SPEC.name),
+        values.get_single(&cli::GENERATE_CUSTOM_EXCLUDE_SPEC.name),
+    )
 }
 
 pub(crate) fn export(values: Values) -> Result<()> {
@@ -62,5 +90,8 @@ pub(crate) fn export(values: Values) -> Result<()> {
 }
 
 pub(crate) fn import(values: Values) -> Result<()> {
-    impls::import(&util::get_repository_path(&values)?, &values.get_required_as::<PathBuf>(&cli::IMPORT_INPUT_SPEC.name))
+    impls::import(
+        &util::get_repository_path(&values)?,
+        &values.get_required_as::<PathBuf>(&cli::IMPORT_INPUT_SPEC.name),
+    )
 }

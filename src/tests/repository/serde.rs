@@ -31,7 +31,8 @@ fn test_export_import_round_trip_ascii() {
             repository_dir.path(),
             true,
             Some("foobar".as_bytes().to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         for path in &paths {
             let absolute_path = repository.path(path).unwrap();
             repository
@@ -46,7 +47,8 @@ fn test_export_import_round_trip_ascii() {
         repository_dir.path(),
         true,
         Some("raboof".as_bytes().to_vec()),
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
@@ -71,7 +73,8 @@ fn test_export_import_round_trip_binary() {
             repository_dir.path(),
             true,
             Some("foobar".as_bytes().to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         for path in &paths {
             let absolute_path = repository.path(path).unwrap();
             repository
@@ -86,7 +89,8 @@ fn test_export_import_round_trip_binary() {
         repository_dir.path(),
         true,
         Some("raboof".as_bytes().to_vec()),
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
