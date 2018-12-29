@@ -14,6 +14,7 @@
 
 use crate::crypto::pwgen;
 use crate::error::*;
+use crate::repository::Repository;
 use failure::format_err;
 use std::fs::File;
 use std::io::{self, Write};
@@ -70,11 +71,15 @@ fn prompt_for_reader() -> Result<String> {
 }
 
 fn addpiv_impl<RP: AsRef<Path>, KP: AsRef<Path>>(
-    _repository_path: RP,
-    _reader: &str,
-    _slot: Key,
-    _public_key_path: KP,
+    repository_path: RP,
+    reader: &str,
+    slot: Key,
+    public_key_path: KP,
 ) -> Result<()> {
+    let mut repository = Repository::new(repository_path.as_ref(), false, None)?;
+    let key: piv::key::Key<piv::hal::PcscHardware> =
+        piv::key::Key::new(Some(reader), None, slot, public_key_path.as_ref())?;
+    repository.add_key(&key)?;
     Ok(())
 }
 
