@@ -64,7 +64,7 @@ pub(crate) fn init<P: AsRef<Path>>(path: P) -> Result<()> {
 
 pub(crate) fn addkey<P: AsRef<Path>>(path: P) -> Result<()> {
     let mut repository = Repository::new(path.as_ref(), false, None)?;
-    repository.add_key(None)?;
+    repository.add_password_key(None)?;
 
     Ok(())
 }

@@ -266,7 +266,17 @@ impl Repository {
             .collect()
     }
 
-    pub fn add_key(&mut self, password: Option<Secret>) -> Result<()> {
+    pub fn add_key<K: AbstractKey>(&mut self, key: &K) -> Result<()> {
+        let was_added = self.get_key_store_mut()?.add_key(key)?;
+        if !was_added {
+            return Err(Error::InvalidArgument(format_err!(
+                "The specified key is already in use, so it was not re-added"
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn add_password_key(&mut self, password: Option<Secret>) -> Result<()> {
         let config = self.get_crypto_configuration();
         let password = unwrap_password_or_prompt(password, ADD_KEY_PROMPT, true)?;
         let key = Key::new_password(
@@ -275,13 +285,7 @@ impl Repository {
             config.get_ops_limit(),
             config.get_mem_limit(),
         )?;
-        let was_added = self.get_key_store_mut()?.add_key(&key)?;
-        if !was_added {
-            return Err(Error::InvalidArgument(format_err!(
-                "The specified key is already in use, so it was not re-added"
-            )));
-        }
-        Ok(())
+        self.add_key(&key)
     }
 
     pub fn remove_key(&mut self, password: Option<Secret>) -> Result<()> {

@@ -165,7 +165,7 @@ fn test_remove() {
 #[test]
 fn test_adding_duplicate_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.add_key(Some(to_password("foobar"))).is_err());
+    assert!(t.add_password_key(Some(to_password("foobar"))).is_err());
 }
 
 #[test]
@@ -181,7 +181,7 @@ fn test_adding_key_succeeds() {
         let path = repository.path(path).unwrap();
         repository.write_encrypt(&path, plaintext.clone()).unwrap();
 
-        repository.add_key(Some(pwb.clone())).unwrap();
+        repository.add_password_key(Some(pwb.clone())).unwrap();
     }
 
     let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
@@ -216,7 +216,7 @@ fn test_removing_key_succeeds() {
         let path = repository.path(path).unwrap();
         repository.write_encrypt(&path, plaintext.clone()).unwrap();
 
-        repository.add_key(Some(pwb.clone())).unwrap();
+        repository.add_password_key(Some(pwb.clone())).unwrap();
         repository.remove_key(Some(pwa.clone())).unwrap();
     }
 
