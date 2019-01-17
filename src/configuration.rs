@@ -61,6 +61,20 @@ impl Drop for SingletonHandle {
     }
 }
 
+pub fn instance_apply_mut<F: FnOnce(&mut Configuration) -> Result<()>>(f: F) -> Result<()> {
+    bdrck_config::instance_apply_mut(
+        &IDENTIFIER,
+        |instance: &mut bdrck_config::Configuration<Configuration>| -> Result<()> {
+            let mut config = instance.get().clone();
+            let res = f(&mut config);
+            if res.is_ok() {
+                instance.set(config);
+            }
+            res
+        },
+    )?
+}
+
 pub fn set(key: &str, value: &str) -> Result<()> {
     let err = bdrck_config::instance_apply_mut(
         &IDENTIFIER,
