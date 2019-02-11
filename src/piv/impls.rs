@@ -31,7 +31,7 @@ fn prompt_for_reader() -> Result<String> {
         0 => {
             return Err(Error::InvalidArgument(format_err!(
                 "No PIV devices found on this system"
-            )))
+            )));
         }
         1 => readers.pop().unwrap(),
         _ => {

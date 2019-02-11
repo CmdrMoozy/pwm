@@ -52,7 +52,7 @@ pub fn get_repository_workdir(repository: &Repository) -> Result<&Path> {
         None => {
             return Err(Error::InvalidArgument(format_err!(
                 "Repository has no workdir"
-            )))
+            )));
         }
     }
 }

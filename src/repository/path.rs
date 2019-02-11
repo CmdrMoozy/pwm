@@ -50,7 +50,7 @@ impl Path {
             None => {
                 return Err(Error::InvalidArgument(format_err!(
                     "Path contains non-unicode characters"
-                )))
+                )));
             }
         }
     }

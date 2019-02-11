@@ -31,7 +31,7 @@ fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> 
         Err(_) => {
             return Err(Error::Internal(format_err!(
                 "Failed to set clipboard contents"
-            )))
+            )));
         }
     }
 }
@@ -47,7 +47,7 @@ pub fn set_contents(data: &SecretSlice, force_binary: bool) -> Result<()> {
             Err(_) => {
                 return Err(Error::Internal(format_err!(
                     "Failed to get clipboard context"
-                )))
+                )));
             }
         };
 
