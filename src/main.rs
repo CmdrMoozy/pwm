@@ -21,7 +21,7 @@
 )]
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
-use bdrck::flags::*;
+use flaggy::*;
 
 fn main() {
     let debug: bool = cfg!(debug_assertions);
@@ -37,7 +37,9 @@ fn main() {
             .unwrap(),
     );
 
-    main_impl_multiple_commands(vec![
+    let _handle = pwm_lib::init_with_configuration().unwrap();
+
+    main_impl(vec![
         pwm_lib::cli::build_config_command(),
         pwm_lib::cli::build_init_command(),
         pwm_lib::cli::build_addkey_command(),

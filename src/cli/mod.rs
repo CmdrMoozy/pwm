@@ -12,24 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod commands;
 mod impls;
 pub mod util;
 
 use crate::error::*;
-use bdrck::flags::command::{Command, CommandCallback};
-use bdrck::flags::spec::{Spec, Specs};
-use bdrck::flags::value::Values;
+use flaggy::*;
 use lazy_static::lazy_static;
-
-pub(crate) fn to_command_fn<F: 'static + FnMut(Values) -> Result<()>>(
-    mut f: F,
-) -> CommandCallback<'static, Error> {
-    Box::new(move |values| {
-        let _handle = crate::init_with_configuration()?;
-        f(values)
-    })
-}
 
 lazy_static! {
     pub static ref REPOSITORY_SPEC: Spec = Spec::optional(
@@ -114,7 +102,7 @@ pub fn build_config_command() -> Command<'static, Error> {
         "config",
         "Get or set a configuration value",
         Specs::new(vec![CONFIG_KEY_SPEC.clone(), CONFIG_SET_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::config),
+        Box::new(impls::config),
     )
 }
 
@@ -123,7 +111,7 @@ pub fn build_init_command() -> Command<'static, Error> {
         "init",
         "Initialize a new pwm repository",
         Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::init),
+        Box::new(impls::init),
     )
 }
 
@@ -132,7 +120,7 @@ pub fn build_addkey_command() -> Command<'static, Error> {
         "addkey",
         "Add a new master key to an existing repository",
         Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::addkey),
+        Box::new(impls::addkey),
     )
 }
 
@@ -141,7 +129,7 @@ pub fn build_rmkey_command() -> Command<'static, Error> {
         "rmkey",
         "Remove an existing master key from an existing repository",
         Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::rmkey),
+        Box::new(impls::rmkey),
     )
 }
 
@@ -150,7 +138,7 @@ pub fn build_ls_command() -> Command<'static, Error> {
         "ls",
         "List passwords stored in a pwm repository",
         Specs::new(vec![REPOSITORY_SPEC.clone(), PATH_PREFIX_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::ls),
+        Box::new(impls::ls),
     )
 }
 
@@ -166,7 +154,7 @@ pub fn build_get_command() -> Command<'static, Error> {
             PATH_SPEC.clone(),
         ])
         .unwrap(),
-        to_command_fn(commands::get),
+        Box::new(impls::get),
     )
 }
 
@@ -181,7 +169,7 @@ pub fn build_set_command() -> Command<'static, Error> {
             PATH_SPEC.clone(),
         ])
         .unwrap(),
-        to_command_fn(commands::set),
+        Box::new(impls::set),
     )
 }
 
@@ -190,7 +178,7 @@ pub fn build_rm_command() -> Command<'static, Error> {
         "rm",
         "Remove a password or key from a pwm repository",
         Specs::new(vec![REPOSITORY_SPEC.clone(), PATH_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::rm),
+        Box::new(impls::rm),
     )
 }
 
@@ -206,7 +194,7 @@ pub fn build_generate_command() -> Command<'static, Error> {
             GENERATE_CUSTOM_EXCLUDE_SPEC.clone(),
         ])
         .unwrap(),
-        to_command_fn(commands::generate),
+        Box::new(impls::generate),
     )
 }
 
@@ -215,7 +203,7 @@ pub fn build_export_command() -> Command<'static, Error> {
         "export",
         "Export all stored passwords as plaintext JSON for backup purposes",
         Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::export),
+        Box::new(impls::export),
     )
 }
 
@@ -224,6 +212,6 @@ pub fn build_import_command() -> Command<'static, Error> {
         "import",
         "Import stored passwords previously 'export'ed",
         Specs::new(vec![REPOSITORY_SPEC.clone(), IMPORT_INPUT_SPEC.clone()]).unwrap(),
-        to_command_fn(commands::import),
+        Box::new(impls::import),
     )
 }

@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::cli::util::get_repository_path;
 use crate::configuration;
 use crate::crypto::pwgen;
 use crate::error::*;
 use crate::piv::{Configuration, KeyConfiguration};
 use crate::repository::Repository;
 use failure::format_err;
+use flaggy::*;
 use std::fs::{self, File};
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use yubirs::piv;
 use yubirs::piv::id::{Algorithm, Key, PinPolicy, TouchPolicy};
 
@@ -103,14 +105,17 @@ fn addpiv_impl<RP: AsRef<Path>, KP: AsRef<Path>>(
     Ok(())
 }
 
-pub(crate) fn setuppiv<RP: AsRef<Path>, KP: AsRef<Path>>(
-    repository_path: RP,
+#[command_callback]
+pub(crate) fn setuppiv(
+    repository: Option<PathBuf>,
     slot: Key,
     algorithm: Algorithm,
     pin_policy: PinPolicy,
     touch_policy: TouchPolicy,
-    public_key_path: KP,
+    public_key: PathBuf,
 ) -> Result<()> {
+    let repository = get_repository_path(repository)?;
+
     // This is a very destructive operation; confirm with the user first before
     // proceeding.
     if !bdrck::cli::continue_confirmation(
@@ -149,29 +154,27 @@ pub(crate) fn setuppiv<RP: AsRef<Path>, KP: AsRef<Path>>(
 
         // Generate the certificate pair which will be used to wrap the
         // repository's master key.
-        let public_key = handle.generate(
+        let generated_public_key = handle.generate(
             Some(new_mgm_key.as_str()),
             slot,
             algorithm,
             pin_policy,
             touch_policy,
         )?;
-        let public_key_data = public_key.format(piv::pkey::Format::Pem)?;
+        let public_key_data = generated_public_key.format(piv::pkey::Format::Pem)?;
 
         // Write the public key to a file.
-        let mut public_key_file = File::create(public_key_path.as_ref())?;
+        let mut public_key_file = File::create(&public_key)?;
         public_key_file.write_all(&public_key_data)?;
     }
 
     // Actually add the new PIV device.
-    addpiv_impl(repository_path, &reader, slot, public_key_path)
+    addpiv_impl(&repository, &reader, slot, &public_key)
 }
 
-pub(crate) fn addpiv<RP: AsRef<Path>, KP: AsRef<Path>>(
-    repository_path: RP,
-    slot: Key,
-    public_key_path: KP,
-) -> Result<()> {
+#[command_callback]
+pub(crate) fn addpiv(repository: Option<PathBuf>, slot: Key, public_key: PathBuf) -> Result<()> {
+    let repository = get_repository_path(repository)?;
     let reader = prompt_for_reader()?;
-    addpiv_impl(repository_path, &reader, slot, public_key_path)
+    addpiv_impl(&repository, &reader, slot, &public_key)
 }

@@ -20,6 +20,9 @@ pub enum Error {
     Base64(#[cause] ::data_encoding::DecodeError),
     #[fail(display = "{}", _0)]
     Bdrck(#[cause] ::bdrck::error::Error),
+    /// An error encountered in deciphering command-line flag values.
+    #[fail(display = "{}", _0)]
+    CliFlags(::failure::Error),
     #[fail(display = "{}", _0)]
     Git(#[cause] ::git2::Error),
     /// An internal unrecoverable error, usually due to some underlying library.
@@ -42,11 +45,17 @@ pub enum Error {
     #[fail(display = "{}", _0)]
     NotFound(::failure::Error),
     #[fail(display = "{}", _0)]
+    ParseBool(#[cause] ::std::str::ParseBoolError),
+    #[fail(display = "{}", _0)]
     ParseInt(#[cause] ::std::num::ParseIntError),
     /// An error encountered while interacting with a PIV device.
     #[cfg(feature = "piv")]
     #[fail(display = "{}", _0)]
     PIV(#[cause] ::yubirs::error::Error),
+    /// An awkward hack; this error exists to use String's FromStr impl, but
+    /// this operation won't actually ever fail.
+    #[fail(display = "{}", _0)]
+    StringParse(#[cause] ::std::string::ParseError),
     #[fail(display = "{}", _0)]
     Unknown(::failure::Error),
     #[fail(display = "{}", _0)]
@@ -56,6 +65,12 @@ pub enum Error {
 impl From<::bdrck::error::Error> for Error {
     fn from(e: ::bdrck::error::Error) -> Self {
         Error::Bdrck(e)
+    }
+}
+
+impl From<::flaggy::ValueError> for Error {
+    fn from(e: ::flaggy::ValueError) -> Self {
+        Error::CliFlags(failure::format_err!("{}", e))
     }
 }
 
@@ -89,6 +104,12 @@ impl From<::rmp_serde::encode::Error> for Error {
     }
 }
 
+impl From<::std::str::ParseBoolError> for Error {
+    fn from(e: ::std::str::ParseBoolError) -> Self {
+        Error::ParseBool(e)
+    }
+}
+
 impl From<::std::num::ParseIntError> for Error {
     fn from(e: ::std::num::ParseIntError) -> Self {
         Error::ParseInt(e)
@@ -99,6 +120,12 @@ impl From<::std::num::ParseIntError> for Error {
 impl From<::yubirs::error::Error> for Error {
     fn from(e: ::yubirs::error::Error) -> Self {
         Error::PIV(e)
+    }
+}
+
+impl From<::std::string::ParseError> for Error {
+    fn from(e: ::std::string::ParseError) -> Self {
+        Error::StringParse(e)
     }
 }
 

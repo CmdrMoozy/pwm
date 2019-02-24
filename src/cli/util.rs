@@ -15,16 +15,15 @@
 use crate::cli;
 use crate::configuration;
 use crate::error::*;
-use bdrck::flags::value::Values;
 use failure::format_err;
 use std::path::PathBuf;
 
-pub fn get_repository_path(values: &Values) -> Result<PathBuf> {
-    Ok(match values.get_single(&cli::REPOSITORY_SPEC.name) {
+pub fn get_repository_path(repository: Option<PathBuf>) -> Result<PathBuf> {
+    Ok(match repository {
         None => match configuration::get()?.default_repository.as_ref() {
-            None => return Err(Error::InvalidArgument(format_err!("No repository path specified. Try the '{}' command option, or setting the 'default_repository' configuration key.", crate::cli::REPOSITORY_SPEC.name))),
+            None => return Err(Error::InvalidArgument(format_err!("No repository path specified. Try the '{}' command option, or setting the 'default_repository' configuration key.", cli::REPOSITORY_SPEC.get_name()))),
             Some(r) => r.into(),
         },
-        Some(r) => r.into(),
+        Some(r) => r,
     })
 }

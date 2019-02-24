@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod commands;
 mod impls;
 
 use crate::cli;
 use crate::error::*;
-use bdrck::flags::command::Command;
-use bdrck::flags::spec::{Spec, Specs};
+use flaggy::*;
 use lazy_static::lazy_static;
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -90,7 +88,7 @@ pub fn build_setuppiv_command() -> Command<'static, Error> {
             PUBLIC_KEY_SPEC.clone(),
         ])
         .unwrap(),
-        cli::to_command_fn(commands::setuppiv),
+        Box::new(impls::setuppiv),
     )
 }
 
@@ -104,6 +102,6 @@ pub fn build_addpiv_command() -> Command<'static, Error> {
             PUBLIC_KEY_SPEC.clone(),
         ])
         .unwrap(),
-        cli::to_command_fn(commands::addpiv),
+        Box::new(impls::addpiv),
     )
 }

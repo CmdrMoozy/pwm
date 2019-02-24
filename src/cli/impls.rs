@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::cli::util::get_repository_path;
 use crate::configuration;
 use crate::crypto::pwgen;
 use crate::error::*;
 use crate::repository::serde::{export_serialize, import_deserialize};
 use crate::repository::Repository;
+#[cfg(feature = "clipboard")]
+use crate::util;
 use crate::util::data::{end_user_display, load_file, SecretSlice};
-use crate::util::{self, multiline_password_prompt, password_prompt};
+use crate::util::{multiline_password_prompt, password_prompt};
 use failure::format_err;
+use flaggy::*;
 use std::fs::File;
 use std::io;
-use std::path::Path;
+use std::path::PathBuf;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EOF' is read:";
 
-pub(crate) fn config(key: Option<&str>, set: Option<&str>) -> Result<()> {
+#[command_callback]
+pub(crate) fn config(key: Option<String>, set: Option<String>) -> Result<()> {
     if key.is_none() {
         if set.is_some() {
             return Err(Error::InvalidArgument(format_err!(
@@ -44,16 +49,18 @@ pub(crate) fn config(key: Option<&str>, set: Option<&str>) -> Result<()> {
 
     let key = key.unwrap();
     if let Some(set) = set {
-        configuration::set(key, set).unwrap();
+        configuration::set(&key, &set).unwrap();
     }
 
-    println!("{} = {}", key, configuration::get_value_as_str(key)?);
+    println!("{} = {}", key, configuration::get_value_as_str(&key)?);
 
     Ok(())
 }
 
-pub(crate) fn init<P: AsRef<Path>>(path: P) -> Result<()> {
-    let repository = Repository::new(path.as_ref(), true, None)?;
+#[command_callback]
+pub(crate) fn init(repository: Option<PathBuf>) -> Result<()> {
+    let repository = get_repository_path(repository)?;
+    let repository = Repository::new(&repository, true, None)?;
     println!(
         "Initialized repository: {}",
         repository.workdir().unwrap().display()
@@ -62,23 +69,29 @@ pub(crate) fn init<P: AsRef<Path>>(path: P) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn addkey<P: AsRef<Path>>(path: P) -> Result<()> {
-    let mut repository = Repository::new(path.as_ref(), false, None)?;
+#[command_callback]
+pub(crate) fn addkey(repository: Option<PathBuf>) -> Result<()> {
+    let repository = get_repository_path(repository)?;
+    let mut repository = Repository::new(&repository, false, None)?;
     repository.add_password_key(None)?;
 
     Ok(())
 }
 
-pub(crate) fn rmkey<P: AsRef<Path>>(path: P) -> Result<()> {
-    let mut repository = Repository::new(path.as_ref(), false, None)?;
+#[command_callback]
+pub(crate) fn rmkey(repository: Option<PathBuf>) -> Result<()> {
+    let repository = get_repository_path(repository)?;
+    let mut repository = Repository::new(&repository, false, None)?;
     repository.remove_key(None)?;
 
     Ok(())
 }
 
-pub(crate) fn ls<RP: AsRef<Path>>(repository_path: RP, path: &str) -> Result<()> {
-    let repository = Repository::new(repository_path, false, None)?;
-    let path = repository.path(path)?;
+#[command_callback]
+pub(crate) fn ls(repository: Option<PathBuf>, path_prefix: String) -> Result<()> {
+    let repository = get_repository_path(repository)?;
+    let repository = Repository::new(&repository, false, None)?;
+    let path = repository.path(path_prefix)?;
     for entry in &repository.list(Some(&path))? {
         println!("{}", entry.to_str().unwrap());
     }
@@ -104,13 +117,15 @@ fn print_stored_data(retrieved: &SecretSlice, force_binary: bool) -> Result<()> 
     Ok(())
 }
 
-pub(crate) fn get<RP: AsRef<Path>>(
-    repository_path: RP,
-    force_binary: bool,
-    clipboard: bool,
-    path: &str,
+#[command_callback]
+pub(crate) fn get(
+    repository: Option<PathBuf>,
+    binary: bool,
+    clipboard: Option<bool>,
+    path: String,
 ) -> Result<()> {
-    let repository = Repository::new(repository_path.as_ref(), false, None)?;
+    let repository = get_repository_path(repository)?;
+    let repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path)?;
 
     let retrieved = repository.read_decrypt(&path)?;
@@ -118,40 +133,43 @@ pub(crate) fn get<RP: AsRef<Path>>(
     match () {
         #[cfg(feature = "clipboard")]
         () => {
-            if clipboard {
-                util::clipboard::set_contents(&retrieved, force_binary)?;
+            if clipboard.unwrap() {
+                util::clipboard::set_contents(&retrieved, binary)?;
             } else {
-                print_stored_data(&retrieved, force_binary)?;
+                print_stored_data(&retrieved, binary)?;
             }
         }
 
         #[cfg(not(feature = "clipboard"))]
         () => {
-            print_stored_data(&retrieved, force_binary)?;
+            let _clipboard = clipboard.unwrap_or(false);
+            print_stored_data(&retrieved, binary)?;
         }
     }
 
     Ok(())
 }
 
-pub(crate) fn set<RP: AsRef<Path>, KP: AsRef<Path>>(
-    repository_path: RP,
-    key_path: Option<KP>,
+#[command_callback]
+pub(crate) fn set(
+    repository: Option<PathBuf>,
+    key_file: Option<PathBuf>,
     multiline: bool,
-    path: &str,
+    path: String,
 ) -> Result<()> {
-    let mut repository = Repository::new(repository_path.as_ref(), false, None)?;
+    let repository = get_repository_path(repository)?;
+    let mut repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path)?;
 
-    if key_path.is_some() && multiline {
+    if key_file.is_some() && multiline {
         return Err(Error::InvalidArgument(format_err!(
             "The 'key_file' and 'multiline' options are mutually exclusive."
         )));
     }
 
-    if let Some(key_path) = key_path {
+    if let Some(key_file) = key_file {
         // The user wants to set the password using a key file.
-        repository.write_encrypt(&path, load_file(key_path.as_ref())?)?;
+        repository.write_encrypt(&path, load_file(&key_file)?)?;
     } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
@@ -167,19 +185,22 @@ pub(crate) fn set<RP: AsRef<Path>, KP: AsRef<Path>>(
     Ok(())
 }
 
-pub(crate) fn rm<RP: AsRef<Path>>(repository_path: RP, path: &str) -> Result<()> {
-    let mut repository = Repository::new(repository_path.as_ref(), false, None)?;
+#[command_callback]
+pub(crate) fn rm(repository: Option<PathBuf>, path: String) -> Result<()> {
+    let repository = get_repository_path(repository)?;
+    let mut repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path)?;
     repository.remove(&path)?;
     Ok(())
 }
 
+#[command_callback]
 pub(crate) fn generate(
-    length: usize,
+    password_length: usize,
     exclude_letters: bool,
     exclude_numbers: bool,
     include_symbols: bool,
-    custom_exclude: Option<&str>,
+    custom_exclude: Option<String>,
 ) -> Result<()> {
     let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
     if !exclude_letters {
@@ -196,8 +217,12 @@ pub(crate) fn generate(
     println!(
         "{}",
         end_user_display(
-            pwgen::generate_password(length, charsets.as_slice(), custom_exclude.as_slice())?
-                .as_slice(),
+            pwgen::generate_password(
+                password_length,
+                charsets.as_slice(),
+                custom_exclude.as_slice()
+            )?
+            .as_slice(),
             false,
             false
         )
@@ -207,25 +232,26 @@ pub(crate) fn generate(
     Ok(())
 }
 
-pub(crate) fn export<P: AsRef<Path>>(path: P) -> Result<()> {
-    let mut repository = Repository::new(path.as_ref(), false, None)?;
+#[command_callback]
+pub(crate) fn export(repository: Option<PathBuf>) -> Result<()> {
+    let repository = get_repository_path(repository)?;
+    let mut repository = Repository::new(&repository, false, None)?;
     println!("{}", export_serialize(&mut repository)?);
     Ok(())
 }
 
-pub(crate) fn import<RP: AsRef<Path>, IP: AsRef<Path>>(
-    repository_path: RP,
-    input_path: IP,
-) -> Result<()> {
+#[command_callback]
+pub(crate) fn import(repository: Option<PathBuf>, input: PathBuf) -> Result<()> {
     use std::io::Read;
 
-    let mut repository = Repository::new(repository_path.as_ref(), false, None)?;
+    let repository = get_repository_path(repository)?;
+    let mut repository = Repository::new(&repository, false, None)?;
 
-    let mut input = String::new();
-    let mut f = File::open(input_path.as_ref())?;
-    f.read_to_string(&mut input)?;
+    let mut input_data = String::new();
+    let mut f = File::open(&input)?;
+    f.read_to_string(&mut input_data)?;
 
-    import_deserialize(&mut repository, input.as_str())?;
+    import_deserialize(&mut repository, input_data.as_str())?;
 
     Ok(())
 }

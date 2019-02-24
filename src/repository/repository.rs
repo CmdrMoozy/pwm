@@ -25,13 +25,17 @@ use bdrck::crypto::keystore::DiskKeyStore;
 use failure::format_err;
 use git2;
 use lazy_static::lazy_static;
+#[cfg(feature = "piv")]
 use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+#[cfg(feature = "piv")]
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
+#[cfg(feature = "piv")]
 use yubirs::piv;
+#[cfg(feature = "piv")]
 use yubirs::piv::hal::PcscHardware;
 
 lazy_static! {
@@ -112,7 +116,7 @@ fn get_keystore_key(
     create: bool,
     password: Option<Secret>,
     crypto_config: &Configuration,
-) -> Result<Box<AbstractKey>> {
+) -> Result<Box<dyn AbstractKey>> {
     get_keystore_key_password(create, password, crypto_config)
 }
 
