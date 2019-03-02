@@ -114,6 +114,7 @@ pub(crate) fn setuppiv(
     touch_policy: TouchPolicy,
     public_key: PathBuf,
 ) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
 
     // This is a very destructive operation; confirm with the user first before
@@ -174,6 +175,7 @@ pub(crate) fn setuppiv(
 
 #[command_callback]
 pub(crate) fn addpiv(repository: Option<PathBuf>, slot: Key, public_key: PathBuf) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let reader = prompt_for_reader()?;
     addpiv_impl(&repository, &reader, slot, &public_key)

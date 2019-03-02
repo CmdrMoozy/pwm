@@ -37,8 +37,6 @@ fn main() {
             .unwrap(),
     );
 
-    let _handle = pwm_lib::init_with_configuration().unwrap();
-
     main_impl(vec![
         pwm_lib::cli::build_config_command(),
         pwm_lib::cli::build_init_command(),

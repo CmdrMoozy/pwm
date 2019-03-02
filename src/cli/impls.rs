@@ -33,6 +33,7 @@ static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EO
 
 #[command_callback]
 pub(crate) fn config(key: Option<String>, set: Option<String>) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     if key.is_none() {
         if set.is_some() {
             return Err(Error::InvalidArgument(format_err!(
@@ -59,6 +60,7 @@ pub(crate) fn config(key: Option<String>, set: Option<String>) -> Result<()> {
 
 #[command_callback]
 pub(crate) fn init(repository: Option<PathBuf>) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let repository = Repository::new(&repository, true, None)?;
     println!(
@@ -71,6 +73,7 @@ pub(crate) fn init(repository: Option<PathBuf>) -> Result<()> {
 
 #[command_callback]
 pub(crate) fn addkey(repository: Option<PathBuf>) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let mut repository = Repository::new(&repository, false, None)?;
     repository.add_password_key(None)?;
@@ -80,6 +83,7 @@ pub(crate) fn addkey(repository: Option<PathBuf>) -> Result<()> {
 
 #[command_callback]
 pub(crate) fn rmkey(repository: Option<PathBuf>) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let mut repository = Repository::new(&repository, false, None)?;
     repository.remove_key(None)?;
@@ -89,6 +93,7 @@ pub(crate) fn rmkey(repository: Option<PathBuf>) -> Result<()> {
 
 #[command_callback]
 pub(crate) fn ls(repository: Option<PathBuf>, path_prefix: String) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path_prefix)?;
@@ -124,6 +129,7 @@ pub(crate) fn get(
     clipboard: Option<bool>,
     path: String,
 ) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path)?;
@@ -157,6 +163,7 @@ pub(crate) fn set(
     multiline: bool,
     path: String,
 ) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let mut repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path)?;
@@ -187,6 +194,7 @@ pub(crate) fn set(
 
 #[command_callback]
 pub(crate) fn rm(repository: Option<PathBuf>, path: String) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let mut repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path)?;
@@ -202,6 +210,7 @@ pub(crate) fn generate(
     include_symbols: bool,
     custom_exclude: Option<String>,
 ) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
     if !exclude_letters {
         charsets.push(pwgen::CharacterSet::Letters);
@@ -234,6 +243,7 @@ pub(crate) fn generate(
 
 #[command_callback]
 pub(crate) fn export(repository: Option<PathBuf>) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let mut repository = Repository::new(&repository, false, None)?;
     println!("{}", export_serialize(&mut repository)?);
@@ -244,6 +254,7 @@ pub(crate) fn export(repository: Option<PathBuf>) -> Result<()> {
 pub(crate) fn import(repository: Option<PathBuf>, input: PathBuf) -> Result<()> {
     use std::io::Read;
 
+    let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let mut repository = Repository::new(&repository, false, None)?;
 
