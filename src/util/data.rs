@@ -48,20 +48,3 @@ pub fn decode(encoded: &str) -> Result<Secret> {
         Err(e) => return Err(Error::Base64(e)),
     })
 }
-
-pub fn end_user_display(
-    secret: &SecretSlice,
-    force_binary: bool,
-    require_utf8: bool,
-) -> Option<String> {
-    let as_utf8 = ::std::str::from_utf8(secret).map(|s| s.to_owned());
-    let is_binary = force_binary || as_utf8.is_err();
-
-    if !is_binary {
-        Some(as_utf8.unwrap())
-    } else if require_utf8 {
-        Some(encode(secret))
-    } else {
-        None
-    }
-}

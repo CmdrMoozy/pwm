@@ -16,16 +16,14 @@ use crate::cli::util::get_repository_path;
 use crate::configuration;
 use crate::crypto::pwgen;
 use crate::error::*;
+use crate::output::{output_secret, InputEncoding, OutputMethod};
 use crate::repository::serde::{export_serialize, import_deserialize};
 use crate::repository::Repository;
-#[cfg(feature = "clipboard")]
-use crate::util;
-use crate::util::data::{end_user_display, load_file, SecretSlice};
+use crate::util::data::load_file;
 use crate::util::{multiline_password_prompt, password_prompt};
 use failure::format_err;
 use flaggy::*;
 use std::fs::File;
-use std::io;
 use std::path::PathBuf;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
@@ -104,55 +102,25 @@ pub(crate) fn ls(repository: Option<PathBuf>, path_prefix: String) -> Result<()>
     Ok(())
 }
 
-fn print_stored_data(retrieved: &SecretSlice, force_binary: bool) -> Result<()> {
-    let tty = bdrck::cli::isatty(bdrck::cli::Stream::Stdout);
-    let display: Option<String> = end_user_display(retrieved, force_binary, tty);
-    let bytes: &[u8] = display
-        .as_ref()
-        .map_or_else(|| &retrieved[..], |s| s.as_bytes());
-
-    if tty {
-        println!("{}", String::from_utf8_lossy(bytes));
-    } else {
-        use std::io::Write;
-        let mut stdout = io::stdout();
-        stdout.write_all(bytes)?;
-    }
-
-    Ok(())
-}
-
 #[command_callback]
 pub(crate) fn get(
     repository: Option<PathBuf>,
     binary: bool,
-    clipboard: Option<bool>,
+    output_method: OutputMethod,
     path: String,
 ) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let repository = Repository::new(&repository, false, None)?;
     let path = repository.path(path)?;
-
-    let retrieved = repository.read_decrypt(&path)?;
-
-    match () {
-        #[cfg(feature = "clipboard")]
-        () => {
-            if clipboard.unwrap() {
-                util::clipboard::set_contents(&retrieved, binary)?;
-            } else {
-                print_stored_data(&retrieved, binary)?;
-            }
-        }
-
-        #[cfg(not(feature = "clipboard"))]
-        () => {
-            let _clipboard = clipboard.unwrap_or(false);
-            print_stored_data(&retrieved, binary)?;
-        }
-    }
-
+    output_secret(
+        &repository.read_decrypt(&path)?,
+        match binary {
+            false => InputEncoding::Auto,
+            true => InputEncoding::Binary,
+        },
+        output_method,
+    )?;
     Ok(())
 }
 
@@ -223,20 +191,16 @@ pub(crate) fn generate(
     }
     let custom_exclude: Vec<char> = custom_exclude.map_or(vec![], |x| x.chars().collect());
 
-    println!(
-        "{}",
-        end_user_display(
-            pwgen::generate_password(
-                password_length,
-                charsets.as_slice(),
-                custom_exclude.as_slice()
-            )?
-            .as_slice(),
-            false,
-            false
-        )
-        .unwrap()
-    );
+    output_secret(
+        pwgen::generate_password(
+            password_length,
+            charsets.as_slice(),
+            custom_exclude.as_slice(),
+        )?
+        .as_slice(),
+        InputEncoding::Auto,
+        OutputMethod::Stdout,
+    )?;
 
     Ok(())
 }

@@ -48,10 +48,11 @@ lazy_static! {
         "Treat the saved password or key as binary data",
         Some('b')
     );
-    pub static ref GET_CLIPBOARD_SPEC: Spec = Spec::boolean(
-        "clipboard",
-        "Copy the saved password or key to the clipboard",
-        Some('c')
+    pub static ref GET_OUTPUT_METHOD_SPEC: Spec = Spec::required(
+        "output_method",
+        "How to output the retrieved secret",
+        Some('o'),
+        Some(&crate::output::OutputMethod::Stdout.to_string())
     );
     pub static ref SET_KEY_FILE_SPEC: Spec = Spec::optional(
         "key_file",
@@ -149,8 +150,7 @@ pub fn build_get_command() -> Command<'static, Error> {
         Specs::new(vec![
             REPOSITORY_SPEC.clone(),
             GET_BINARY_SPEC.clone(),
-            #[cfg(feature = "clipboard")]
-            GET_CLIPBOARD_SPEC.clone(),
+            GET_OUTPUT_METHOD_SPEC.clone(),
             PATH_SPEC.clone(),
         ])
         .unwrap(),

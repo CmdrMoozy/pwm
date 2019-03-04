@@ -25,6 +25,7 @@ pub mod cli;
 pub mod configuration;
 pub mod crypto;
 pub mod error;
+pub mod output;
 #[cfg(feature = "piv")]
 pub mod piv;
 pub mod repository;

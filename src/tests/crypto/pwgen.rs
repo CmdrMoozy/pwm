@@ -13,22 +13,19 @@
 // limitations under the License.
 
 use crate::crypto::pwgen::*;
-use crate::util::data::end_user_display;
 
 fn generate_password_str(
     length: Option<usize>,
     charsets: &[CharacterSet],
     exclude: &[char],
 ) -> String {
-    end_user_display(
-        &generate_password(
+    String::from_utf8(
+        generate_password(
             length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
             charsets,
             exclude,
         )
         .unwrap(),
-        false,
-        false,
     )
     .unwrap()
 }

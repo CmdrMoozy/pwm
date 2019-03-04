@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use crate::error::*;
-use crate::util::data::{end_user_display, SecretSlice};
+use crate::output::{encode_for_display, InputEncoding, OutputHandler};
+use crate::util::data::SecretSlice;
 use clipboard::{self, ClipboardProvider};
 use failure::format_err;
 use lazy_static::lazy_static;
@@ -36,13 +37,17 @@ fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> 
     }
 }
 
-/// Set the contents of the OS's clipboard to the given data. If `force_binary`
-/// is true, or if the given data is determined to not be a valid UTF-8-encoded
-/// string, then the clipboard will be populated with a Base64 encoded version
-/// of the data.
-pub fn set_contents(data: &SecretSlice, force_binary: bool) -> Result<()> {
-    let mut cp: clipboard::x11_clipboard::X11ClipboardContext<clipboard::x11_clipboard::Clipboard> =
-        match clipboard::x11_clipboard::X11ClipboardContext::new() {
+pub(crate) struct ClipboardOutputHandler;
+
+impl OutputHandler for ClipboardOutputHandler {
+    /// Set the contents of the OS's clipboard to the given data. If
+    /// `force_binary` is true, or if the given data is determined to not be a
+    /// valid UTF-8-encoded string, then the clipboard will be populated with a
+    /// base-64 encoded version of the data.
+    fn handle(&self, secret: &SecretSlice, encoding: InputEncoding) -> Result<()> {
+        let mut cp: clipboard::x11_clipboard::X11ClipboardContext<
+            clipboard::x11_clipboard::Clipboard,
+        > = match clipboard::x11_clipboard::X11ClipboardContext::new() {
             Ok(cp) => cp,
             Err(_) => {
                 return Err(Error::Internal(format_err!(
@@ -51,14 +56,20 @@ pub fn set_contents(data: &SecretSlice, force_binary: bool) -> Result<()> {
             }
         };
 
-    set_contents_string(&mut cp, end_user_display(data, force_binary, true).unwrap())?;
+        set_contents_string(
+            &mut cp,
+            String::from_utf8(encode_for_display(
+                secret, encoding, /*supports_binary=*/ false,
+            ))
+            .unwrap(),
+        )?;
+        info!(
+            "Copied stored password or key to clipboard. Will clear in {} seconds.",
+            CLIPBOARD_TIMEOUT.as_secs()
+        );
+        sleep(*CLIPBOARD_TIMEOUT);
+        set_contents_string(&mut cp, "".to_owned())?;
 
-    info!(
-        "Copied stored password or key to clipboard. Will clear in {} seconds.",
-        CLIPBOARD_TIMEOUT.as_secs()
-    );
-    sleep(*CLIPBOARD_TIMEOUT);
-    set_contents_string(&mut cp, "".to_owned())?;
-
-    Ok(())
+        Ok(())
+    }
 }
