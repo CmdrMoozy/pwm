@@ -51,6 +51,8 @@ fn main() {
         pwm_lib::cli::build_set_command(),
         pwm_lib::cli::build_rm_command(),
         pwm_lib::cli::build_generate_command(),
+        #[cfg(feature = "wifiqr")]
+        pwm_lib::wifiqr::build_wifiqr_command(),
         pwm_lib::cli::build_export_command(),
         pwm_lib::cli::build_import_command(),
     ]);

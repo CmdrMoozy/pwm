@@ -60,6 +60,8 @@ pub enum Error {
     Unknown(::failure::Error),
     #[fail(display = "{}", _0)]
     Utf8(::std::string::FromUtf8Error),
+    #[fail(display = "{}", _0)]
+    Utf8Slice(::std::str::Utf8Error),
 }
 
 impl From<::bdrck::error::Error> for Error {
@@ -138,6 +140,12 @@ impl From<::failure::Error> for Error {
 impl From<::std::string::FromUtf8Error> for Error {
     fn from(e: ::std::string::FromUtf8Error) -> Self {
         Error::Utf8(e)
+    }
+}
+
+impl From<::std::str::Utf8Error> for Error {
+    fn from(e: ::std::str::Utf8Error) -> Self {
+        Error::Utf8Slice(e)
     }
 }
 

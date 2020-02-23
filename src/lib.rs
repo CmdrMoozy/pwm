@@ -30,6 +30,8 @@ pub mod output;
 pub mod piv;
 pub mod repository;
 pub mod util;
+#[cfg(feature = "wifiqr")]
+pub mod wifiqr;
 
 #[cfg(test)]
 mod tests;
