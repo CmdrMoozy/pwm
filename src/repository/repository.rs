@@ -132,7 +132,12 @@ fn open_keystore(
 
     let key = get_keystore_key(create, password, &crypto_config)?;
 
-    Ok(DiskKeyStore::open_or_new(path.as_path(), &key)?)
+    let mut keystore = DiskKeyStore::new(path.as_path(), false)?;
+    if !keystore.is_persistable() {
+        keystore.add_key(&key)?;
+    }
+    keystore.open(&key)?;
+    Ok(keystore)
 }
 
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
@@ -236,7 +241,7 @@ impl Repository {
     }
 
     fn get_master_key(&self) -> Result<&Key> {
-        Ok(self.get_key_store()?.get_master_key())
+        Ok(self.get_key_store()?.get_master_key()?)
     }
 
     pub fn workdir(&self) -> Result<&Path> {
