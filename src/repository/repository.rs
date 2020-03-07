@@ -52,20 +52,6 @@ static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
 
-fn get_keystore_key_password(
-    create: bool,
-    password: Option<Secret>,
-    crypto_config: &Configuration,
-) -> Result<Box<dyn AbstractKey>> {
-    let password = unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
-    Ok(Box::new(Key::new_password(
-        password.as_slice(),
-        &crypto_config.get_salt(),
-        crypto_config.get_ops_limit(),
-        crypto_config.get_mem_limit(),
-    )?))
-}
-
 #[cfg(feature = "piv")]
 fn get_keystore_key(
     create: bool,
@@ -96,7 +82,7 @@ fn get_keystore_key(
         }
     }
 
-    get_keystore_key_password(create, password, crypto_config)
+    crypto_config.get_password_key(password, MASTER_PASSWORD_PROMPT, create)
 }
 
 #[cfg(not(feature = "piv"))]

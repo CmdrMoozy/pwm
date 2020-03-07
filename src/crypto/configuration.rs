@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::Result;
+use crate::error::*;
+use crate::util::data::Secret;
+use crate::util::unwrap_password_or_prompt;
 use bdrck::configuration as bdrck_config;
 use bdrck::crypto::key::*;
 use serde_derive::{Deserialize, Serialize};
@@ -44,6 +46,21 @@ impl Configuration {
 
     pub fn get_ops_limit(&self) -> usize {
         self.ops_limit
+    }
+
+    pub fn get_password_key(
+        &self,
+        password: Option<Secret>,
+        prompt: &str,
+        confirm: bool,
+    ) -> Result<Box<dyn AbstractKey>> {
+        let password = unwrap_password_or_prompt(password, prompt, confirm)?;
+        Ok(Box::new(Key::new_password(
+            password.as_slice(),
+            &self.salt,
+            self.ops_limit,
+            self.mem_limit,
+        )?))
     }
 }
 
