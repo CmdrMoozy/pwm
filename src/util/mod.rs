@@ -31,6 +31,20 @@ pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::Secret> {
     .into())
 }
 
+/// A wrapper around `password_prompt`, which will skip the prompt if a
+/// "hard-coded" password was provided instead.
+pub fn unwrap_password_or_prompt(
+    password: Option<data::Secret>,
+    prompt: &str,
+    confirm: bool,
+) -> Result<data::Secret> {
+    Ok(if let Some(p) = password {
+        p
+    } else {
+        password_prompt(prompt, confirm)?
+    })
+}
+
 /// Prompt the user for multiple lines of password data using the given prompt
 /// on stderr. We'll keep reading lines of text from stdin until we read "EOF".
 pub fn multiline_password_prompt(prompt: &str) -> Result<data::Secret> {

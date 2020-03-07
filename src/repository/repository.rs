@@ -19,7 +19,7 @@ use crate::repository::path::Path as RepositoryPath;
 use crate::util::data::Secret;
 use crate::util::git;
 use crate::util::lazy::Lazy;
-use crate::util::password_prompt;
+use crate::util::unwrap_password_or_prompt;
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
 use failure::format_err;
@@ -51,18 +51,6 @@ static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption he
 static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
-
-fn unwrap_password_or_prompt(
-    password: Option<Secret>,
-    prompt: &str,
-    confirm: bool,
-) -> Result<Secret> {
-    Ok(if let Some(p) = password {
-        p
-    } else {
-        password_prompt(prompt, confirm)?
-    })
-}
 
 fn get_keystore_key_password(
     create: bool,
