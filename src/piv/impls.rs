@@ -13,14 +13,14 @@
 // limitations under the License.
 
 use crate::cli::util::get_repository_path;
-use crate::configuration;
+//use crate::configuration;
 use crate::crypto::pwgen;
 use crate::error::*;
-use crate::piv::{Configuration, KeyConfiguration};
-use crate::repository::Repository;
+//use crate::piv::{Configuration, KeyConfiguration};
+//use crate::repository::Repository;
 use failure::format_err;
 use flaggy::*;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use yubirs::piv;
@@ -75,11 +75,13 @@ fn prompt_for_reader() -> Result<String> {
 }
 
 fn addpiv_impl<RP: AsRef<Path>, KP: AsRef<Path>>(
-    repository_path: RP,
-    reader: &str,
-    slot: Key,
-    public_key_path: KP,
+    _repository_path: RP,
+    _reader: &str,
+    _slot: Key,
+    _public_key_path: KP,
 ) -> Result<()> {
+    // TODO: Re-implement this.
+    /*
     // Add the key to the repository.
     let mut repository = Repository::new(repository_path.as_ref(), false, None)?;
     let key: piv::key::Key<piv::hal::PcscHardware> =
@@ -101,6 +103,7 @@ fn addpiv_impl<RP: AsRef<Path>, KP: AsRef<Path>>(
         config.piv = Some(piv_config);
         Ok(())
     })?;
+    */
 
     Ok(())
 }

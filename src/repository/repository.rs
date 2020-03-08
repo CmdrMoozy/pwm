@@ -15,7 +15,7 @@
 use crate::crypto::configuration::{Configuration, ConfigurationInstance};
 use crate::crypto::padding;
 use crate::error::*;
-use crate::repository::keystore::get_keystore;
+use crate::repository::keystore::{add_password_key, get_keystore};
 use crate::repository::path::Path as RepositoryPath;
 use crate::util::data::Secret;
 use crate::util::git;
@@ -37,7 +37,6 @@ lazy_static! {
 }
 
 // TODO: Remove these once they are no longer referenced in this file.
-static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
 static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
@@ -188,26 +187,12 @@ impl Repository {
             .collect()
     }
 
-    pub fn add_key<K: AbstractKey>(&mut self, key: &K) -> Result<()> {
-        let was_added = self.get_key_store_mut()?.add_key(key)?;
-        if !was_added {
-            return Err(Error::InvalidArgument(format_err!(
-                "The specified key is already in use, so it was not re-added"
-            )));
-        }
-        Ok(())
-    }
-
     pub fn add_password_key(&mut self, password: Option<Secret>) -> Result<()> {
-        let config = self.get_crypto_configuration();
-        let password = unwrap_password_or_prompt(password, ADD_KEY_PROMPT, true)?;
-        let key = Key::new_password(
-            password.as_slice(),
-            &config.get_salt(),
-            config.get_ops_limit(),
-            config.get_mem_limit(),
-        )?;
-        self.add_key(&key)
+        add_password_key(
+            &self.get_crypto_configuration(),
+            self.get_key_store_mut()?,
+            password,
+        )
     }
 
     pub fn remove_key(&mut self, password: Option<Secret>) -> Result<()> {

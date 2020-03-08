@@ -15,11 +15,13 @@
 use crate::crypto::configuration::Configuration;
 use crate::error::*;
 use crate::util::data::Secret;
+use bdrck::crypto::key::AbstractKey;
 use bdrck::crypto::keystore::DiskKeyStore;
 use failure::format_err;
 use std::path::Path;
 
 static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
+static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
 
 fn open(
     keystore: &mut DiskKeyStore,
@@ -89,4 +91,25 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
 
     // Return the fully initialized key store.
     Ok(keystore)
+}
+
+fn add_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
+    let was_added = keystore.add_key(key)?;
+    if !was_added {
+        return Err(Error::InvalidArgument(format_err!(
+            "The specified key is already in use, so it was not re-added"
+        )));
+    }
+    Ok(())
+}
+
+pub(crate) fn add_password_key(
+    crypto_config: &Configuration,
+    keystore: &mut DiskKeyStore,
+    password: Option<Secret>,
+) -> Result<()> {
+    add_key(
+        keystore,
+        &crypto_config.get_password_key(password, ADD_KEY_PROMPT, /*confirm=*/ true)?,
+    )
 }
