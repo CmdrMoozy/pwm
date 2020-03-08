@@ -84,7 +84,7 @@ pub(crate) fn rmkey(repository: Option<PathBuf>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let mut repository = Repository::new(&repository, false, None)?;
-    repository.remove_key(None)?;
+    repository.remove_password_key(None)?;
 
     Ok(())
 }

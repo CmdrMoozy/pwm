@@ -15,12 +15,11 @@
 use crate::crypto::configuration::{Configuration, ConfigurationInstance};
 use crate::crypto::padding;
 use crate::error::*;
-use crate::repository::keystore::{add_password_key, get_keystore};
+use crate::repository::keystore::{add_password_key, get_keystore, remove_password_key};
 use crate::repository::path::Path as RepositoryPath;
 use crate::util::data::Secret;
 use crate::util::git;
 use crate::util::lazy::Lazy;
-use crate::util::unwrap_password_or_prompt;
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
 use failure::format_err;
@@ -35,9 +34,6 @@ lazy_static! {
     static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
     static ref KEYSTORE_PATH: PathBuf = PathBuf::from("keys.mp");
 }
-
-// TODO: Remove these once they are no longer referenced in this file.
-static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
@@ -195,22 +191,12 @@ impl Repository {
         )
     }
 
-    pub fn remove_key(&mut self, password: Option<Secret>) -> Result<()> {
-        let config = self.get_crypto_configuration();
-        let password = unwrap_password_or_prompt(password, REMOVE_KEY_PROMPT, true)?;
-        let key = Key::new_password(
-            password.as_slice(),
-            &config.get_salt(),
-            config.get_ops_limit(),
-            config.get_mem_limit(),
-        )?;
-        let was_removed = self.get_key_store_mut()?.remove_key(&key)?;
-        if !was_removed {
-            return Err(Error::NotFound(format_err!(
-                "The specified key is not registered with this repository"
-            )));
-        }
-        Ok(())
+    pub fn remove_password_key(&mut self, password: Option<Secret>) -> Result<()> {
+        remove_password_key(
+            &self.get_crypto_configuration(),
+            self.get_key_store_mut()?,
+            password,
+        )
     }
 
     pub fn write_encrypt(&mut self, path: &RepositoryPath, plaintext: Secret) -> Result<()> {

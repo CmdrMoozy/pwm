@@ -22,6 +22,7 @@ use std::path::Path;
 
 static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
 static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
+static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 
 fn open(
     keystore: &mut DiskKeyStore,
@@ -111,5 +112,26 @@ pub(crate) fn add_password_key(
     add_key(
         keystore,
         &crypto_config.get_password_key(password, ADD_KEY_PROMPT, /*confirm=*/ true)?,
+    )
+}
+
+fn remove_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
+    let was_removed = keystore.remove_key(key)?;
+    if !was_removed {
+        return Err(Error::NotFound(format_err!(
+            "The specified key is not registered with this repository"
+        )));
+    }
+    Ok(())
+}
+
+pub(crate) fn remove_password_key(
+    crypto_config: &Configuration,
+    keystore: &mut DiskKeyStore,
+    password: Option<Secret>,
+) -> Result<()> {
+    remove_key(
+        keystore,
+        &crypto_config.get_password_key(password, REMOVE_KEY_PROMPT, /*confirm=*/ false)?,
     )
 }

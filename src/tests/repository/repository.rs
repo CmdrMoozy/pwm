@@ -193,13 +193,13 @@ fn test_adding_key_succeeds() {
 #[test]
 fn test_removing_only_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.remove_key(Some(to_password("foobar"))).is_err());
+    assert!(t.remove_password_key(Some(to_password("foobar"))).is_err());
 }
 
 #[test]
 fn test_removing_unused_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.remove_key(Some(to_password("barbaz"))).is_err());
+    assert!(t.remove_password_key(Some(to_password("barbaz"))).is_err());
 }
 
 #[test]
@@ -217,7 +217,7 @@ fn test_removing_key_succeeds() {
         repository.write_encrypt(&path, plaintext.clone()).unwrap();
 
         repository.add_password_key(Some(pwb.clone())).unwrap();
-        repository.remove_key(Some(pwa.clone())).unwrap();
+        repository.remove_password_key(Some(pwa.clone())).unwrap();
     }
 
     {
