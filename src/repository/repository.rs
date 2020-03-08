@@ -15,6 +15,7 @@
 use crate::crypto::configuration::{Configuration, ConfigurationInstance};
 use crate::crypto::padding;
 use crate::error::*;
+use crate::repository::keystore::get_keystore;
 use crate::repository::path::Path as RepositoryPath;
 use crate::util::data::Secret;
 use crate::util::git;
@@ -25,25 +26,17 @@ use bdrck::crypto::keystore::DiskKeyStore;
 use failure::format_err;
 use git2;
 use lazy_static::lazy_static;
-#[cfg(feature = "piv")]
-use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-#[cfg(feature = "piv")]
-use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
-#[cfg(feature = "piv")]
-use yubirs::piv;
-#[cfg(feature = "piv")]
-use yubirs::piv::hal::PcscHardware;
 
 lazy_static! {
     static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
     static ref KEYSTORE_PATH: PathBuf = PathBuf::from("keys.mp");
 }
 
-static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
+// TODO: Remove these once they are no longer referenced in this file.
 static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
 static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 
@@ -52,66 +45,11 @@ static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
 
-#[cfg(feature = "piv")]
-fn get_keystore_key(
-    create: bool,
-    password: Option<Secret>,
-    crypto_config: &Configuration,
-) -> Result<Box<dyn AbstractKey>> {
-    // Don't try using a PIV device if a password was given explicitly.
-    if password.is_none() {
-        let config = crate::configuration::get()?;
-        if let Some(config) = config.piv {
-            let handle: piv::Handle<PcscHardware> = piv::Handle::new()?;
-            let readers: HashSet<String> = HashSet::from_iter(handle.list_readers()?.into_iter());
-
-            for config in config.keys {
-                let reader: String = config
-                    .reader
-                    .unwrap_or_else(|| piv::DEFAULT_READER.to_owned());
-                if readers.contains(&reader) {
-                    let key: piv::key::Key<PcscHardware> = piv::key::Key::new(
-                        Some(reader.as_str()),
-                        None,
-                        config.slot,
-                        config.public_key.as_path(),
-                    )?;
-                    return Ok(Box::new(key));
-                }
-            }
-        }
-    }
-
-    crypto_config.get_password_key(password, MASTER_PASSWORD_PROMPT, create)
-}
-
-#[cfg(not(feature = "piv"))]
-fn get_keystore_key(
-    create: bool,
-    password: Option<Secret>,
-    crypto_config: &Configuration,
-) -> Result<Box<dyn AbstractKey>> {
-    get_keystore_key_password(create, password, crypto_config)
-}
-
-fn open_keystore(
-    path: PathBuf,
-    create: bool,
-    password: Option<Secret>,
-    crypto_config: Configuration,
-) -> Result<DiskKeyStore> {
-    let repository = git::open_repository(path.as_path(), false)?;
+fn get_keystore_path<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
+    let repository = git::open_repository(path.as_ref(), /*create=*/ false)?;
     let mut path = PathBuf::from(git::get_repository_workdir(&repository)?);
     path.push(KEYSTORE_PATH.as_path());
-
-    let key = get_keystore_key(create, password, &crypto_config)?;
-
-    let mut keystore = DiskKeyStore::new(path.as_path(), false)?;
-    if !keystore.is_persistable() {
-        keystore.add_key(&key)?;
-    }
-    keystore.open(&key)?;
-    Ok(keystore)
+    Ok(path)
 }
 
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
@@ -179,7 +117,8 @@ impl Repository {
 
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
-        let keystore = Lazy::new(move || open_keystore(path, create, password, c));
+        let keystore_path = get_keystore_path(path)?;
+        let keystore = Lazy::new(move || get_keystore(&keystore_path, create, &c, password));
 
         Ok(Repository {
             repository: repository,
