@@ -20,11 +20,34 @@ use bdrck::crypto::key::*;
 use serde_derive::{Deserialize, Serialize};
 use std::path::Path;
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[cfg(not(feature = "piv"))]
+fn deserialize_piv_keys_panic<'de, D: serde::Deserializer<'de>, T>(
+    _: D,
+) -> std::result::Result<T, D::Error> {
+    panic!("PIV feature is disabled; refusing to load PIV configuration");
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
     salt: Salt,
     mem_limit: usize,
     ops_limit: usize,
+
+    #[cfg(feature = "piv")]
+    // Default to an empty Vec if the structure didn't previously have this.
+    #[serde(default)]
+    piv_keys: Vec<crate::piv::util::PivKeyAssociation>,
+
+    #[cfg(not(feature = "piv"))]
+    // We must default in order to load structures which omit this (all should).
+    #[serde(default)]
+    // Don't write this field out when serializing this structure (it's just a
+    // placeholder).
+    #[serde(skip_serializing)]
+    // If we actually find a structure with this field, instead of dserializing
+    // it, just panic instead (it's not supported without the PIV feature).
+    #[serde(deserialize_with = "deserialize_piv_keys_panic")]
+    piv_keys: std::marker::PhantomData<()>,
 }
 
 impl Configuration {
@@ -33,6 +56,11 @@ impl Configuration {
             salt: salt,
             mem_limit: mem_limit,
             ops_limit: ops_limit,
+
+            #[cfg(feature = "piv")]
+            piv_keys: Vec::new(),
+            #[cfg(not(feature = "piv"))]
+            piv_keys: std::marker::PhantomData,
         }
     }
 
@@ -46,6 +74,11 @@ impl Configuration {
 
     pub fn get_ops_limit(&self) -> usize {
         self.ops_limit
+    }
+
+    #[cfg(feature = "piv")]
+    pub(crate) fn get_piv_keys(&self) -> &[crate::piv::util::PivKeyAssociation] {
+        self.piv_keys.as_slice()
     }
 
     pub fn get_password_key(

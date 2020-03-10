@@ -13,6 +13,7 @@
 // limitations under the License.
 
 mod impls;
+pub(crate) mod util;
 
 use crate::cli;
 use crate::error::*;
