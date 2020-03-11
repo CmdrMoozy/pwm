@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::crypto::configuration::Configuration;
 use crate::error::*;
-use bdrck::crypto::key::Digest;
+use bdrck::crypto::key::{AbstractKey, Digest};
+use log::warn;
 use serde_derive::{Deserialize, Serialize};
 use yubirs::piv;
 
@@ -51,4 +53,47 @@ pub(crate) fn list_piv_devices() -> Result<Vec<(String, Vec<u8>)>> {
     }
 
     Ok(devices)
+}
+
+/// Try to find a PIV device key which can be used for unwrapping our key store.
+/// This can return an error if something unexpected happens, or `Ok(None)` if
+/// we don't manage to find any key and nothing catastrophic goes wrong.
+pub(crate) fn find_master_key(
+    crypto_config: &Configuration,
+) -> Result<Option<Box<dyn AbstractKey>>> {
+    for (reader, chuid) in list_piv_devices()? {
+        for assoc in crypto_config.get_piv_keys() {
+            if chuid == assoc.chuid {
+                // It's weird if the reader name changed, but we'll take the
+                // CHUID as being authoritative and continue anyway (after
+                // logging a warning).
+                if reader != assoc.reader {
+                    warn!(
+                        "Found matching PIV device, with reader mismatch (expected '{}', got '{}'",
+                        assoc.reader, reader
+                    );
+                }
+
+                let key: Option<Box<dyn AbstractKey>> =
+                    match piv::key::Key::<piv::PcscHardware>::new(
+                        Some(&reader),
+                        /*pin=*/ None,
+                        assoc.slot,
+                        assoc.public_key_pem.as_slice(),
+                    ) {
+                        Ok(k) => Some(Box::new(k)),
+                        Err(e) => {
+                            warn!("Failed to get master key from recognized PIV device '{}' (CHUID '{:?}'): {}", reader, assoc.chuid, e);
+                            None
+                        }
+                    };
+
+                if let Some(k) = key {
+                    return Ok(Some(k));
+                }
+            }
+        }
+    }
+
+    Ok(None)
 }
