@@ -54,21 +54,15 @@ impl<'a, T> Lazy<'a, T> {
 }
 
 struct Factory<'a, T> {
-    f: Box<dyn FnMut() -> T + 'a>,
+    f: Box<dyn FnOnce() -> T + 'a>,
 }
 
 impl<'a, T> Factory<'a, T> {
     fn new<F: 'a + FnOnce() -> T>(f: F) -> Factory<'a, T> {
-        // TODO: This is a gross hack to work around the fact that Box<FnOnce> doesn't
-        // work. Remove this if Box<FnOnce> ever works on Rust stable, or if FnBox is
-        // stabilized.
-        let mut f = Some(f);
-        Factory {
-            f: Box::new(move || -> T { f.take().unwrap()() }),
-        }
+        Factory { f: Box::new(f) }
     }
 
-    fn build(mut self) -> T {
+    fn build(self) -> T {
         (self.f)()
     }
 }
