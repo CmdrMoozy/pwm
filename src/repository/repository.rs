@@ -19,7 +19,7 @@ use crate::repository::keystore::{add_password_key, get_keystore, remove_passwor
 use crate::repository::path::Path as RepositoryPath;
 use crate::util::data::Secret;
 use crate::util::git;
-use crate::util::lazy::Lazy;
+use crate::util::lazy::LazyResult;
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
 use failure::format_err;
@@ -95,7 +95,7 @@ pub struct Repository {
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<ConfigurationInstance>,
     // NOTE: keystore is guaranteed to be Some() everywhere except within drop().
-    keystore: Option<Lazy<'static, Result<DiskKeyStore>>>,
+    keystore: Option<LazyResult<'static, DiskKeyStore, Error>>,
 }
 
 impl Repository {
@@ -113,7 +113,7 @@ impl Repository {
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
         let keystore_path = get_keystore_path(path)?;
-        let keystore = Lazy::new(move || get_keystore(&keystore_path, create, &c, password));
+        let keystore = LazyResult::new(move || get_keystore(&keystore_path, create, &c, password));
 
         Ok(Repository {
             repository: repository,
@@ -132,20 +132,16 @@ impl Repository {
 
     fn get_key_store(&self) -> Result<&DiskKeyStore> {
         use std::ops::Deref;
-        let lazy: &Lazy<'static, Result<DiskKeyStore>> = self.keystore.as_ref().unwrap();
-        let result: &Result<DiskKeyStore> = lazy.deref();
-        result.as_ref().map_err(|e| {
-            Error::Internal(format_err!("Accessing repository key store failed: {}", e))
-        })
+        let lazy: &LazyResult<'static, DiskKeyStore, Error> = self.keystore.as_ref().unwrap();
+        lazy.force()?;
+        Ok(lazy.deref())
     }
 
     fn get_key_store_mut(&mut self) -> Result<&mut DiskKeyStore> {
         use std::ops::DerefMut;
-        let lazy: &mut Lazy<'static, Result<DiskKeyStore>> = self.keystore.as_mut().unwrap();
-        let result: &mut Result<DiskKeyStore> = lazy.deref_mut();
-        result.as_mut().map_err(|e| {
-            Error::Internal(format_err!("Accessing repository key store failed: {}", e))
-        })
+        let lazy: &mut LazyResult<'static, DiskKeyStore, Error> = self.keystore.as_mut().unwrap();
+        lazy.force()?;
+        Ok(lazy.deref_mut())
     }
 
     fn get_master_key(&self) -> Result<&Key> {
