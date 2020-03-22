@@ -16,12 +16,12 @@ use std::cell::UnsafeCell;
 use std::ops::{Deref, DerefMut};
 use std::ptr;
 
-struct Factory<'a, T> {
-    f: Box<dyn FnOnce() -> T + 'a>,
+struct Factory<'f, T> {
+    f: Box<dyn FnOnce() -> T + 'f>,
 }
 
-impl<'a, T> Factory<'a, T> {
-    fn new<F: 'a + FnOnce() -> T>(f: F) -> Factory<'a, T> {
+impl<'f, T> Factory<'f, T> {
+    fn new<F: FnOnce() -> T + 'f>(f: F) -> Self {
         Factory { f: Box::new(f) }
     }
 
@@ -30,18 +30,18 @@ impl<'a, T> Factory<'a, T> {
     }
 }
 
-enum LazyState<'a, T> {
+enum LazyState<'f, T> {
     Evaluated(T),
     Evaluating,
-    Unevaluated(Factory<'a, T>),
+    Unevaluated(Factory<'f, T>),
 }
 
-pub struct Lazy<'a, T> {
-    state: UnsafeCell<LazyState<'a, T>>,
+pub struct Lazy<'f, T> {
+    state: UnsafeCell<LazyState<'f, T>>,
 }
 
-impl<'a, T> Lazy<'a, T> {
-    pub fn new<F: 'a + FnOnce() -> T>(f: F) -> Lazy<'a, T> {
+impl<'f, T> Lazy<'f, T> {
+    pub fn new<F: FnOnce() -> T + 'f>(f: F) -> Self {
         Lazy {
             state: UnsafeCell::new(LazyState::Unevaluated(Factory::new(f))),
         }
@@ -73,10 +73,10 @@ impl<'a, T> Lazy<'a, T> {
     }
 }
 
-impl<'x, T> Deref for Lazy<'x, T> {
+impl<'f, T> Deref for Lazy<'f, T> {
     type Target = T;
 
-    fn deref<'a>(&'a self) -> &'a T {
+    fn deref<'l>(&'l self) -> &'l Self::Target {
         self.force();
         match unsafe { &*self.state.get() } {
             &LazyState::Evaluated(ref val) => val,
@@ -85,8 +85,8 @@ impl<'x, T> Deref for Lazy<'x, T> {
     }
 }
 
-impl<'x, T> DerefMut for Lazy<'x, T> {
-    fn deref_mut<'a>(&'a mut self) -> &'a mut T {
+impl<'f, T> DerefMut for Lazy<'f, T> {
+    fn deref_mut<'l>(&'l mut self) -> &'l mut Self::Target {
         self.force();
         match unsafe { &mut *self.state.get() } {
             &mut LazyState::Evaluated(ref mut val) => val,
