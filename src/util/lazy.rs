@@ -16,6 +16,26 @@ use std::cell::UnsafeCell;
 use std::ops::{Deref, DerefMut};
 use std::ptr;
 
+struct Factory<'a, T> {
+    f: Box<dyn FnOnce() -> T + 'a>,
+}
+
+impl<'a, T> Factory<'a, T> {
+    fn new<F: 'a + FnOnce() -> T>(f: F) -> Factory<'a, T> {
+        Factory { f: Box::new(f) }
+    }
+
+    fn build(self) -> T {
+        (self.f)()
+    }
+}
+
+enum LazyState<'a, T> {
+    Evaluated(T),
+    Evaluating,
+    Unevaluated(Factory<'a, T>),
+}
+
 pub struct Lazy<'a, T> {
     state: UnsafeCell<LazyState<'a, T>>,
 }
@@ -51,26 +71,6 @@ impl<'a, T> Lazy<'a, T> {
             _ => unreachable!(),
         }
     }
-}
-
-struct Factory<'a, T> {
-    f: Box<dyn FnOnce() -> T + 'a>,
-}
-
-impl<'a, T> Factory<'a, T> {
-    fn new<F: 'a + FnOnce() -> T>(f: F) -> Factory<'a, T> {
-        Factory { f: Box::new(f) }
-    }
-
-    fn build(self) -> T {
-        (self.f)()
-    }
-}
-
-enum LazyState<'a, T> {
-    Evaluated(T),
-    Evaluating,
-    Unevaluated(Factory<'a, T>),
 }
 
 impl<'x, T> Deref for Lazy<'x, T> {
