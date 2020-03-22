@@ -24,6 +24,16 @@ static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
 static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
 static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 
+#[cfg(feature = "piv")]
+fn find_piv_master_key(crypto_config: &Configuration) -> Result<Option<Box<dyn AbstractKey>>> {
+    crate::piv::util::find_master_key(crypto_config)
+}
+
+#[cfg(not(feature = "piv"))]
+fn find_piv_master_key(_: &Configuration) -> Result<Option<Box<dyn AbstractKey>>> {
+    Ok(None)
+}
+
 fn open(
     keystore: &mut DiskKeyStore,
     crypto_config: &Configuration,
@@ -33,15 +43,11 @@ fn open(
         return Ok(());
     }
 
-    // TODO: Implement this.
-    /*
-    - If a password was not explicitly provided:
-        - If PIV feature is enabled:
-            - List PIV devices (if any)
-            - If any of the CHUIDs match up with the (slot, wrapping digest)s listed in crypto config:
-                - Try opening keystore with this PIV device
-                - On success, just return
-    */
+    if let Some(piv_key) = find_piv_master_key(crypto_config)? {
+        if let Err(e) = keystore.open(&piv_key) {
+            eprintln!("Failed to use master PIV key ({})", e);
+        }
+    }
 
     while !keystore.is_open() {
         let key = crypto_config.get_password_key(
