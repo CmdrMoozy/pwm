@@ -22,7 +22,7 @@ use yubirs::piv;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct PivKeyAssociation {
     pub(crate) reader: String,
-    pub(crate) chuid: Vec<u8>,
+    pub(crate) serial: u32,
 
     pub(crate) wrapping_key_digest: Digest,
 
@@ -34,7 +34,7 @@ pub(crate) struct PivKeyAssociation {
 /// `Vec` of tuples of (reader name, CHUID data). A unique CHUID must uniquely
 /// identify not only a device, but also *its contents* (OSes cache contents
 /// aggressively, so if they change the user must update the CHUID).
-pub(crate) fn list_piv_devices() -> Result<Vec<(String, Vec<u8>)>> {
+pub(crate) fn list_piv_devices() -> Result<Vec<(String, u32)>> {
     let mut handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
     let mut connected = false;
 
@@ -48,8 +48,8 @@ pub(crate) fn list_piv_devices() -> Result<Vec<(String, Vec<u8>)>> {
         handle.connect(Some(&reader))?;
         connected = true;
 
-        let chuid = handle.read_object(piv::id::Object::Chuid)?;
-        devices.push((reader, chuid));
+        let serial = handle.get_serial()?;
+        devices.push((reader, serial.0));
     }
 
     Ok(devices)
@@ -61,12 +61,12 @@ pub(crate) fn list_piv_devices() -> Result<Vec<(String, Vec<u8>)>> {
 pub(crate) fn find_master_key(
     crypto_config: &Configuration,
 ) -> Result<Option<Box<dyn AbstractKey>>> {
-    for (reader, chuid) in list_piv_devices()? {
+    for (reader, serial) in list_piv_devices()? {
         for assoc in crypto_config.get_piv_keys() {
-            if chuid == assoc.chuid {
+            if serial == assoc.serial {
                 // It's weird if the reader name changed, but we'll take the
-                // CHUID as being authoritative and continue anyway (after
-                // logging a warning).
+                // serial number as being authoritative and continue anyway
+                // (after logging a warning).
                 if reader != assoc.reader {
                     warn!(
                         "Found matching PIV device, with reader mismatch (expected '{}', got '{}'",
@@ -83,7 +83,7 @@ pub(crate) fn find_master_key(
                     ) {
                         Ok(k) => Some(Box::new(k)),
                         Err(e) => {
-                            warn!("Failed to get master key from recognized PIV device '{}' (CHUID '{:?}'): {}", reader, assoc.chuid, e);
+                            warn!("Failed to get master key from recognized PIV device '{}' (serial # {}): {}", reader, assoc.serial, e);
                             None
                         }
                     };
