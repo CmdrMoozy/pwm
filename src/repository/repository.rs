@@ -15,7 +15,7 @@
 use crate::crypto::configuration::{Configuration, ConfigurationInstance};
 use crate::crypto::padding;
 use crate::error::*;
-use crate::repository::keystore::{add_password_key, get_keystore, remove_password_key};
+use crate::repository::keystore::{add_key, add_password_key, get_keystore, remove_password_key};
 use crate::repository::path::Path as RepositoryPath;
 use crate::util::data::Secret;
 use crate::util::git;
@@ -137,6 +137,13 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
+    pub fn set_crypto_configuration(&self, crypto_configuration: Configuration) {
+        self.crypto_configuration
+            .as_ref()
+            .unwrap()
+            .set(crypto_configuration);
+    }
+
     fn get_key_store(&self) -> Result<&DiskKeyStore> {
         use std::ops::Deref;
         let lazy: &LazyResult<'static, DiskKeyStore, Error> = self.keystore.as_ref().unwrap();
@@ -184,6 +191,10 @@ impl Repository {
             .filter(|entry| entry != KEYSTORE_PATH.as_path())
             .map(|entry| self.path(entry))
             .collect()
+    }
+
+    pub fn add_key<K: AbstractKey>(&mut self, key: &K) -> Result<()> {
+        add_key(self.get_key_store_mut()?, key)
     }
 
     pub fn add_password_key(&mut self, password: Option<Secret>) -> Result<()> {

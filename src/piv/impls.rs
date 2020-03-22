@@ -13,11 +13,11 @@
 // limitations under the License.
 
 use crate::cli::util::get_repository_path;
-//use crate::configuration;
 use crate::crypto::pwgen;
 use crate::error::*;
-//use crate::piv::{Configuration, KeyConfiguration};
-//use crate::repository::Repository;
+use crate::piv::util::PivKeyAssociation;
+use crate::repository::Repository;
+use bdrck::crypto::key::AbstractKey;
 use failure::format_err;
 use flaggy::*;
 use std::fs::File;
@@ -75,35 +75,34 @@ fn prompt_for_reader() -> Result<String> {
 }
 
 fn addpiv_impl<RP: AsRef<Path>>(
-    _repository_path: RP,
-    _reader: &str,
-    _slot: Key,
-    _public_key: &piv::pkey::PublicKey,
+    repository_path: RP,
+    reader: &str,
+    slot: Key,
+    public_key: piv::pkey::PublicKey,
 ) -> Result<()> {
-    // TODO: Re-implement this.
-    /*
     // Add the key to the repository.
     let mut repository = Repository::new(repository_path.as_ref(), false, None)?;
+    let public_key_pem = public_key.format(piv::pkey::Format::Pem)?;
     let key: piv::key::Key<piv::hal::PcscHardware> =
-        piv::key::Key::new(Some(reader), None, slot, public_key_path.as_ref())?;
+        piv::key::Key::new(Some(reader), None, slot, public_key)?;
     repository.add_key(&key)?;
 
+    let serial = {
+        let mut handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
+        handle.connect(Some(reader))?;
+        handle.get_serial()?.0
+    };
+
     // Also add the key to our configuration.
-    configuration::instance_apply_mut(|config: &mut configuration::Configuration| -> Result<()> {
-        let mut piv_config = config
-            .piv
-            .as_ref()
-            .cloned()
-            .unwrap_or_else(Configuration::default);
-        piv_config.keys.push(KeyConfiguration {
-            reader: Some(reader.to_owned()),
-            slot: slot,
-            public_key: fs::canonicalize(public_key_path.as_ref())?,
-        });
-        config.piv = Some(piv_config);
-        Ok(())
-    })?;
-    */
+    let mut configuration = repository.get_crypto_configuration();
+    configuration.add_piv_key(PivKeyAssociation {
+        reader: reader.to_owned(),
+        serial: serial,
+        wrapping_key_digest: key.get_digest(),
+        slot: slot,
+        public_key_pem: public_key_pem,
+    });
+    repository.set_crypto_configuration(configuration);
 
     Ok(())
 }
@@ -178,7 +177,7 @@ pub(crate) fn setuppiv(
     }
 
     // Actually add the new PIV device.
-    addpiv_impl(&repository, &reader, slot, &generated_public_key.unwrap())
+    addpiv_impl(&repository, &reader, slot, generated_public_key.unwrap())
 }
 
 #[command_callback]
@@ -187,5 +186,5 @@ pub(crate) fn addpiv(repository: Option<PathBuf>, slot: Key, public_key: PathBuf
     let repository = get_repository_path(repository)?;
     let reader = prompt_for_reader()?;
     let public_key = piv::pkey::PublicKey::from_pem_file(&public_key)?;
-    addpiv_impl(&repository, &reader, slot, &public_key)
+    addpiv_impl(&repository, &reader, slot, public_key)
 }

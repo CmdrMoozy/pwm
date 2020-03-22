@@ -81,6 +81,11 @@ impl Configuration {
         self.piv_keys.as_slice()
     }
 
+    #[cfg(feature = "piv")]
+    pub(crate) fn add_piv_key(&mut self, assoc: crate::piv::util::PivKeyAssociation) {
+        self.piv_keys.push(assoc);
+    }
+
     pub fn get_password_key(
         &self,
         password: Option<Secret>,

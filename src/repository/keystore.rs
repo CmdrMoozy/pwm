@@ -100,7 +100,7 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
     Ok(keystore)
 }
 
-fn add_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
+pub(crate) fn add_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
     let was_added = keystore.add_key(key)?;
     if !was_added {
         return Err(Error::InvalidArgument(format_err!(

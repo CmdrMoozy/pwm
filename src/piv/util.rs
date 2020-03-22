@@ -75,7 +75,7 @@ pub(crate) fn find_master_key(
                 }
 
                 let key: Option<Box<dyn AbstractKey>> =
-                    match piv::key::Key::<piv::PcscHardware>::new(
+                    match piv::key::Key::<piv::PcscHardware>::new_from_read(
                         Some(&reader),
                         /*pin=*/ None,
                         assoc.slot,
