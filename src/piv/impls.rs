@@ -74,11 +74,11 @@ fn prompt_for_reader() -> Result<String> {
     })
 }
 
-fn addpiv_impl<RP: AsRef<Path>, KP: AsRef<Path>>(
+fn addpiv_impl<RP: AsRef<Path>>(
     _repository_path: RP,
     _reader: &str,
     _slot: Key,
-    _public_key_path: KP,
+    _public_key: &piv::pkey::PublicKey,
 ) -> Result<()> {
     // TODO: Re-implement this.
     /*
@@ -115,7 +115,7 @@ pub(crate) fn setuppiv(
     algorithm: Algorithm,
     pin_policy: PinPolicy,
     touch_policy: TouchPolicy,
-    public_key: PathBuf,
+    public_key: Option<PathBuf>,
 ) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
@@ -124,12 +124,13 @@ pub(crate) fn setuppiv(
     // proceeding.
     if !bdrck::cli::continue_confirmation(
         bdrck::cli::Stream::Stderr,
-        "This will reset all PIV device data (certificates, ...) to factory defaults. ",
+        "WARNING: This will reset all PIV device data (certificates, ...) to factory defaults. ",
     )? {
         return Ok(());
     }
 
     let reader = prompt_for_reader()?;
+    let generated_public_key: Option<piv::pkey::PublicKey>;
 
     {
         let mut handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
@@ -158,22 +159,26 @@ pub(crate) fn setuppiv(
 
         // Generate the certificate pair which will be used to wrap the
         // repository's master key.
-        let generated_public_key = handle.generate(
+        let pubkey = handle.generate(
             Some(new_mgm_key.as_str()),
             slot,
             algorithm,
             pin_policy,
             touch_policy,
         )?;
-        let public_key_data = generated_public_key.format(piv::pkey::Format::Pem)?;
 
         // Write the public key to a file.
-        let mut public_key_file = File::create(&public_key)?;
-        public_key_file.write_all(&public_key_data)?;
+        if let Some(path) = public_key {
+            let public_key_data = pubkey.format(piv::pkey::Format::Pem)?;
+            let mut public_key_file = File::create(&path)?;
+            public_key_file.write_all(&public_key_data)?;
+        }
+
+        generated_public_key = Some(pubkey);
     }
 
     // Actually add the new PIV device.
-    addpiv_impl(&repository, &reader, slot, &public_key)
+    addpiv_impl(&repository, &reader, slot, &generated_public_key.unwrap())
 }
 
 #[command_callback]
@@ -181,5 +186,6 @@ pub(crate) fn addpiv(repository: Option<PathBuf>, slot: Key, public_key: PathBuf
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
     let reader = prompt_for_reader()?;
+    let public_key = piv::pkey::PublicKey::from_pem_file(&public_key)?;
     addpiv_impl(&repository, &reader, slot, &public_key)
 }

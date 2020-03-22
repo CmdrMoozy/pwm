@@ -68,7 +68,12 @@ lazy_static! {
         None,
         Some(&::yubirs::piv::id::TouchPolicy::Default.to_string())
     );
-    pub static ref PUBLIC_KEY_SPEC: Spec = Spec::required(
+    pub static ref OPTIONAL_PUBLIC_KEY_SPEC: Spec = Spec::optional(
+        "public_key",
+        "The path to write the public key to; only necessary if you want to re-use this key for other applications",
+        Some('p'),
+    );
+    pub static ref REQUIRED_PUBLIC_KEY_SPEC: Spec = Spec::required(
         "public_key",
         "The path to write the public key to",
         Some('p'),
@@ -86,7 +91,7 @@ pub fn build_setuppiv_command() -> Command<'static, Error> {
             ALGORITHM_SPEC.clone(),
             PIN_POLICY_SPEC.clone(),
             TOUCH_POLICY_SPEC.clone(),
-            PUBLIC_KEY_SPEC.clone(),
+            OPTIONAL_PUBLIC_KEY_SPEC.clone(),
         ])
         .unwrap(),
         Box::new(impls::setuppiv),
@@ -100,7 +105,7 @@ pub fn build_addpiv_command() -> Command<'static, Error> {
         Specs::new(vec![
             cli::REPOSITORY_SPEC.clone(),
             SLOT_SPEC.clone(),
-            PUBLIC_KEY_SPEC.clone(),
+            REQUIRED_PUBLIC_KEY_SPEC.clone(),
         ])
         .unwrap(),
         Box::new(impls::addpiv),
