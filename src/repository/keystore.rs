@@ -87,7 +87,7 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
     if !keystore.is_persistable() {
         let key = crypto_config.get_password_key(
             password.clone(),
-            MASTER_PASSWORD_PROMPT,
+            ADD_KEY_PROMPT,
             /*confirm=*/ true,
         )?;
         keystore.add_key(&key)?;

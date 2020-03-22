@@ -113,7 +113,14 @@ impl Repository {
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
         let keystore_path = get_keystore_path(path)?;
+        let keystore_is_new = !keystore_path.exists();
         let keystore = LazyResult::new(move || get_keystore(&keystore_path, create, &c, password));
+
+        // If we're initializing a brand new key store, `force` it so we add an
+        // initial master key.
+        if keystore_is_new {
+            keystore.force()?;
+        }
 
         Ok(Repository {
             repository: repository,
