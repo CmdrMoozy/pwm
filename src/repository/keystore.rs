@@ -121,7 +121,7 @@ pub(crate) fn add_password_key(
     )
 }
 
-fn remove_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
+pub(crate) fn remove_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
     let was_removed = keystore.remove_key(key)?;
     if !was_removed {
         return Err(Error::NotFound(format_err!(

@@ -15,12 +15,12 @@
 use crate::cli::util::get_repository_path;
 use crate::crypto::pwgen;
 use crate::error::*;
-use crate::piv::util::{prompt_for_device, PivKeyAssociation};
+use crate::piv::util::{prompt_for_device, prompt_for_device_from, PivKeyAssociation};
 use crate::repository::Repository;
 use bdrck::crypto::key::AbstractKey;
 use flaggy::*;
 use std::fs::File;
-use std::io::Write;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use yubirs::piv;
 use yubirs::piv::id::{Algorithm, Key, PinPolicy, TouchPolicy};
@@ -143,9 +143,40 @@ pub(crate) fn addpiv(repository: Option<PathBuf>, slot: Key, public_key: PathBuf
 
 #[command_callback]
 pub(crate) fn rmpiv(
-    _repository: Option<PathBuf>,
-    _reader: Option<String>,
-    _serial: Option<u32>,
+    repository: Option<PathBuf>,
+    reader: Option<String>,
+    serial: Option<u32>,
 ) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
+    let repository = get_repository_path(repository)?;
+    let mut repository = Repository::new(&repository, false, None)?;
+    let mut config = repository.get_crypto_configuration();
+
+    let select_from: Vec<(String, u32)> = config
+        .get_piv_keys()
+        .iter()
+        .map(|assoc| (assoc.reader.clone(), assoc.serial))
+        .collect::<Vec<(String, u32)>>();
+    let (reader, serial) =
+        prompt_for_device_from(reader.as_ref().map(|r| r.as_str()), serial, select_from)?;
+    let (to_remove, remaining): (Vec<PivKeyAssociation>, Vec<PivKeyAssociation>) = config
+        .get_piv_keys()
+        .iter()
+        .cloned()
+        .partition(|assoc| assoc.reader == reader && assoc.serial == serial);
+    let to_remove = to_remove.into_iter().next().unwrap();
+
+    let public_key = piv::pkey::PublicKey::from_pem(io::Cursor::new(to_remove.public_key_pem))?;
+    let key: piv::key::Key<piv::hal::PcscHardware> = piv::key::Key::new(
+        Some(to_remove.reader.as_str()),
+        None,
+        to_remove.slot,
+        public_key,
+    )?;
+
+    repository.remove_key(&key)?;
+    config.set_piv_keys(remaining);
+    repository.set_crypto_configuration(config);
+
     Ok(())
 }

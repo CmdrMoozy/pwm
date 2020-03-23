@@ -82,6 +82,11 @@ impl Configuration {
     }
 
     #[cfg(feature = "piv")]
+    pub(crate) fn set_piv_keys(&mut self, keys: Vec<crate::piv::util::PivKeyAssociation>) {
+        self.piv_keys = keys;
+    }
+
+    #[cfg(feature = "piv")]
     pub(crate) fn add_piv_key(&mut self, assoc: crate::piv::util::PivKeyAssociation) {
         self.piv_keys.push(assoc);
     }
