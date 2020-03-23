@@ -61,17 +61,30 @@ pub(crate) fn list_piv_devices() -> Result<Vec<(String, u32)>> {
 pub(crate) fn find_master_key(
     crypto_config: &Configuration,
 ) -> Result<Option<Box<dyn AbstractKey>>> {
-    for (reader, serial) in list_piv_devices()? {
-        for assoc in crypto_config.get_piv_keys() {
-            if serial == assoc.serial {
+    let devices = list_piv_devices()?;
+
+    for assoc in crypto_config.get_piv_keys() {
+        for (reader, serial) in devices.iter() {
+            if *serial == assoc.serial {
                 // It's weird if the reader name changed, but we'll take the
                 // serial number as being authoritative and continue anyway
                 // (after logging a warning).
-                if reader != assoc.reader {
+                if *reader != assoc.reader {
                     warn!(
                         "Found matching PIV device, with reader mismatch (expected '{}', got '{}'",
                         assoc.reader, reader
                     );
+                }
+
+                // Confirm with the user that they wish to use this device.
+                if !bdrck::cli::continue_confirmation(
+                    bdrck::cli::Stream::Stderr,
+                    &format!(
+                        "Unlock repository using PIV device '{}' (#{})? ",
+                        reader, serial
+                    ),
+                )? {
+                    continue;
                 }
 
                 let key: Option<Box<dyn AbstractKey>> =
