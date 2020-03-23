@@ -46,6 +46,8 @@ fn main() {
         pwm_lib::piv::build_setuppiv_command(),
         #[cfg(feature = "piv")]
         pwm_lib::piv::build_addpiv_command(),
+        #[cfg(feature = "piv")]
+        pwm_lib::piv::build_rmpiv_command(),
         pwm_lib::cli::build_ls_command(),
         pwm_lib::cli::build_get_command(),
         pwm_lib::cli::build_set_command(),

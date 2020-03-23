@@ -15,68 +15,20 @@
 use crate::cli::util::get_repository_path;
 use crate::crypto::pwgen;
 use crate::error::*;
-use crate::piv::util::PivKeyAssociation;
+use crate::piv::util::{prompt_for_device, PivKeyAssociation};
 use crate::repository::Repository;
 use bdrck::crypto::key::AbstractKey;
-use failure::format_err;
 use flaggy::*;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use yubirs::piv;
 use yubirs::piv::id::{Algorithm, Key, PinPolicy, TouchPolicy};
 
-fn prompt_for_reader() -> Result<String> {
-    let handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
-    let mut readers = handle.list_readers()?;
-    Ok(match readers.len() {
-        0 => {
-            return Err(Error::InvalidArgument(format_err!(
-                "No PIV devices found on this system"
-            )));
-        }
-        1 => readers.pop().unwrap(),
-        _ => {
-            let mut stderr = io::stderr();
-            let mut i: usize = 1;
-            for reader in &readers {
-                write!(stderr, "{}: {}\n", i, reader)?;
-                i += 1;
-            }
-            stderr.flush()?;
-
-            let reader: Option<String>;
-            let prompt = format!("Which PIV device to set up? [1..{}] ", readers.len());
-            loop {
-                let choice = bdrck::cli::prompt_for_string(
-                    bdrck::cli::Stream::Stderr,
-                    prompt.as_str(),
-                    false,
-                )?;
-                match choice.parse::<usize>() {
-                    Err(_) => {
-                        write!(stderr, "Invalid number '{}'.\n", choice)?;
-                        stderr.flush()?;
-                    }
-                    Ok(idx) => {
-                        if idx < 1 || idx > readers.len() {
-                            write!(stderr, "Invalid choice '{}'.\n", idx)?;
-                            stderr.flush()?;
-                        } else {
-                            reader = Some(readers.get(idx - 1).unwrap().clone());
-                            break;
-                        }
-                    }
-                };
-            }
-            reader.unwrap()
-        }
-    })
-}
-
 fn addpiv_impl<RP: AsRef<Path>>(
     repository_path: RP,
     reader: &str,
+    serial: u32,
     slot: Key,
     public_key: piv::pkey::PublicKey,
 ) -> Result<()> {
@@ -86,12 +38,6 @@ fn addpiv_impl<RP: AsRef<Path>>(
     let key: piv::key::Key<piv::hal::PcscHardware> =
         piv::key::Key::new(Some(reader), None, slot, public_key)?;
     repository.add_key(&key)?;
-
-    let serial = {
-        let mut handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
-        handle.connect(Some(reader))?;
-        handle.get_serial()?.0
-    };
 
     // Also add the key to our configuration.
     let mut configuration = repository.get_crypto_configuration();
@@ -128,7 +74,7 @@ pub(crate) fn setuppiv(
         return Ok(());
     }
 
-    let reader = prompt_for_reader()?;
+    let (reader, serial) = prompt_for_device(None, None)?;
     let generated_public_key: Option<piv::pkey::PublicKey>;
 
     {
@@ -177,14 +123,29 @@ pub(crate) fn setuppiv(
     }
 
     // Actually add the new PIV device.
-    addpiv_impl(&repository, &reader, slot, generated_public_key.unwrap())
+    addpiv_impl(
+        &repository,
+        &reader,
+        serial,
+        slot,
+        generated_public_key.unwrap(),
+    )
 }
 
 #[command_callback]
 pub(crate) fn addpiv(repository: Option<PathBuf>, slot: Key, public_key: PathBuf) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
-    let reader = prompt_for_reader()?;
+    let (reader, serial) = prompt_for_device(None, None)?;
     let public_key = piv::pkey::PublicKey::from_pem_file(&public_key)?;
-    addpiv_impl(&repository, &reader, slot, public_key)
+    addpiv_impl(&repository, &reader, serial, slot, public_key)
+}
+
+#[command_callback]
+pub(crate) fn rmpiv(
+    _repository: Option<PathBuf>,
+    _reader: Option<String>,
+    _serial: Option<u32>,
+) -> Result<()> {
+    Ok(())
 }

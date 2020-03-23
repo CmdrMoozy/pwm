@@ -15,8 +15,10 @@
 use crate::crypto::configuration::Configuration;
 use crate::error::*;
 use bdrck::crypto::key::{AbstractKey, Digest};
+use failure::format_err;
 use log::warn;
 use serde_derive::{Deserialize, Serialize};
+use std::io::{self, Write};
 use yubirs::piv;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -53,6 +55,84 @@ pub(crate) fn list_piv_devices() -> Result<Vec<(String, u32)>> {
     }
 
     Ok(devices)
+}
+
+/// Prompts the user on stderr for a single device out of the given list of all
+/// available PIV devices. The list is filtered to only devices matching
+/// `reader` and/or `serial`, if provided.
+pub(crate) fn prompt_for_device_from(
+    reader: Option<&str>,
+    serial: Option<u32>,
+    devices: Vec<(String, u32)>,
+) -> Result<(String, u32)> {
+    let mut devices: Vec<(String, u32)> = devices
+        .into_iter()
+        .filter(|(r, s)| {
+            if let Some(reader) = reader {
+                if *r != reader {
+                    return false;
+                }
+            }
+
+            if let Some(serial) = serial {
+                if *s != serial {
+                    return false;
+                }
+            }
+
+            true
+        })
+        .collect();
+
+    if devices.is_empty() {
+        return Err(Error::InvalidArgument(format_err!(
+            "No matching PIV devices found on this system"
+        )));
+    }
+
+    if devices.len() == 1 {
+        return Ok(devices.into_iter().next().unwrap());
+    }
+
+    let mut stderr = io::stderr();
+    for (i, (reader, serial)) in devices.iter().enumerate() {
+        write!(stderr, "{}: {} (serial # {})\n", i, reader, serial)?;
+    }
+    stderr.flush()?;
+
+    let selection: Option<(String, u32)>;
+    let prompt = format!("Select the PIV device to use? [1..{}]", devices.len());
+    loop {
+        let i = bdrck::cli::prompt_for_string(bdrck::cli::Stream::Stderr, prompt.as_str(), false)?;
+        let i = match i.parse::<usize>() {
+            Err(_) => {
+                write!(stderr, "Invalid number '{}'.\n", i)?;
+                stderr.flush()?;
+                continue;
+            }
+            Ok(i) => i,
+        };
+        if i < 1 || i > devices.len() {
+            write!(stderr, "Invalid choice '{}'.\n", i)?;
+            stderr.flush()?;
+            continue;
+        }
+
+        selection = Some(devices.remove(i - 1));
+        break;
+    }
+
+    Ok(selection.unwrap())
+}
+
+/// Prompt the user on stderr for a single device out of all devices returned by
+/// `list_piv_devices`. The list is filtered to only devices matching `reader`
+/// and/or `serial`, if provided.
+pub(crate) fn prompt_for_device(
+    reader: Option<&str>,
+    serial: Option<u32>,
+) -> Result<(String, u32)> {
+    prompt_for_device_from(reader, serial, list_piv_devices()?)
 }
 
 /// Try to find a PIV device key which can be used for unwrapping our key store.

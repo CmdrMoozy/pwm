@@ -79,6 +79,16 @@ lazy_static! {
         Some('p'),
         None
     );
+    pub static ref READER_SPEC: Spec = Spec::optional(
+        "reader",
+        "The reader name of the PIV device to remove",
+        None,
+    );
+    pub static ref SERIAL_SPEC: Spec = Spec::optional(
+        "serial",
+        "The serial number of the PIV device to remove",
+        None,
+    );
 }
 
 pub fn build_setuppiv_command() -> Command<'static, Error> {
@@ -109,5 +119,19 @@ pub fn build_addpiv_command() -> Command<'static, Error> {
         ])
         .unwrap(),
         Box::new(impls::addpiv),
+    )
+}
+
+pub fn build_rmpiv_command() -> Command<'static, Error> {
+    Command::new(
+        "rmpiv",
+        "Remove a PIV device key from an existing repository",
+        Specs::new(vec![
+            cli::REPOSITORY_SPEC.clone(),
+            READER_SPEC.clone(),
+            SERIAL_SPEC.clone(),
+        ])
+        .unwrap(),
+        Box::new(impls::rmpiv),
     )
 }
