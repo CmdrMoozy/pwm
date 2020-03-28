@@ -75,7 +75,7 @@ lazy_static! {
     );
     pub static ref REQUIRED_PUBLIC_KEY_SPEC: Spec = Spec::required(
         "public_key",
-        "The path to write the public key to",
+        "The path to this PIV device's public key (in PEM format)",
         Some('p'),
         None
     );
