@@ -17,7 +17,7 @@ use crate::error::*;
 use bdrck::crypto::key::{AbstractKey, Digest};
 use failure::format_err;
 use log::warn;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
 use yubirs::piv;
 

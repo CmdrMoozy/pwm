@@ -15,7 +15,7 @@
 use crate::error::Result;
 use crate::repository::Repository;
 use crate::util::data::{decode, encode};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;
 

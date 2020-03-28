@@ -19,7 +19,7 @@ use bdrck::configuration as bdrck_config;
 use failure::format_err;
 use lazy_static::lazy_static;
 use log::error;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 static IDENTIFIER_APPLICATION: &'static str = "pwm";
