@@ -25,8 +25,16 @@ use std::io;
 /// twice, and make sure they copies match.
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::Secret> {
     Ok(match confirm {
-        false => bdrck::cli::prompt_for_string(bdrck::cli::Stream::Stderr, prompt, true)?,
-        true => bdrck::cli::prompt_for_string_confirm(bdrck::cli::Stream::Stderr, prompt, true)?,
+        false => bdrck::cli::prompt_for_string(
+            bdrck::cli::Stream::Stderr,
+            prompt,
+            /*is_sensitive=*/ true,
+        )?,
+        true => bdrck::cli::prompt_for_string_confirm(
+            bdrck::cli::Stream::Stderr,
+            prompt,
+            /*is_sensitive=*/ true,
+        )?,
     }
     .into())
 }
