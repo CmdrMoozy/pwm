@@ -26,11 +26,13 @@ use std::io;
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::Secret> {
     Ok(match confirm {
         false => bdrck::cli::prompt_for_string(
+            bdrck::cli::Stream::Stdin,
             bdrck::cli::Stream::Stderr,
             prompt,
             /*is_sensitive=*/ true,
         )?,
         true => bdrck::cli::prompt_for_string_confirm(
+            bdrck::cli::Stream::Stdin,
             bdrck::cli::Stream::Stderr,
             prompt,
             /*is_sensitive=*/ true,

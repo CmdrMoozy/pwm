@@ -68,6 +68,7 @@ pub(crate) fn setuppiv(
     // This is a very destructive operation; confirm with the user first before
     // proceeding.
     if !bdrck::cli::continue_confirmation(
+        bdrck::cli::Stream::Stdin,
         bdrck::cli::Stream::Stderr,
         "WARNING: This will reset all PIV device data (certificates, ...) to factory defaults. ",
     )? {

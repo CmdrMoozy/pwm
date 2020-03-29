@@ -103,7 +103,12 @@ pub(crate) fn prompt_for_device_from(
     let selection: Option<(String, u32)>;
     let prompt = format!("Select the PIV device to use? [1..{}]", devices.len());
     loop {
-        let i = bdrck::cli::prompt_for_string(bdrck::cli::Stream::Stderr, prompt.as_str(), false)?;
+        let i = bdrck::cli::prompt_for_string(
+            bdrck::cli::Stream::Stdin,
+            bdrck::cli::Stream::Stderr,
+            prompt.as_str(),
+            false,
+        )?;
         let i = match i.parse::<usize>() {
             Err(_) => {
                 write!(stderr, "Invalid number '{}'.\n", i)?;
@@ -158,6 +163,7 @@ pub(crate) fn find_master_key(
 
                 // Confirm with the user that they wish to use this device.
                 if !bdrck::cli::continue_confirmation(
+                    bdrck::cli::Stream::Stdin,
                     bdrck::cli::Stream::Stderr,
                     &format!(
                         "Unlock repository using PIV device '{}' (#{})? ",

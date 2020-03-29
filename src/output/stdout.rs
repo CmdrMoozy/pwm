@@ -21,7 +21,9 @@ pub(crate) struct StdoutOutputHandler;
 
 impl OutputHandler for StdoutOutputHandler {
     fn handle(&self, secret: &SecretSlice, encoding: InputEncoding) -> Result<()> {
-        let tty = bdrck::cli::isatty(bdrck::cli::Stream::Stdout);
+        use bdrck::cli::AbstractStream;
+
+        let tty = bdrck::cli::Stream::Stdout.isatty();
         let display = encode_for_display(secret, encoding, /*supports_binary=*/ !tty);
         let mut stdout = io::stdout();
         stdout.write_all(&display)?;
