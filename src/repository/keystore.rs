@@ -85,12 +85,7 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
 
     // If this is a newly initialized key store, add an initial wrapping key.
     if !keystore.is_persistable() {
-        let key = crypto_config.get_password_key(
-            password.clone(),
-            ADD_KEY_PROMPT,
-            /*confirm=*/ true,
-        )?;
-        keystore.add_key(&key)?;
+        add_password_key(&crypto_config, &mut keystore, password.clone())?;
     }
 
     // If this key store needs to be opened, find an appropriate key and do so.
