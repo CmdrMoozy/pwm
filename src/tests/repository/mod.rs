@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #[cfg(test)]
+mod keystore;
+#[cfg(test)]
 mod repository;
 #[cfg(test)]
 mod serde;

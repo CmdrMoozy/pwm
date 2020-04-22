@@ -55,13 +55,15 @@ fn open(
             MASTER_PASSWORD_PROMPT,
             /*confirm=*/ false,
         )?;
-        if let Err(e) = keystore.open(&key) {
-            eprintln!("Invalid master key ({}), try again.", e);
-        }
 
-        // Only try once, if a hard-coded password was provided.
         if password.is_some() {
+            // Only try once, if a hard-coded password was provided.
+            keystore.open(&key)?;
             break;
+        } else {
+            if let Err(e) = keystore.open(&key) {
+                eprintln!("Invalid master key ({}), try again.", e);
+            }
         }
     }
     Ok(())
