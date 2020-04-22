@@ -12,24 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use util::serde::*;
+use crate::cli;
+use crate::configuration;
+use crate::error::*;
+use failure::format_err;
+use std::path::PathBuf;
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
-struct TestStruct {
-    a: String,
-    b: u64,
-    c: bool,
-}
-
-#[test]
-fn test_binary_round_trip() {
-    let original = TestStruct {
-        a: "this is a test!".to_owned(),
-        b: 42,
-        c: true,
-    };
-
-    let serialized = serialize_binary(&original).unwrap();
-    let deserialized = deserialize_binary(serialized.as_slice()).unwrap();
-    assert_eq!(original, deserialized);
+pub fn get_repository_path(repository: Option<PathBuf>) -> Result<PathBuf> {
+    Ok(match repository {
+        None => match configuration::get()?.default_repository.as_ref() {
+            None => return Err(Error::InvalidArgument(format_err!("No repository path specified. Try the '{}' command option, or setting the 'default_repository' configuration key.", cli::REPOSITORY_SPEC.get_name()))),
+            Some(r) => r.into(),
+        },
+        Some(r) => r,
+    })
 }

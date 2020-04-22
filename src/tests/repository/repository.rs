@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::*;
+use crate::repository::*;
+use crate::util::data::Secret;
 use bdrck::testing::temp;
-use error::*;
-use repository::*;
 use sodiumoxide::randombytes::randombytes;
 use std::ops::{Deref, DerefMut};
-use util::data::SensitiveData;
 
 static TEST_REPO_DIR: &'static str = "pwm-test";
 
-fn to_password(s: &str) -> SensitiveData { SensitiveData::from(s.as_bytes().to_vec()) }
+fn to_password(s: &str) -> Secret {
+    s.as_bytes().to_vec()
+}
 
 struct TestRepository {
     _directory: temp::Dir,
@@ -30,11 +32,15 @@ struct TestRepository {
 
 impl Deref for TestRepository {
     type Target = Repository;
-    fn deref(&self) -> &Self::Target { self.repository.as_ref().unwrap() }
+    fn deref(&self) -> &Self::Target {
+        self.repository.as_ref().unwrap()
+    }
 }
 
 impl DerefMut for TestRepository {
-    fn deref_mut(&mut self) -> &mut Self::Target { self.repository.as_mut().unwrap() }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.repository.as_mut().unwrap()
+    }
 }
 
 impl Drop for TestRepository {
@@ -46,7 +52,7 @@ impl Drop for TestRepository {
 }
 
 impl TestRepository {
-    pub fn new(password: &str) -> Result<TestRepository> {
+    fn new(password: &str) -> Result<TestRepository> {
         let directory = temp::Dir::new(TEST_REPO_DIR)?;
         let repository = Repository::new(directory.path(), true, Some(to_password(password)))?;
         Ok(TestRepository {
@@ -64,7 +70,7 @@ fn test_wrong_master_password_fails() {
     let path = "test";
 
     {
-        let repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
+        let mut repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
         let path = repository.path(path).unwrap();
         repository
             .write_encrypt(&path, to_password("Hello, world!"))
@@ -82,37 +88,60 @@ fn test_write_read_round_trip() {
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pw = to_password("foobar");
     let path = "test";
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let plaintext = randombytes(1024);
 
     {
-        let repository = Repository::new(repository_dir.path(), true, Some(pw.clone())).unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(), true, Some(pw.clone())).unwrap();
+        let absolute_path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&repository.path(path).unwrap(), plaintext.clone())
+            .write_encrypt(&absolute_path, plaintext.clone())
             .unwrap();
     }
 
     let repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
-    let output_plaintext = repository
-        .read_decrypt(&repository.path(path).unwrap())
-        .unwrap();
+    let absolute_path = repository.path(path).unwrap();
+    let output_plaintext = repository.read_decrypt(&absolute_path).unwrap();
     assert_eq!(&plaintext[..], &output_plaintext[..]);
 }
 
 #[test]
+fn test_read_missing_file_fails_before_keystore_open() {
+    let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
+
+    {
+        // Initialize the repository with a password.
+        let _repository =
+            Repository::new(repository_dir.path(), true, Some(to_password("foo"))).unwrap();
+    }
+
+    // Construct a repository with an invalid password.
+    let repository =
+        Repository::new(repository_dir.path(), false, Some(to_password("bar"))).unwrap();
+    let ret = repository.read_decrypt(&repository.path("test").unwrap());
+    // The error we get should be about the missing file, not the bad password.
+    assert_eq!(
+        "No stored password at path 'test'",
+        ret.err().unwrap().to_string()
+    );
+}
+
+#[test]
 fn test_repository_listing() {
-    let t = TestRepository::new("foobar").unwrap();
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let mut t = TestRepository::new("foobar").unwrap();
+    let plaintext = randombytes(1024);
 
-    t.write_encrypt(&t.path("foo/1").unwrap(), plaintext.clone())
-        .unwrap();
-    t.write_encrypt(&t.path("bar/2").unwrap(), plaintext.clone())
-        .unwrap();
-    t.write_encrypt(&t.path("3").unwrap(), plaintext.clone())
-        .unwrap();
-    t.write_encrypt(&t.path("foo/bar/4").unwrap(), plaintext.clone())
-        .unwrap();
+    let absolute_path = t.path("foo/1").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    let absolute_path = t.path("bar/2").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    let absolute_path = t.path("3").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    let absolute_path = t.path("foo/bar/4").unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
 
-    let listing: Vec<String> = t.list(None)
+    let listing: Vec<String> = t
+        .list(None)
         .unwrap()
         .iter()
         .map(|p| p.to_str().unwrap().to_owned())
@@ -131,21 +160,22 @@ fn test_repository_listing() {
 
 #[test]
 fn test_remove() {
-    let t = TestRepository::new("foobar").unwrap();
-    t.write_encrypt(
-        &t.path("test").unwrap(),
-        SensitiveData::from(randombytes(1024)),
-    ).unwrap();
+    let mut t = TestRepository::new("foobar").unwrap();
+    let absolute_path = t.path("test").unwrap();
+    t.write_encrypt(&absolute_path, randombytes(1024)).unwrap();
 
-    let listing: Vec<String> = t.list(None)
+    let listing: Vec<String> = t
+        .list(None)
         .unwrap()
         .iter()
         .map(|p| p.to_str().unwrap().to_owned())
         .collect();
     assert_eq!(vec!["test".to_owned()], listing);
 
-    t.remove(&t.path("test").unwrap()).unwrap();
-    let listing: Vec<String> = t.list(None)
+    let path = t.path("test").unwrap();
+    t.remove(&path).unwrap();
+    let listing: Vec<String> = t
+        .list(None)
         .unwrap()
         .iter()
         .map(|p| p.to_str().unwrap().to_owned())
@@ -156,7 +186,7 @@ fn test_remove() {
 #[test]
 fn test_adding_duplicate_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.add_key(Some(to_password("foobar"))).is_err());
+    assert!(t.add_password_key(Some(to_password("foobar"))).is_err());
 }
 
 #[test]
@@ -165,14 +195,14 @@ fn test_adding_key_succeeds() {
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let plaintext = randombytes(1024);
 
     {
         let mut repository = Repository::new(repository_dir.path(), true, Some(pwa)).unwrap();
         let path = repository.path(path).unwrap();
         repository.write_encrypt(&path, plaintext.clone()).unwrap();
 
-        repository.add_key(Some(pwb.clone())).unwrap();
+        repository.add_password_key(Some(pwb.clone())).unwrap();
     }
 
     let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
@@ -184,13 +214,13 @@ fn test_adding_key_succeeds() {
 #[test]
 fn test_removing_only_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.remove_key(Some(to_password("foobar"))).is_err());
+    assert!(t.remove_password_key(Some(to_password("foobar"))).is_err());
 }
 
 #[test]
 fn test_removing_unused_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.remove_key(Some(to_password("barbaz"))).is_err());
+    assert!(t.remove_password_key(Some(to_password("barbaz"))).is_err());
 }
 
 #[test]
@@ -199,7 +229,7 @@ fn test_removing_key_succeeds() {
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";
-    let plaintext = SensitiveData::from(randombytes(1024));
+    let plaintext = randombytes(1024);
 
     {
         let mut repository =
@@ -207,8 +237,8 @@ fn test_removing_key_succeeds() {
         let path = repository.path(path).unwrap();
         repository.write_encrypt(&path, plaintext.clone()).unwrap();
 
-        repository.add_key(Some(pwb.clone())).unwrap();
-        repository.remove_key(Some(pwa.clone())).unwrap();
+        repository.add_password_key(Some(pwb.clone())).unwrap();
+        repository.remove_password_key(Some(pwa.clone())).unwrap();
     }
 
     {

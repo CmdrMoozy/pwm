@@ -12,53 +12,110 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::*;
+use crate::util::data::Secret;
+use crate::util::unwrap_password_or_prompt;
 use bdrck::configuration as bdrck_config;
-use error::Result;
-use sodiumoxide::crypto::pwhash;
-use sodiumoxide::crypto::pwhash::{MemLimit, OpsLimit, Salt, SALTBYTES};
+use bdrck::crypto::key::*;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+#[cfg(not(feature = "piv"))]
+fn deserialize_piv_keys_panic<'de, D: serde::Deserializer<'de>, T>(
+    _: D,
+) -> std::result::Result<T, D::Error> {
+    panic!("PIV feature is disabled; refusing to load PIV configuration");
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
-    salt: [u8; SALTBYTES],
+    salt: Salt,
     mem_limit: usize,
     ops_limit: usize,
+
+    #[cfg(feature = "piv")]
+    // Default to an empty Vec if the structure didn't previously have this.
+    #[serde(default)]
+    piv_keys: Vec<crate::piv::util::PivKeyAssociation>,
+
+    #[cfg(not(feature = "piv"))]
+    // We must default in order to load structures which omit this (all should).
+    #[serde(default)]
+    // Don't write this field out when serializing this structure (it's just a
+    // placeholder).
+    #[serde(skip_serializing)]
+    // If we actually find a structure with this field, instead of dserializing
+    // it, just panic instead (it's not supported without the PIV feature).
+    #[serde(deserialize_with = "deserialize_piv_keys_panic")]
+    piv_keys: std::marker::PhantomData<()>,
 }
 
 impl Configuration {
-    pub fn new(salt: Salt, mem_limit: MemLimit, ops_limit: OpsLimit) -> Configuration {
+    pub fn new(salt: Salt, mem_limit: usize, ops_limit: usize) -> Configuration {
         Configuration {
-            salt: salt.0,
-            mem_limit: mem_limit.0,
-            ops_limit: ops_limit.0,
+            salt: salt,
+            mem_limit: mem_limit,
+            ops_limit: ops_limit,
+
+            #[cfg(feature = "piv")]
+            piv_keys: Vec::new(),
+            #[cfg(not(feature = "piv"))]
+            piv_keys: std::marker::PhantomData,
         }
     }
 
-    pub fn get_salt(&self) -> Salt { Salt(self.salt) }
+    pub fn get_salt(&self) -> Salt {
+        self.salt.clone()
+    }
 
-    pub fn get_mem_limit(&self) -> MemLimit { MemLimit(self.mem_limit) }
+    pub fn get_mem_limit(&self) -> usize {
+        self.mem_limit
+    }
 
-    pub fn get_ops_limit(&self) -> OpsLimit { OpsLimit(self.ops_limit) }
+    pub fn get_ops_limit(&self) -> usize {
+        self.ops_limit
+    }
+
+    #[cfg(feature = "piv")]
+    pub(crate) fn get_piv_keys(&self) -> &[crate::piv::util::PivKeyAssociation] {
+        self.piv_keys.as_slice()
+    }
+
+    #[cfg(feature = "piv")]
+    pub(crate) fn set_piv_keys(&mut self, keys: Vec<crate::piv::util::PivKeyAssociation>) {
+        self.piv_keys = keys;
+    }
+
+    #[cfg(feature = "piv")]
+    pub(crate) fn add_piv_key(&mut self, assoc: crate::piv::util::PivKeyAssociation) {
+        self.piv_keys.push(assoc);
+    }
+
+    pub fn get_password_key(
+        &self,
+        password: Option<Secret>,
+        prompt: &str,
+        confirm: bool,
+    ) -> Result<Box<dyn AbstractKey>> {
+        let password = unwrap_password_or_prompt(password, prompt, confirm)?;
+        Ok(Box::new(Key::new_password(
+            password.as_slice(),
+            &self.salt,
+            self.ops_limit,
+            self.mem_limit,
+        )?))
+    }
 }
 
 impl Default for Configuration {
     fn default() -> Configuration {
         Self::new(
-            pwhash::gen_salt(),
-            pwhash::MEMLIMIT_INTERACTIVE,
-            pwhash::OPSLIMIT_INTERACTIVE,
+            Salt::default(),
+            MEM_LIMIT_INTERACTIVE,
+            OPS_LIMIT_INTERACTIVE,
         )
     }
 }
-
-impl PartialEq for Configuration {
-    fn eq(&self, other: &Configuration) -> bool {
-        self.salt == other.salt && self.mem_limit == other.mem_limit
-            && self.ops_limit == other.ops_limit
-    }
-}
-
-impl Eq for Configuration {}
 
 pub struct ConfigurationInstance {
     identifier: bdrck_config::Identifier,
@@ -93,5 +150,7 @@ impl ConfigurationInstance {
         bdrck_config::set(&self.identifier, config).unwrap()
     }
 
-    pub fn reset(&self) { bdrck_config::reset::<Configuration>(&self.identifier).unwrap() }
+    pub fn reset(&self) {
+        bdrck_config::reset::<Configuration>(&self.identifier).unwrap()
+    }
 }

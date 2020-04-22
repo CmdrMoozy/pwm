@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use error::{Error, Result};
-use git2;
-use git2::{Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree};
+use crate::error::{Error, Result};
+use failure::format_err;
+use git2::{
+    self, Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree,
+};
 use std::collections::vec_deque::VecDeque;
 use std::path::{Path, PathBuf};
 
@@ -28,14 +30,16 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
     let path = path.as_ref();
     match Repository::open(path) {
         Ok(repository) => Ok(repository),
-        Err(error) => if create
-            && (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository)
-            && error.code() == ErrorCode::NotFound
-        {
-            Ok(Repository::init(path)?)
-        } else {
-            Err(Error::from(error))
-        },
+        Err(error) => {
+            if create
+                && (error.class() == ErrorClass::Os || error.class() == ErrorClass::Repository)
+                && error.code() == ErrorCode::NotFound
+            {
+                Ok(Repository::init(path)?)
+            } else {
+                Err(Error::from(error))
+            }
+        }
     }
 }
 
@@ -45,7 +49,11 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
 pub fn get_repository_workdir(repository: &Repository) -> Result<&Path> {
     match repository.workdir() {
         Some(path) => Ok(path),
-        None => bail!("Repository has no workdir"),
+        None => {
+            return Err(Error::InvalidArgument(format_err!(
+                "Repository has no workdir"
+            )));
+        }
     }
 }
 
@@ -67,20 +75,20 @@ fn get_head_commit(repository: &Repository) -> Result<Option<Commit>> {
             Ok(Some(object.into_commit().map_err(|_| {
                 git2::Error::from_str("Resolving head commit failed.")
             })?))
-        },
-        Err(e) => if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
-            Ok(None)
-        } else {
-            Err(Error::from(e))
-        },
+        }
+        Err(e) => {
+            if e.class() == ErrorClass::Reference && e.code() == ErrorCode::UnbornBranch {
+                Ok(None)
+            } else {
+                Err(Error::from(e))
+            }
+        }
     }
 }
 
 fn get_head_tree(repository: &Repository) -> Result<Tree> {
     let tree_id = get_head_commit(repository)?
-        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| {
-            c.tree_id()
-        });
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |c| c.tree_id());
     Ok(repository.find_tree(tree_id)?)
 }
 
@@ -94,7 +102,8 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
     while !pending_trees.is_empty() {
         let (tree, prefix) = pending_trees.pop_front().unwrap();
 
-        let mut subtrees: VecDeque<(Tree, PathBuf)> = tree.iter()
+        let mut subtrees: VecDeque<(Tree, PathBuf)> = tree
+            .iter()
             .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) == ObjectType::Tree)
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
@@ -112,7 +121,8 @@ pub fn get_repository_listing(repository: &Repository, path_filter: &Path) -> Re
             .collect();
         pending_trees.append(&mut subtrees);
 
-        let mut entries: Vec<PathBuf> = tree.iter()
+        let mut entries: Vec<PathBuf> = tree
+            .iter()
             .filter(|entry| entry.kind().unwrap_or(ObjectType::Any) != ObjectType::Tree)
             .map(|entry| {
                 let mut path: PathBuf = prefix.clone();
@@ -143,9 +153,7 @@ fn commit_tree(
     let parent_refs = parents.iter().collect::<Vec<&Commit>>();
     let parent_tree_id: Oid = parent_refs
         .get(0)
-        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| {
-            p.tree_id()
-        });
+        .map_or(Oid::from_str(EMPTY_TREE_OID).unwrap(), |p| p.tree_id());
 
     // If this commit is empty (e.g., its tree is identical to its parent's), don't
     // create a new commit.

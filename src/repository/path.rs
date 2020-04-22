@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use error::*;
+use crate::error::*;
+use failure::format_err;
 use std::path::Path as StdPath;
 use std::path::PathBuf;
 
@@ -35,14 +36,22 @@ impl Path {
         })
     }
 
-    pub fn relative_path(&self) -> &StdPath { self.relative_path.as_path() }
+    pub fn relative_path(&self) -> &StdPath {
+        self.relative_path.as_path()
+    }
 
-    pub fn absolute_path(&self) -> &StdPath { self.absolute_path.as_path() }
+    pub fn absolute_path(&self) -> &StdPath {
+        self.absolute_path.as_path()
+    }
 
     pub fn to_str(&self) -> Result<&str> {
         match self.relative_path.to_str() {
             Some(s) => Ok(s),
-            None => bail!("Path contains non-unicode characters"),
+            None => {
+                return Err(Error::InvalidArgument(format_err!(
+                    "Path contains non-unicode characters"
+                )));
+            }
         }
     }
 }

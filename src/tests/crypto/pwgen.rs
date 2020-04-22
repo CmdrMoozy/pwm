@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crypto::pwgen::*;
+use crate::crypto::pwgen::*;
 
 fn generate_password_str(
     length: Option<usize>,
     charsets: &[CharacterSet],
     exclude: &[char],
 ) -> String {
-    generate_password(
-        length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
-        charsets,
-        exclude,
-    ).unwrap()
-        .display(false, false)
-        .unwrap()
+    String::from_utf8(
+        generate_password(
+            length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
+            charsets,
+            exclude,
+        )
+        .unwrap(),
+    )
+    .unwrap()
 }
 
 #[test]
@@ -46,13 +48,12 @@ fn test_excluding_characters() {
 
 #[test]
 fn test_excluding_all_characters() {
-    assert!(
-        generate_password(
-            RECOMMENDED_MINIMUM_PASSWORD_LENGTH,
-            &[CharacterSet::Numbers],
-            &['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        ).is_err()
-    );
+    assert!(generate_password(
+        RECOMMENDED_MINIMUM_PASSWORD_LENGTH,
+        &[CharacterSet::Numbers],
+        &['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    )
+    .is_err());
 }
 
 #[test]
@@ -60,22 +61,18 @@ fn test_pwgen_charset() {
     for _ in 0..10 {
         let password = generate_password_str(None, &[CharacterSet::Letters], &[]);
         assert_eq!(RECOMMENDED_MINIMUM_PASSWORD_LENGTH, password.len());
-        assert!(
-            password
-                .chars()
-                .map(|c| c.is_alphabetic())
-                .fold(true, |acc, isalpha| acc && isalpha)
-        );
+        assert!(password
+            .chars()
+            .map(|c| c.is_alphabetic())
+            .fold(true, |acc, isalpha| acc && isalpha));
     }
 
     for _ in 0..10 {
         let password = generate_password_str(None, &[CharacterSet::Numbers], &[]);
         assert_eq!(RECOMMENDED_MINIMUM_PASSWORD_LENGTH, password.len());
-        assert!(
-            password
-                .chars()
-                .map(|c| c.is_digit(10))
-                .fold(true, |acc, isdigit| acc && isdigit)
-        );
+        assert!(password
+            .chars()
+            .map(|c| c.is_digit(10))
+            .fold(true, |acc, isdigit| acc && isdigit));
     }
 }

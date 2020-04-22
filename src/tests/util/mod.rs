@@ -18,5 +18,3 @@ mod data;
 mod git;
 #[cfg(test)]
 mod lazy;
-#[cfg(test)]
-mod serde;

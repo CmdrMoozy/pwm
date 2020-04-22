@@ -12,46 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crypto::configuration::{Configuration, ConfigurationInstance};
-use crypto::key::NormalKey;
-use crypto::keystore::KeyStore;
-use crypto::padding;
-use error::Result;
+use crate::crypto::configuration::{Configuration, ConfigurationInstance};
+use crate::crypto::padding;
+use crate::error::*;
+use crate::repository::keystore::{
+    add_key, add_password_key, get_keystore, remove_key, remove_password_key,
+};
+use crate::repository::path::Path as RepositoryPath;
+use crate::util::data::Secret;
+use crate::util::git;
+use crate::util::lazy::LazyResult;
+use bdrck::crypto::key::{AbstractKey, Key, Nonce};
+use bdrck::crypto::keystore::DiskKeyStore;
+use failure::format_err;
 use git2;
-use repository::path::Path as RepositoryPath;
-use sodiumoxide::crypto::secretbox;
+use lazy_static::lazy_static;
 use std::fs;
 use std::fs::File;
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use util::data::SensitiveData;
-use util::git;
-use util::lazy::Lazy;
-use util::password_prompt;
 
 lazy_static! {
     static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
     static ref KEYSTORE_PATH: PathBuf = PathBuf::from("keys.mp");
 }
 
-static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
-static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
-static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
-
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";
 static STORED_PASSWORD_UPDATE_MESSAGE: &'static str = "Update stored password / key.";
 static STORED_PASSWORD_REMOVE_MESSAGE: &'static str = "Remove stored password / key.";
 
-fn unwrap_password_or_prompt(
-    password: Option<SensitiveData>,
-    prompt: &str,
-    confirm: bool,
-) -> Result<SensitiveData> {
-    Ok(if let Some(p) = password {
-        p
-    } else {
-        password_prompt(prompt, confirm)?
-    })
+fn get_keystore_path<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
+    let repository = git::open_repository(path.as_ref(), /*create=*/ false)?;
+    let mut path = PathBuf::from(git::get_repository_workdir(&repository)?);
+    path.push(KEYSTORE_PATH.as_path());
+    Ok(path)
 }
 
 fn get_commit_signature(repository: &git2::Repository) -> git2::Signature<'static> {
@@ -66,48 +61,19 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     ConfigurationInstance::new(path.as_path())
 }
 
-fn open_keystore(repository: &git2::Repository, key: &NormalKey) -> Result<KeyStore> {
-    let mut path = PathBuf::from(git::get_repository_workdir(repository)?);
-    path.push(KEYSTORE_PATH.as_path());
-    KeyStore::open_or_new(path.as_path(), &key)
-}
-
-fn write_encrypt(
-    path: &RepositoryPath,
-    plaintext: SensitiveData,
-    master_key: &NormalKey,
-) -> Result<()> {
-    let (nonce, data) = master_key.encrypt(padding::pad(plaintext));
+fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key) -> Result<()> {
+    padding::pad(&mut plaintext);
+    let encrypted_tuple: (Option<Nonce>, Secret) =
+        master_key.encrypt(plaintext.as_slice(), None)?;
 
     if let Some(parent) = path.absolute_path().parent() {
         fs::create_dir_all(parent)?;
     }
 
-    use std::io::Write;
     let mut file = File::create(path.absolute_path())?;
-    file.write_all(&nonce.0)?;
-    file.write_all(data.as_slice())?;
+    rmp_serde::encode::write(&mut file, &encrypted_tuple)?;
     file.flush()?;
     Ok(())
-}
-
-fn read_decrypt(path: &RepositoryPath, master_key: &NormalKey) -> Result<SensitiveData> {
-    use std::io::Read;
-
-    if !path.absolute_path().exists() {
-        bail!(
-            "No stored password at path '{}'",
-            path.relative_path().display()
-        );
-    }
-
-    let mut file = File::open(path.absolute_path())?;
-    let mut nonce: secretbox::Nonce = secretbox::Nonce([0; 24]);
-    let mut data: Vec<u8> = vec![];
-    file.read_exact(&mut nonce.0)?;
-    file.read_to_end(&mut data)?;
-
-    padding::unpad(master_key.decrypt(data.as_slice(), &nonce)?)
 }
 
 pub struct Repository {
@@ -115,7 +81,7 @@ pub struct Repository {
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<ConfigurationInstance>,
     // NOTE: keystore is guaranteed to be Some() everywhere except within drop().
-    keystore: Option<Lazy<'static, Result<KeyStore>>>,
+    keystore: Option<LazyResult<'static, DiskKeyStore, Error>>,
 }
 
 impl Repository {
@@ -125,20 +91,22 @@ impl Repository {
     pub fn new<P: AsRef<Path>>(
         path: P,
         create: bool,
-        password: Option<SensitiveData>,
+        password: Option<Secret>,
     ) -> Result<Repository> {
         let repository = git::open_repository(path.as_ref(), create)?;
         let crypto_configuration = open_crypto_configuration(&repository)?;
 
         let c = crypto_configuration.get();
         let path = path.as_ref().to_path_buf();
-        let keystore = Lazy::new(move || -> Result<KeyStore> {
-            let master_password =
-                unwrap_password_or_prompt(password, MASTER_PASSWORD_PROMPT, create)?;
-            let master_key = NormalKey::new_password(master_password, Some(c))?;
-            let repository = git::open_repository(path.as_path(), false)?;
-            open_keystore(&repository, &master_key)
-        });
+        let keystore_path = get_keystore_path(path)?;
+        let keystore_is_new = !keystore_path.exists();
+        let keystore = LazyResult::new(move || get_keystore(&keystore_path, create, &c, password));
+
+        // If we're initializing a brand new key store, `force` it so we add an
+        // initial master key.
+        if keystore_is_new {
+            keystore.force()?;
+        }
 
         Ok(Repository {
             repository: repository,
@@ -155,24 +123,34 @@ impl Repository {
         self.crypto_configuration.as_ref().unwrap().get()
     }
 
-    fn get_key_store(&self) -> Result<&KeyStore> {
-        match self.keystore.as_ref().unwrap().as_ref() {
-            Ok(ks) => Ok(ks),
-            Err(e) => bail!("Accessing repository key store failed: {}", e),
-        }
+    pub fn set_crypto_configuration(&self, crypto_configuration: Configuration) {
+        self.crypto_configuration
+            .as_ref()
+            .unwrap()
+            .set(crypto_configuration);
     }
 
-    fn get_key_store_mut(&mut self) -> Result<&mut KeyStore> {
+    fn get_key_store(&self) -> Result<&DiskKeyStore> {
+        use std::ops::Deref;
+        let lazy: &LazyResult<'static, DiskKeyStore, Error> = self.keystore.as_ref().unwrap();
+        lazy.force()?;
+        Ok(lazy.deref())
+    }
+
+    fn get_key_store_mut(&mut self) -> Result<&mut DiskKeyStore> {
         use std::ops::DerefMut;
-        let lazy: &mut Lazy<'static, Result<KeyStore>> = self.keystore.as_mut().unwrap();
-        lazy.deref_mut()
-            .as_mut()
-            .map_err(|e| format!("Accessing repository key store failed: {}", e).into())
+        let lazy: &mut LazyResult<'static, DiskKeyStore, Error> = self.keystore.as_mut().unwrap();
+        lazy.force()?;
+        Ok(lazy.deref_mut())
     }
 
-    fn get_master_key(&self) -> Result<&NormalKey> { Ok(self.get_key_store()?.get_key()) }
+    fn get_master_key(&self) -> Result<&Key> {
+        Ok(self.get_key_store()?.get_master_key()?)
+    }
 
-    pub fn workdir(&self) -> Result<&Path> { git::get_repository_workdir(&self.repository) }
+    pub fn workdir(&self) -> Result<&Path> {
+        git::get_repository_workdir(&self.repository)
+    }
 
     fn commit_all(&self, message: &str, paths: &[&Path]) -> Result<()> {
         git::commit_paths(
@@ -201,39 +179,54 @@ impl Repository {
             .collect()
     }
 
-    pub fn add_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
-        let config = self.get_crypto_configuration();
-        let password = unwrap_password_or_prompt(password, ADD_KEY_PROMPT, true)?;
-        let key = NormalKey::new_password(password, Some(config))?;
-        let was_added = self.get_key_store_mut()?.add(&key)?;
-        if !was_added {
-            bail!("The specified key is already in use, so it was not re-added");
-        }
-        Ok(())
+    pub fn add_key<K: AbstractKey>(&mut self, key: &K) -> Result<()> {
+        add_key(self.get_key_store_mut()?, key)
     }
 
-    pub fn remove_key(&mut self, password: Option<SensitiveData>) -> Result<()> {
-        let config = self.get_crypto_configuration();
-        let password = unwrap_password_or_prompt(password, REMOVE_KEY_PROMPT, true)?;
-        let key = NormalKey::new_password(password, Some(config))?;
-        let was_removed = self.get_key_store_mut()?.remove(&key)?;
-        if !was_removed {
-            bail!("The specified key is not registered with this repository");
-        }
-        Ok(())
+    pub fn add_password_key(&mut self, password: Option<Secret>) -> Result<()> {
+        add_password_key(
+            &self.get_crypto_configuration(),
+            self.get_key_store_mut()?,
+            password,
+        )
     }
 
-    pub fn write_encrypt(&self, path: &RepositoryPath, plaintext: SensitiveData) -> Result<()> {
+    pub fn remove_key<K: AbstractKey>(&mut self, key: &K) -> Result<()> {
+        remove_key(self.get_key_store_mut()?, key)
+    }
+
+    pub fn remove_password_key(&mut self, password: Option<Secret>) -> Result<()> {
+        remove_password_key(
+            &self.get_crypto_configuration(),
+            self.get_key_store_mut()?,
+            password,
+        )
+    }
+
+    pub fn write_encrypt(&mut self, path: &RepositoryPath, plaintext: Secret) -> Result<()> {
         write_encrypt(path, plaintext, self.get_master_key()?)?;
         self.commit_one(STORED_PASSWORD_UPDATE_MESSAGE, path.relative_path())?;
         Ok(())
     }
 
-    pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<SensitiveData> {
-        read_decrypt(path, self.get_master_key()?)
+    pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<Secret> {
+        if !path.absolute_path().exists() {
+            return Err(Error::NotFound(format_err!(
+                "No stored password at path '{}'",
+                path.relative_path().display()
+            )));
+        }
+
+        let mut file = File::open(path.absolute_path())?;
+        let encrypted_tuple: (Option<Nonce>, Secret) = rmp_serde::decode::from_read(&mut file)?;
+        let mut decrypted: Secret = self
+            .get_master_key()?
+            .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
+        padding::unpad(&mut decrypted)?;
+        Ok(decrypted)
     }
 
-    pub fn remove(&self, path: &RepositoryPath) -> Result<()> {
+    pub fn remove(&mut self, path: &RepositoryPath) -> Result<()> {
         fs::remove_file(path.absolute_path())?;
         self.commit_one(STORED_PASSWORD_REMOVE_MESSAGE, path.relative_path())?;
         Ok(())
@@ -250,6 +243,7 @@ impl Drop for Repository {
         self.commit_one(
             CRYPTO_CONFIGURATION_UPDATE_MESSAGE,
             CRYPTO_CONFIGURATION_PATH.as_path(),
-        ).unwrap();
+        )
+        .unwrap();
     }
 }

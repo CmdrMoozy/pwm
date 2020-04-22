@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use error::Result;
-use repository::Repository;
+use crate::error::Result;
+use crate::repository::Repository;
+use crate::util::data::{decode, encode};
+use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;
-use util::data::SensitiveData;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Contents {
@@ -29,7 +30,7 @@ pub fn export(repository: &Repository) -> Result<Contents> {
     };
 
     for path in repository.list(None)? {
-        let plaintext: String = repository.read_decrypt(&path)?.encode();
+        let plaintext: String = encode(repository.read_decrypt(&path)?.as_slice());
         contents
             .contents
             .insert(path.to_str()?.to_owned(), plaintext);
@@ -42,14 +43,14 @@ pub fn export_serialize(repository: &Repository) -> Result<String> {
     Ok(to_string_pretty(&export(repository)?)?)
 }
 
-pub fn import(repository: &Repository, contents: Contents) -> Result<()> {
+pub fn import(repository: &mut Repository, contents: Contents) -> Result<()> {
     for (path, plaintext) in contents.contents {
         let path = repository.path(path)?;
-        repository.write_encrypt(&path, SensitiveData::decode(plaintext)?)?;
+        repository.write_encrypt(&path, decode(&plaintext)?)?;
     }
     Ok(())
 }
 
-pub fn import_deserialize(repository: &Repository, s: &str) -> Result<()> {
+pub fn import_deserialize(repository: &mut Repository, s: &str) -> Result<()> {
     import(repository, from_str(s)?)
 }

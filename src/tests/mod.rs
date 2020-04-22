@@ -20,3 +20,5 @@ mod crypto;
 mod repository;
 #[cfg(test)]
 mod util;
+#[cfg(all(test, feature = "wifiqr"))]
+mod wifiqr;

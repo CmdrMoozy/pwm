@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::configuration::*;
 use bdrck::testing::temp;
-use configuration::*;
+use lazy_static::lazy_static;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -51,7 +52,10 @@ fn test_get_and_set() {
     let _handle = SingletonHandle::new(Some(path.as_path())).unwrap();
 
     let config = get().unwrap();
-    assert_eq!("/home/foo/bar", config.default_repository.unwrap());
+    assert_eq!(
+        PathBuf::from("/home/foo/bar"),
+        config.default_repository.unwrap()
+    );
 }
 
 #[test]
@@ -114,7 +118,10 @@ fn test_reset() {
         let _handle = SingletonHandle::new(Some(path.as_path())).unwrap();
 
         let config = get().unwrap();
-        assert_eq!("/home/foo/bar", config.default_repository.unwrap());
+        assert_eq!(
+            PathBuf::from("/home/foo/bar"),
+            config.default_repository.unwrap()
+        );
 
         reset().unwrap();
     }

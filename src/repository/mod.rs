@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub(crate) mod keystore;
 pub mod path;
 mod repository;
 pub mod serde;
 
-pub use repository::repository::*;
+pub use crate::repository::repository::*;

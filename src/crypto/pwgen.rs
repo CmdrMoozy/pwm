@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crypto::rng::Generator;
-use error::*;
-use rand::Rng;
+use crate::crypto::rng::Generator;
+use crate::error::*;
+use crate::util::data::Secret;
+use failure::format_err;
+use lazy_static::lazy_static;
+use rand::{Rng, RngCore};
 use std::collections::{HashMap, HashSet};
-use util::data::SensitiveData;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum CharacterSet {
@@ -28,10 +30,17 @@ pub enum CharacterSet {
 lazy_static! {
     static ref CHARACTER_SET: HashMap<CharacterSet, Vec<char>> = {
         let mut m = HashMap::new();
-        m.insert(CharacterSet::Letters,
-                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().collect());
+        m.insert(
+            CharacterSet::Letters,
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                .chars()
+                .collect(),
+        );
         m.insert(CharacterSet::Numbers, "0123456789".chars().collect());
-        m.insert(CharacterSet::Symbols, "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".chars().collect());
+        m.insert(
+            CharacterSet::Symbols,
+            "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".chars().collect(),
+        );
         m
     };
 }
@@ -42,9 +51,11 @@ pub fn generate_password(
     length: usize,
     charsets: &[CharacterSet],
     exclude: &[char],
-) -> Result<SensitiveData> {
+) -> Result<Secret> {
     if length == 0 {
-        bail!("Refusing to generate a password of length 0");
+        return Err(Error::InvalidArgument(format_err!(
+            "Refusing to generate a password of length 0"
+        )));
     }
 
     let exclude: HashSet<char> = exclude.iter().cloned().collect();
@@ -55,12 +66,25 @@ pub fn generate_password(
         .cloned()
         .collect();
     if chars.is_empty() {
-        bail!("Cannot generate passwords from an empty character set");
+        return Err(Error::InvalidArgument(format_err!(
+            "Cannot generate passwords from an empty character set"
+        )));
     }
 
     let mut generator = Generator;
     let password: String = (0..length)
         .map(|_| chars[generator.gen_range(0, chars.len())])
         .collect();
-    Ok(SensitiveData::from(password.into_bytes()))
+    Ok(password.into_bytes())
+}
+
+pub fn generate_hex(byte_length: usize) -> String {
+    let mut generator = Generator;
+    let mut bytes = vec![0_u8; byte_length];
+    generator.fill_bytes(&mut bytes);
+    bytes
+        .iter()
+        .map(|b| format!("{:02X}", b))
+        .collect::<Vec<_>>()
+        .concat()
 }

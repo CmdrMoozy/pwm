@@ -13,9 +13,7 @@
 // limitations under the License.
 
 #[cfg(test)]
-mod key;
-#[cfg(test)]
-mod keystore;
+mod configuration;
 #[cfg(test)]
 mod padding;
 #[cfg(test)]

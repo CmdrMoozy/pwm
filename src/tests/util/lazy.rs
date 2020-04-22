@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::util::lazy::Lazy;
 use std::sync::{Arc, Mutex};
-use util::lazy::Lazy;
 
 #[test]
 fn test_simple_evaluation() {

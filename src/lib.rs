@@ -12,41 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate bdrck;
-extern crate bincode;
-extern crate byteorder;
-#[cfg(feature = "clipboard")]
-extern crate clipboard;
-extern crate data_encoding;
-#[macro_use]
-extern crate error_chain;
-extern crate git2;
-extern crate isatty;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-extern crate rand;
-extern crate rpassword;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-extern crate sodiumoxide;
+#![deny(
+    anonymous_parameters,
+    trivial_casts,
+    trivial_numeric_casts,
+    unused_extern_crates,
+    unused_import_braces
+)]
+#![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
+pub mod cli;
 pub mod configuration;
 pub mod crypto;
 pub mod error;
+pub mod output;
+#[cfg(feature = "piv")]
+pub mod piv;
 pub mod repository;
 pub mod util;
+#[cfg(feature = "wifiqr")]
+pub mod wifiqr;
 
 #[cfg(test)]
 mod tests;
 
-pub fn init() -> ::error::Result<()> {
-    if !sodiumoxide::init() {
-        bail!("sodiumoxide initialization failed");
-    }
-
+pub fn init() -> crate::error::Result<()> {
+    bdrck::init()?;
+    #[cfg(feature = "piv")]
+    yubirs::init()?;
     Ok(())
+}
+
+pub fn init_with_configuration() -> crate::error::Result<crate::configuration::SingletonHandle> {
+    init()?;
+    Ok(crate::configuration::SingletonHandle::new(None)?)
 }
