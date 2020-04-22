@@ -106,6 +106,27 @@ fn test_write_read_round_trip() {
 }
 
 #[test]
+fn test_read_missing_file_fails_before_keystore_open() {
+    let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
+
+    {
+        // Initialize the repository with a password.
+        let _repository =
+            Repository::new(repository_dir.path(), true, Some(to_password("foo"))).unwrap();
+    }
+
+    // Construct a repository with an invalid password.
+    let repository =
+        Repository::new(repository_dir.path(), false, Some(to_password("bar"))).unwrap();
+    let ret = repository.read_decrypt(&repository.path("test").unwrap());
+    // The error we get should be about the missing file, not the bad password.
+    assert_eq!(
+        "No stored password at path 'test'",
+        ret.err().unwrap().to_string()
+    );
+}
+
+#[test]
 fn test_repository_listing() {
     let mut t = TestRepository::new("foobar").unwrap();
     let plaintext = randombytes(1024);

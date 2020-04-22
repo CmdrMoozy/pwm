@@ -76,22 +76,6 @@ fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key)
     Ok(())
 }
 
-fn read_decrypt(path: &RepositoryPath, master_key: &Key) -> Result<Secret> {
-    if !path.absolute_path().exists() {
-        return Err(Error::NotFound(format_err!(
-            "No stored password at path '{}'",
-            path.relative_path().display()
-        )));
-    }
-
-    let mut file = File::open(path.absolute_path())?;
-    let encrypted_tuple: (Option<Nonce>, Secret) = rmp_serde::decode::from_read(&mut file)?;
-    let mut decrypted: Secret =
-        master_key.decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
-    padding::unpad(&mut decrypted)?;
-    Ok(decrypted)
-}
-
 pub struct Repository {
     repository: git2::Repository,
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
@@ -226,7 +210,20 @@ impl Repository {
     }
 
     pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<Secret> {
-        read_decrypt(path, self.get_master_key()?)
+        if !path.absolute_path().exists() {
+            return Err(Error::NotFound(format_err!(
+                "No stored password at path '{}'",
+                path.relative_path().display()
+            )));
+        }
+
+        let mut file = File::open(path.absolute_path())?;
+        let encrypted_tuple: (Option<Nonce>, Secret) = rmp_serde::decode::from_read(&mut file)?;
+        let mut decrypted: Secret = self
+            .get_master_key()?
+            .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
+        padding::unpad(&mut decrypted)?;
+        Ok(decrypted)
     }
 
     pub fn remove(&mut self, path: &RepositoryPath) -> Result<()> {
