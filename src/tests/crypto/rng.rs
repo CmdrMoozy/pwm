@@ -33,7 +33,7 @@ fn test_rng_range() {
     let min: u64 = 123;
     let max: u64 = 9876;
     for _ in 0..100 {
-        let n: u64 = generator.gen_range(min, max);
+        let n: u64 = generator.gen_range(min..max);
         assert!(min <= n);
         assert!(n < max);
     }

@@ -52,6 +52,10 @@ pub enum Error {
     #[cfg(feature = "piv")]
     #[fail(display = "{}", _0)]
     PIV(#[cause] ::yubirs::error::Error),
+    /// An error occurred while generating a QR code.
+    #[cfg(feature = "wifiqr")]
+    #[fail(display = "{}", _0)]
+    QRCode(#[cause] ::qrcode_generator::QRCodeError),
     /// An awkward hack; this error exists to use String's FromStr impl, but
     /// this operation won't actually ever fail.
     #[fail(display = "{}", _0)]
@@ -122,6 +126,13 @@ impl From<::std::num::ParseIntError> for Error {
 impl From<::yubirs::error::Error> for Error {
     fn from(e: ::yubirs::error::Error) -> Self {
         Error::PIV(e)
+    }
+}
+
+#[cfg(feature = "wifiqr")]
+impl From<::qrcode_generator::QRCodeError> for Error {
+    fn from(e: ::qrcode_generator::QRCodeError) -> Self {
+        Error::QRCode(e)
     }
 }
 

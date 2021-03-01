@@ -176,7 +176,7 @@ fn wifiqr(
             QR_IMAGE_SIZE_PIXELS,
             output,
         )?,
-        ImageFormat::Svg => qrcode_generator::to_svg_to_file(
+        ImageFormat::Svg => qrcode_generator::to_svg_to_file::<Secret, String, PathBuf>(
             encoded,
             error_correction.to_upstream(),
             QR_IMAGE_SIZE_PIXELS,

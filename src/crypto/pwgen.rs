@@ -73,7 +73,7 @@ pub fn generate_password(
 
     let mut generator = Generator;
     let password: String = (0..length)
-        .map(|_| chars[generator.gen_range(0, chars.len())])
+        .map(|_| chars[generator.gen_range(0..chars.len())])
         .collect();
     Ok(password.into_bytes())
 }
