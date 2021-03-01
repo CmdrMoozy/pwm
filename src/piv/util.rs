@@ -37,7 +37,21 @@ pub(crate) struct PivKeyAssociation {
 /// identify not only a device, but also *its contents* (OSes cache contents
 /// aggressively, so if they change the user must update the CHUID).
 pub(crate) fn list_piv_devices() -> Result<Vec<(String, u32)>> {
-    let mut handle: piv::Handle<piv::PcscHardware> = piv::Handle::new()?;
+    let mut handle: piv::Handle<piv::PcscHardware> = match piv::Handle::new() {
+        Ok(h) => h,
+        /*
+         * Constructing a handle might fail for legitimate reasons, e.g. if there are no smartcards
+         * attached to the system. Don't fail completely in that case, just log the error and
+         * return a list of no readers.
+         */
+        Err(e) => {
+            warn!(
+                "failed to establish PCSC context ({}); no smart cards attached?",
+                e
+            );
+            return Ok(vec![]);
+        }
+    };
     let mut connected = false;
 
     let readers = handle.list_readers()?;
