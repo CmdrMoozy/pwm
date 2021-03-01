@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use crate::error::{Error, Result};
-use failure::format_err;
 use git2::{
     self, Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree,
 };
@@ -50,9 +49,9 @@ pub fn get_repository_workdir(repository: &Repository) -> Result<&Path> {
     match repository.workdir() {
         Some(path) => Ok(path),
         None => {
-            return Err(Error::InvalidArgument(format_err!(
-                "Repository has no workdir"
-            )));
+            return Err(Error::InvalidArgument(
+                "repository has no workdir".to_string(),
+            ));
         }
     }
 }

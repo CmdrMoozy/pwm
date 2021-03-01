@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub mod configuration;
+pub mod key;
 pub mod padding;
 pub mod pwgen;
 pub mod rng;

@@ -13,9 +13,9 @@
 // limitations under the License.
 
 use crate::crypto::configuration::Configuration;
+use crate::crypto::key::PwmKey;
 use crate::error::*;
 use bdrck::crypto::key::{AbstractKey, Digest};
-use failure::format_err;
 use log::warn;
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
@@ -85,9 +85,9 @@ pub(crate) fn prompt_for_device_from(
         .collect();
 
     if devices.is_empty() {
-        return Err(Error::InvalidArgument(format_err!(
-            "No matching PIV devices found on this system"
-        )));
+        return Err(Error::InvalidArgument(
+            "no matching PIV devices found on this system".to_string(),
+        ));
     }
 
     if devices.len() == 1 {
@@ -145,7 +145,7 @@ pub(crate) fn prompt_for_device(
 /// we don't manage to find any key and nothing catastrophic goes wrong.
 pub(crate) fn find_master_key(
     crypto_config: &Configuration,
-) -> Result<Option<Box<dyn AbstractKey>>> {
+) -> Result<Option<impl AbstractKey<Error = Error>>> {
     let devices = list_piv_devices()?;
 
     for assoc in crypto_config.get_piv_keys() {
@@ -173,22 +173,23 @@ pub(crate) fn find_master_key(
                     continue;
                 }
 
-                let key: Option<Box<dyn AbstractKey>> =
-                    match piv::key::Key::<piv::PcscHardware>::new_from_read(
-                        Some(&reader),
-                        /*pin=*/ None,
-                        assoc.slot,
-                        assoc.public_key_pem.as_slice(),
-                    ) {
-                        Ok(k) => Some(Box::new(k)),
-                        Err(e) => {
-                            warn!("Failed to get master key from recognized PIV device '{}' (serial # {}): {}", reader, assoc.serial, e);
-                            None
-                        }
-                    };
+                let key: Option<piv::key::Key<piv::PcscHardware>> = match piv::key::Key::<
+                    piv::PcscHardware,
+                >::new_from_read(
+                    Some(&reader),
+                    /*pin=*/ None,
+                    assoc.slot,
+                    assoc.public_key_pem.as_slice(),
+                ) {
+                    Ok(k) => Some(k),
+                    Err(e) => {
+                        warn!("Failed to get master key from recognized PIV device '{}' (serial # {}): {}", reader, assoc.serial, e);
+                        None
+                    }
+                };
 
                 if let Some(k) = key {
-                    return Ok(Some(k));
+                    return Ok(Some(PwmKey::from(k)));
                 }
             }
         }

@@ -24,7 +24,6 @@ use crate::util::git;
 use crate::util::lazy::LazyResult;
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
-use failure::format_err;
 use git2;
 use lazy_static::lazy_static;
 use std::fs;
@@ -179,7 +178,7 @@ impl Repository {
             .collect()
     }
 
-    pub fn add_key<K: AbstractKey>(&mut self, key: &K) -> Result<()> {
+    pub fn add_key<E: Into<Error>, K: AbstractKey<Error = E>>(&mut self, key: &K) -> Result<()> {
         add_key(self.get_key_store_mut()?, key)
     }
 
@@ -191,7 +190,7 @@ impl Repository {
         )
     }
 
-    pub fn remove_key<K: AbstractKey>(&mut self, key: &K) -> Result<()> {
+    pub fn remove_key<E: Into<Error>, K: AbstractKey<Error = E>>(&mut self, key: &K) -> Result<()> {
         remove_key(self.get_key_store_mut()?, key)
     }
 
@@ -211,8 +210,8 @@ impl Repository {
 
     pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<Secret> {
         if !path.absolute_path().exists() {
-            return Err(Error::NotFound(format_err!(
-                "No stored password at path '{}'",
+            return Err(Error::NotFound(format!(
+                "no stored password at path '{}'",
                 path.relative_path().display()
             )));
         }

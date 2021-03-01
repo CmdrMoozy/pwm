@@ -12,152 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use failure::Fail;
+use thiserror::Error;
 
-#[derive(Fail, Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "{}", _0)]
-    Base64(#[cause] ::data_encoding::DecodeError),
-    #[fail(display = "{}", _0)]
-    Bdrck(#[cause] ::bdrck::error::Error),
+    #[error(transparent)]
+    Base64(#[from] ::data_encoding::DecodeError),
+    #[error(transparent)]
+    Bdrck(#[from] ::bdrck::error::Error),
     /// An error encountered in deciphering command-line flag values.
-    #[fail(display = "{}", _0)]
-    CliFlags(::failure::Error),
-    #[fail(display = "{}", _0)]
-    Git(#[cause] ::git2::Error),
+    #[error(transparent)]
+    CliFlags(#[from] ::flaggy::ValueError),
+    #[error(transparent)]
+    Git(#[from] ::git2::Error),
     /// An internal unrecoverable error, usually due to some underlying library.
-    #[fail(display = "{}", _0)]
-    Internal(::failure::Error),
+    #[error("internal error: {0}")]
+    Internal(String),
     /// Errors akin to EINVAL.
-    #[fail(display = "{}", _0)]
-    InvalidArgument(::failure::Error),
-    #[fail(display = "{}", _0)]
-    Io(#[cause] ::std::io::Error),
-    #[fail(display = "{}", _0)]
-    Json(::serde_json::Error),
+    #[error("invalid argument: {0}")]
+    InvalidArgument(String),
+    #[error(transparent)]
+    Io(#[from] ::std::io::Error),
+    #[error(transparent)]
+    Json(#[from] ::serde_json::Error),
     /// An error encountered when decoding a serialized message.
-    #[fail(display = "{}", _0)]
-    MsgDecode(#[cause] ::rmp_serde::decode::Error),
+    #[error(transparent)]
+    MsgDecode(#[from] ::rmp_serde::decode::Error),
     /// An error encountered when encoding a struct to a serialized message.
-    #[fail(display = "{}", _0)]
-    MsgEncode(#[cause] ::rmp_serde::encode::Error),
+    #[error(transparent)]
+    MsgEncode(#[from] ::rmp_serde::encode::Error),
     /// Errors akin to ENOENT.
-    #[fail(display = "{}", _0)]
-    NotFound(::failure::Error),
-    #[fail(display = "{}", _0)]
-    ParseBool(#[cause] ::std::str::ParseBoolError),
-    #[fail(display = "{}", _0)]
-    ParseInt(#[cause] ::std::num::ParseIntError),
+    #[error("not found: {0}")]
+    NotFound(String),
+    #[error(transparent)]
+    ParseBool(#[from] ::std::str::ParseBoolError),
+    #[error(transparent)]
+    ParseInt(#[from] ::std::num::ParseIntError),
     /// An error encountered while interacting with a PIV device.
     #[cfg(feature = "piv")]
-    #[fail(display = "{}", _0)]
-    PIV(#[cause] ::yubirs::error::Error),
+    #[error(transparent)]
+    PIV(#[from] ::yubirs::error::Error),
     /// An error occurred while generating a QR code.
     #[cfg(feature = "wifiqr")]
-    #[fail(display = "{}", _0)]
-    QRCode(#[cause] ::qrcode_generator::QRCodeError),
+    #[error(transparent)]
+    QRCode(#[from] ::qrcode_generator::QRCodeError),
     /// An awkward hack; this error exists to use String's FromStr impl, but
     /// this operation won't actually ever fail.
-    #[fail(display = "{}", _0)]
-    StringParse(#[cause] ::std::string::ParseError),
-    #[fail(display = "{}", _0)]
-    Unknown(::failure::Error),
-    #[fail(display = "{}", _0)]
-    Utf8(::std::string::FromUtf8Error),
-    #[fail(display = "{}", _0)]
-    Utf8Slice(::std::str::Utf8Error),
-}
-
-impl From<::bdrck::error::Error> for Error {
-    fn from(e: ::bdrck::error::Error) -> Self {
-        Error::Bdrck(e)
-    }
-}
-
-impl From<::flaggy::ValueError> for Error {
-    fn from(e: ::flaggy::ValueError) -> Self {
-        Error::CliFlags(failure::format_err!("{}", e))
-    }
-}
-
-impl From<::git2::Error> for Error {
-    fn from(e: ::git2::Error) -> Self {
-        Error::Git(e)
-    }
-}
-
-impl From<::std::io::Error> for Error {
-    fn from(e: ::std::io::Error) -> Self {
-        Error::Io(e)
-    }
-}
-
-impl From<::serde_json::Error> for Error {
-    fn from(e: ::serde_json::Error) -> Self {
-        Error::Json(e)
-    }
-}
-
-impl From<::rmp_serde::decode::Error> for Error {
-    fn from(e: ::rmp_serde::decode::Error) -> Self {
-        Error::MsgDecode(e)
-    }
-}
-
-impl From<::rmp_serde::encode::Error> for Error {
-    fn from(e: ::rmp_serde::encode::Error) -> Self {
-        Error::MsgEncode(e)
-    }
-}
-
-impl From<::std::str::ParseBoolError> for Error {
-    fn from(e: ::std::str::ParseBoolError) -> Self {
-        Error::ParseBool(e)
-    }
-}
-
-impl From<::std::num::ParseIntError> for Error {
-    fn from(e: ::std::num::ParseIntError) -> Self {
-        Error::ParseInt(e)
-    }
-}
-
-#[cfg(feature = "piv")]
-impl From<::yubirs::error::Error> for Error {
-    fn from(e: ::yubirs::error::Error) -> Self {
-        Error::PIV(e)
-    }
-}
-
-#[cfg(feature = "wifiqr")]
-impl From<::qrcode_generator::QRCodeError> for Error {
-    fn from(e: ::qrcode_generator::QRCodeError) -> Self {
-        Error::QRCode(e)
-    }
-}
-
-impl From<::std::string::ParseError> for Error {
-    fn from(e: ::std::string::ParseError) -> Self {
-        Error::StringParse(e)
-    }
-}
-
-impl From<::failure::Error> for Error {
-    fn from(e: ::failure::Error) -> Self {
-        Error::Unknown(e)
-    }
-}
-
-impl From<::std::string::FromUtf8Error> for Error {
-    fn from(e: ::std::string::FromUtf8Error) -> Self {
-        Error::Utf8(e)
-    }
-}
-
-impl From<::std::str::Utf8Error> for Error {
-    fn from(e: ::std::str::Utf8Error) -> Self {
-        Error::Utf8Slice(e)
-    }
+    #[error(transparent)]
+    StringParse(#[from] ::std::string::ParseError),
+    #[error("unknown error: {0}")]
+    Unknown(String),
+    #[error(transparent)]
+    Utf8(#[from] ::std::string::FromUtf8Error),
+    #[error(transparent)]
+    Utf8Slice(#[from] ::std::str::Utf8Error),
 }
 
 pub type Result<T> = ::std::result::Result<T, Error>;

@@ -16,7 +16,6 @@ use crate::error::*;
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
 use crate::util::data::SecretSlice;
 use clipboard::{self, ClipboardProvider};
-use failure::format_err;
 use lazy_static::lazy_static;
 use log::info;
 use std::thread::sleep;
@@ -30,9 +29,9 @@ fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> 
     match cp.set_contents(contents) {
         Ok(_) => Ok(()),
         Err(_) => {
-            return Err(Error::Internal(format_err!(
-                "Failed to set clipboard contents"
-            )));
+            return Err(Error::Internal(
+                "failed to set clipboard contents".to_string(),
+            ))
         }
     }
 }
@@ -50,9 +49,9 @@ impl OutputHandler for ClipboardOutputHandler {
         > = match clipboard::x11_clipboard::X11ClipboardContext::new() {
             Ok(cp) => cp,
             Err(_) => {
-                return Err(Error::Internal(format_err!(
-                    "Failed to get clipboard context"
-                )));
+                return Err(Error::Internal(
+                    "failed to get clipboard context".to_string(),
+                ))
             }
         };
 

@@ -15,7 +15,6 @@
 use crate::crypto::rng::Generator;
 use crate::error::*;
 use crate::util::data::Secret;
-use failure::format_err;
 use lazy_static::lazy_static;
 use rand::{Rng, RngCore};
 use std::collections::{HashMap, HashSet};
@@ -53,9 +52,9 @@ pub fn generate_password(
     exclude: &[char],
 ) -> Result<Secret> {
     if length == 0 {
-        return Err(Error::InvalidArgument(format_err!(
-            "Refusing to generate a password of length 0"
-        )));
+        return Err(Error::InvalidArgument(
+            "refusing to generate a password of length 0".to_string(),
+        ));
     }
 
     let exclude: HashSet<char> = exclude.iter().cloned().collect();
@@ -66,9 +65,9 @@ pub fn generate_password(
         .cloned()
         .collect();
     if chars.is_empty() {
-        return Err(Error::InvalidArgument(format_err!(
-            "Cannot generate passwords from an empty character set"
-        )));
+        return Err(Error::InvalidArgument(
+            "cannot generate passwords from an empty character set".to_string(),
+        ));
     }
 
     let mut generator = Generator;

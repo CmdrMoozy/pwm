@@ -16,7 +16,6 @@ use crate::crypto::pwgen;
 use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
 use crate::util::data::{Secret, SecretSlice};
-use failure::format_err;
 use flaggy::*;
 use qrcode_generator::{self, QrCodeEcc};
 use std::fs;
@@ -64,8 +63,8 @@ impl std::str::FromStr for ErrorCorrection {
             "Quartile" => ErrorCorrection::Quartile,
             "High" => ErrorCorrection::High,
             _ => {
-                return Err(Error::InvalidArgument(format_err!(
-                    "Invalid error correction '{}'",
+                return Err(Error::InvalidArgument(format!(
+                    "invalid error correction '{}'",
                     s
                 )))
             }
@@ -86,8 +85,8 @@ impl std::str::FromStr for ImageFormat {
             "png" => ImageFormat::Png,
             "svg" => ImageFormat::Svg,
             _ => {
-                return Err(Error::InvalidArgument(format_err!(
-                    "Invalid file extension '{}'; only *.png and *.svg are supported",
+                return Err(Error::InvalidArgument(format!(
+                    "invalid file extension '{}'; only *.png and *.svg are supported",
                     extension
                 )))
             }
@@ -136,14 +135,14 @@ fn wifiqr(
         if let Some(extension_str) = extension.to_str() {
             extension_str.parse()?
         } else {
-            return Err(Error::InvalidArgument(format_err!(
-                "Invalid output path '{}', file extension is not valid UTF-8",
+            return Err(Error::InvalidArgument(format!(
+                "invalid output path '{}', file extension is not valid UTF-8",
                 output.display()
             )));
         }
     } else {
-        return Err(Error::InvalidArgument(format_err!(
-            "Invalid output path '{}', expected *.png or *.svg extension",
+        return Err(Error::InvalidArgument(format!(
+            "invalid output path '{}', expected *.png or *.svg extension",
             output.display()
         )));
     };
@@ -151,14 +150,14 @@ fn wifiqr(
     // Check if the output already exists, and create its parent directory.
     if output.exists() {
         if !overwrite {
-            return Err(Error::InvalidArgument(format_err!(
-                "Refusing to overwrite '{}'",
+            return Err(Error::InvalidArgument(format!(
+                "refusing to overwrite '{}'",
                 output.display()
             )));
         }
         if !output.is_file() {
-            return Err(Error::InvalidArgument(format_err!(
-                "Found directory, expected file at '{}'",
+            return Err(Error::InvalidArgument(format!(
+                "found directory, expected file at '{}'",
                 output.display()
             )));
         }

@@ -14,7 +14,6 @@
 
 use crate::error::*;
 use data_encoding::BASE64;
-use failure::format_err;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -27,8 +26,8 @@ pub type SecretSlice = [u8];
 pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Secret> {
     let mut file = File::open(path.as_ref())?;
     if file.metadata()?.len() > MAX_KEY_FILE_SIZE_BYTES {
-        return Err(Error::InvalidArgument(format_err!(
-            "Invalid secret file {}; exceeded maximum limit of {} bytes",
+        return Err(Error::InvalidArgument(format!(
+            "invalid secret file {}; exceeded maximum limit of {} bytes",
             path.as_ref().display(),
             MAX_KEY_FILE_SIZE_BYTES
         )));

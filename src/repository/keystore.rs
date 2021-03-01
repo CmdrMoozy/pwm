@@ -17,7 +17,6 @@ use crate::error::*;
 use crate::util::data::Secret;
 use bdrck::crypto::key::AbstractKey;
 use bdrck::crypto::keystore::DiskKeyStore;
-use failure::format_err;
 use std::path::Path;
 
 static MASTER_PASSWORD_PROMPT: &'static str = "Master password: ";
@@ -25,12 +24,16 @@ static ADD_KEY_PROMPT: &'static str = "Master password to add: ";
 static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 
 #[cfg(feature = "piv")]
-fn find_piv_master_key(crypto_config: &Configuration) -> Result<Option<Box<dyn AbstractKey>>> {
+fn find_piv_master_key(
+    crypto_config: &Configuration,
+) -> Result<Option<impl AbstractKey<Error = Error>>> {
     crate::piv::util::find_master_key(crypto_config)
 }
 
 #[cfg(not(feature = "piv"))]
-fn find_piv_master_key(_: &Configuration) -> Result<Option<Box<dyn AbstractKey>>> {
+fn find_piv_master_key(
+    _: &Configuration,
+) -> Result<Option<PwmKey<::bdrck::error::Error, ::bdrck::crypto::key::Key>>> {
     Ok(None)
 }
 
@@ -79,8 +82,8 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
 
     // Check for the case where we really expected an existing key store.
     if !allow_create && !keystore.is_persistable() {
-        return Err(Error::NotFound(format_err!(
-            "No key store found at '{}'",
+        return Err(Error::NotFound(format!(
+            "no key store found at '{}'",
             path.as_ref().display()
         )));
     }
@@ -97,12 +100,15 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
     Ok(keystore)
 }
 
-pub(crate) fn add_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
+pub(crate) fn add_key<E: Into<Error>, K: AbstractKey<Error = E>>(
+    keystore: &mut DiskKeyStore,
+    key: &K,
+) -> Result<()> {
     let was_added = keystore.add_key(key)?;
     if !was_added {
-        return Err(Error::InvalidArgument(format_err!(
-            "The specified key is already in use, so it was not re-added"
-        )));
+        return Err(Error::InvalidArgument(
+            "the specified key is already in use, so it was not re-added".to_string(),
+        ));
     }
     Ok(())
 }
@@ -118,12 +124,15 @@ pub(crate) fn add_password_key(
     )
 }
 
-pub(crate) fn remove_key<K: AbstractKey>(keystore: &mut DiskKeyStore, key: &K) -> Result<()> {
+pub(crate) fn remove_key<E: Into<Error>, K: AbstractKey<Error = E>>(
+    keystore: &mut DiskKeyStore,
+    key: &K,
+) -> Result<()> {
     let was_removed = keystore.remove_key(key)?;
     if !was_removed {
-        return Err(Error::NotFound(format_err!(
-            "The specified key is not registered with this repository"
-        )));
+        return Err(Error::NotFound(
+            "the specified key is not registered with this repository".to_string(),
+        ));
     }
     Ok(())
 }

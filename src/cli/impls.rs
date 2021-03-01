@@ -21,7 +21,6 @@ use crate::repository::serde::{export_serialize, import_deserialize};
 use crate::repository::Repository;
 use crate::util::data::load_file;
 use crate::util::{multiline_password_prompt, password_prompt};
-use failure::format_err;
 use flaggy::*;
 use std::fs::File;
 use std::path::PathBuf;
@@ -34,9 +33,9 @@ pub(crate) fn config(key: Option<String>, set: Option<String>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     if key.is_none() {
         if set.is_some() {
-            return Err(Error::InvalidArgument(format_err!(
-                "A 'key' must be provided when 'set'ting a configuration value."
-            )));
+            return Err(Error::InvalidArgument(
+                "a 'key' must be provided when 'set'ting a configuration value".to_string(),
+            ));
         }
 
         println!(
@@ -137,9 +136,9 @@ pub(crate) fn set(
     let path = repository.path(path)?;
 
     if key_file.is_some() && multiline {
-        return Err(Error::InvalidArgument(format_err!(
-            "The 'key_file' and 'multiline' options are mutually exclusive."
-        )));
+        return Err(Error::InvalidArgument(
+            "the 'key_file' and 'multiline' options are mutually exclusive".to_string(),
+        ));
     }
 
     if let Some(key_file) = key_file {

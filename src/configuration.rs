@@ -16,7 +16,6 @@ use crate::error::*;
 #[cfg(feature = "piv")]
 use crate::piv;
 use bdrck::configuration as bdrck_config;
-use failure::format_err;
 use lazy_static::lazy_static;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -83,8 +82,8 @@ pub fn set(key: &str, value: &str) -> Result<()> {
             if key == DEFAULT_REPOSITORY_KEY {
                 config.default_repository = Some(value.into());
             } else {
-                return Some(Error::InvalidArgument(format_err!(
-                    "Invalid configuration key '{}'",
+                return Some(Error::InvalidArgument(format!(
+                    "invalid configuration key '{}'",
                     key
                 )));
             }
@@ -109,7 +108,7 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
         Ok(match config.default_repository {
             Some(v) => match v.as_path().to_str() {
                 None => {
-                    return Err(Error::Internal(format_err!(
+                    return Err(Error::Internal(format!(
                         "{} is not a valid UTF-8 string",
                         DEFAULT_REPOSITORY_KEY
                     )));
@@ -119,8 +118,8 @@ pub fn get_value_as_str(key: &str) -> Result<String> {
             None => String::new(),
         })
     } else {
-        return Err(Error::InvalidArgument(format_err!(
-            "Invalid configuration key '{}'",
+        return Err(Error::InvalidArgument(format!(
+            "invalid configuration key '{}'",
             key
         )));
     }

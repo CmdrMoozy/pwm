@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use crate::error::*;
-use failure::format_err;
 use std::path::Path as StdPath;
 use std::path::PathBuf;
 
@@ -48,9 +47,9 @@ impl Path {
         match self.relative_path.to_str() {
             Some(s) => Ok(s),
             None => {
-                return Err(Error::InvalidArgument(format_err!(
-                    "Path contains non-unicode characters"
-                )));
+                return Err(Error::InvalidArgument(
+                    "path contains non-unicode characters".to_string(),
+                ));
             }
         }
     }

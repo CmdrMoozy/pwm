@@ -15,7 +15,6 @@
 use crate::error::*;
 use crate::util::data::{Secret, SecretSlice};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use failure::format_err;
 use sodiumoxide::randombytes::randombytes;
 use std::io::Cursor;
 use std::mem;
@@ -39,15 +38,15 @@ fn get_padded_size(original_size: usize) -> usize {
 
 fn read_original_size(data: &SecretSlice) -> Result<usize> {
     if data.len() % PAD_BLOCK_SIZE_BYTES != 0 {
-        return Err(Error::InvalidArgument(format_err!(
-            "Cannot unpad data which wasn't previously padded - bad length"
-        )));
+        return Err(Error::InvalidArgument(
+            "cannot unpad data which wasn't previously padded - bad length".to_string(),
+        ));
     }
 
     if data.len() < METADATA_BYTES {
-        return Err(Error::InvalidArgument(format_err!(
-            "Cannot unpad data with invalid length"
-        )));
+        return Err(Error::InvalidArgument(
+            "cannot unpad data with invalid length".to_string(),
+        ));
     }
 
     let original_size_encoded: &SecretSlice = &data[data.len() - METADATA_BYTES..];

@@ -18,7 +18,6 @@ mod stdout;
 
 use crate::error::*;
 use crate::util::data::{encode, Secret, SecretSlice};
-use failure::format_err;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fmt;
@@ -74,10 +73,10 @@ impl FromStr for OutputMethod {
         let s = s.to_uppercase();
         Ok(match STRING_OUTPUT_METHODS.get(&s) {
             None => {
-                return Err(Error::InvalidArgument(format_err!(
-                    "Invalid output method '{}'",
+                return Err(Error::InvalidArgument(format!(
+                    "invalid output method '{}'",
                     s
-                )));
+                )))
             }
             Some(om) => *om,
         })

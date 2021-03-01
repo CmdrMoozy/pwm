@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::crypto::key::PwmKey;
 use crate::error::*;
 use crate::util::data::Secret;
 use crate::util::unwrap_password_or_prompt;
@@ -96,14 +97,15 @@ impl Configuration {
         password: Option<Secret>,
         prompt: &str,
         confirm: bool,
-    ) -> Result<Box<dyn AbstractKey>> {
+    ) -> Result<impl AbstractKey<Error = Error>> {
         let password = unwrap_password_or_prompt(password, prompt, confirm)?;
-        Ok(Box::new(Key::new_password(
+        let key = Key::new_password(
             password.as_slice(),
             &self.salt,
             self.ops_limit,
             self.mem_limit,
-        )?))
+        )?;
+        Ok(PwmKey::from(key))
     }
 }
 
