@@ -33,7 +33,7 @@ fn find_piv_master_key(
 #[cfg(not(feature = "piv"))]
 fn find_piv_master_key(
     _: &Configuration,
-) -> Result<Option<PwmKey<::bdrck::error::Error, ::bdrck::crypto::key::Key>>> {
+) -> Result<Option<crate::crypto::key::PwmKey<::bdrck::error::Error, ::bdrck::crypto::key::Key>>> {
     Ok(None)
 }
 
