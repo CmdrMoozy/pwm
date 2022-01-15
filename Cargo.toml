@@ -33,7 +33,7 @@ features = ["piv"]
 optional = true
 
 [features]
-default = ["clipboard", "piv", "wifiqr"]
+default = ["clipboard", "wifiqr"]
 piv = ["yubirs"]
 wifiqr = ["qrcode-generator"]
 
