@@ -14,7 +14,7 @@
 
 use crate::error::*;
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use std::io::{self, Write};
 
 pub(crate) struct StdoutOutputHandler;

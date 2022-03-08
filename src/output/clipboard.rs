@@ -14,7 +14,7 @@
 
 use crate::error::*;
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use clipboard::{self, ClipboardProvider};
 use lazy_static::lazy_static;
 use log::info;

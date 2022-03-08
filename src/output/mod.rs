@@ -17,7 +17,7 @@ mod clipboard;
 mod stdout;
 
 use crate::error::*;
-use crate::util::data::{encode, Secret};
+use crate::secret::{encode, Secret};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fmt;

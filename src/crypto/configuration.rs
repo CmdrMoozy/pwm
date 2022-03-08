@@ -14,7 +14,7 @@
 
 use crate::crypto::key::PwmKey;
 use crate::error::*;
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use crate::util::unwrap_password_or_prompt;
 use bdrck::configuration as bdrck_config;
 use bdrck::crypto::key::*;

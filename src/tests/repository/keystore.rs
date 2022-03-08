@@ -14,7 +14,7 @@
 
 use crate::crypto::configuration::Configuration;
 use crate::repository::keystore::*;
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use bdrck::testing::temp;
 
 static TEST_KEYSTORE_DIR: &'static str = "pwm-test";

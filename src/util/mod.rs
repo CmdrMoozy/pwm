@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod data;
 pub mod git;
 pub mod lazy;
 
 use crate::error::Result;
+use crate::secret::Secret;
 use bdrck;
 use std::io;
 
 /// Prompt the user for a password using the given prompt on stderr, and then
 /// read the result on stdin. If confirm is set, we'll prompt for the password
 /// twice, and make sure they copies match.
-pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::Secret> {
+pub fn password_prompt(prompt: &str, confirm: bool) -> Result<Secret> {
     Ok(match confirm {
         false => bdrck::cli::prompt_for_string(
             bdrck::cli::Stream::Stdin,
@@ -44,10 +44,10 @@ pub fn password_prompt(prompt: &str, confirm: bool) -> Result<data::Secret> {
 /// A wrapper around `password_prompt`, which will skip the prompt if a
 /// "hard-coded" password was provided instead.
 pub fn unwrap_password_or_prompt(
-    password: Option<data::Secret>,
+    password: Option<Secret>,
     prompt: &str,
     confirm: bool,
-) -> Result<data::Secret> {
+) -> Result<Secret> {
     Ok(if let Some(p) = password {
         p
     } else {
@@ -57,13 +57,13 @@ pub fn unwrap_password_or_prompt(
 
 /// Prompt the user for multiple lines of password data using the given prompt
 /// on stderr. We'll keep reading lines of text from stdin until we read "EOF".
-pub fn multiline_password_prompt(prompt: &str) -> Result<data::Secret> {
+pub fn multiline_password_prompt(prompt: &str) -> Result<Secret> {
     use std::io::Write;
 
     writeln!(&mut io::stderr(), "{}", prompt)?;
 
     let stdin = io::stdin();
-    let mut secret: data::Secret = vec![];
+    let mut secret: Secret = vec![];
     loop {
         let mut buffer = String::new();
         stdin.read_line(&mut buffer)?;

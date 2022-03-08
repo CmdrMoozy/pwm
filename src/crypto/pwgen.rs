@@ -14,7 +14,7 @@
 
 use crate::crypto::rng::Generator;
 use crate::error::*;
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use lazy_static::lazy_static;
 use rand::{Rng, RngCore};
 use std::collections::{HashMap, HashSet};

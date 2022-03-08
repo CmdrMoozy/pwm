@@ -19,7 +19,7 @@ use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
 use crate::repository::serde::{export_serialize, import_deserialize};
 use crate::repository::Repository;
-use crate::util::data::load_file;
+use crate::secret::load_file;
 use crate::util::{multiline_password_prompt, password_prompt};
 use flaggy::*;
 use std::fs::File;

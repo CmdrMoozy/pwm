@@ -23,6 +23,8 @@ mod odf;
 #[cfg(test)]
 mod repository;
 #[cfg(test)]
+mod secret;
+#[cfg(test)]
 mod util;
 #[cfg(all(test, feature = "wifiqr"))]
 mod wifiqr;

@@ -14,7 +14,7 @@
 
 use crate::crypto::configuration::Configuration;
 use crate::error::*;
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use bdrck::crypto::key::AbstractKey;
 use bdrck::crypto::keystore::DiskKeyStore;
 use std::path::Path;

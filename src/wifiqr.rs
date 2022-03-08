@@ -15,7 +15,7 @@
 use crate::crypto::pwgen;
 use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use flaggy::*;
 use qrcode_generator::{self, QrCodeEcc};
 use std::fs;

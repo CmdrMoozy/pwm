@@ -14,7 +14,7 @@
 
 use crate::error::*;
 use crate::repository::*;
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use bdrck::testing::temp;
 use sodiumoxide::randombytes::randombytes;
 use std::ops::{Deref, DerefMut};

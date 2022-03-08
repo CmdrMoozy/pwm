@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::util::data::*;
+use crate::secret::*;
 use bdrck::testing::temp;
 use std::fs::File;
 

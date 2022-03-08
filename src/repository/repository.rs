@@ -19,7 +19,7 @@ use crate::repository::keystore::{
     add_key, add_password_key, get_keystore, remove_key, remove_password_key,
 };
 use crate::repository::path::Path as RepositoryPath;
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use crate::util::git;
 use crate::util::lazy::LazyResult;
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};

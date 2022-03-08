@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::error::*;
-use crate::util::data::Secret;
+use crate::secret::Secret;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::Cursor;
 use std::mem;
