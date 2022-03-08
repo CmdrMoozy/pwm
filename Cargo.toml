@@ -10,12 +10,12 @@ byteorder = "1.4"
 clipboard = { version = "0.5", optional = true }
 data-encoding = "2.3"
 flaggy = "0.2"
-git2 = { version = "0.13", default-features = false, features = [] }
+git2 = { version = "0.14", default-features = false, features = [] }
 lazy_static = "1.4"
 log = "0.4"
-qrcode-generator = { version = "4.0", optional = true }
+qrcode-generator = { version = "4.1", optional = true }
 rand = "0.8"
-rmp-serde = "0.15"
+rmp-serde = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sodiumoxide = "0.2"
