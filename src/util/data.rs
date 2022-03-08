@@ -21,7 +21,6 @@ use std::path::Path;
 const MAX_KEY_FILE_SIZE_BYTES: u64 = 1024 * 1024 * 10; // 10 MiB
 
 pub type Secret = Vec<u8>;
-pub type SecretSlice = [u8];
 
 pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Secret> {
     let mut file = File::open(path.as_ref())?;
@@ -37,7 +36,7 @@ pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Secret> {
     Ok(data)
 }
 
-pub fn encode(secret: &SecretSlice) -> String {
+pub fn encode(secret: &Secret) -> String {
     BASE64.encode(secret)
 }
 

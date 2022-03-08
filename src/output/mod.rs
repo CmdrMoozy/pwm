@@ -17,7 +17,7 @@ mod clipboard;
 mod stdout;
 
 use crate::error::*;
-use crate::util::data::{encode, Secret, SecretSlice};
+use crate::util::data::{encode, Secret};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fmt;
@@ -88,7 +88,7 @@ impl FromStr for OutputMethod {
 /// both `encoding` and `supports_binary`, and then returns the result as a
 /// vector of bytes.
 pub fn encode_for_display(
-    secret: &SecretSlice,
+    secret: &Secret,
     encoding: InputEncoding,
     supports_binary: bool,
 ) -> Secret {
@@ -108,7 +108,7 @@ pub fn encode_for_display(
 }
 
 trait OutputHandler {
-    fn handle(&self, secret: &SecretSlice, encoding: InputEncoding) -> Result<()>;
+    fn handle(&self, secret: &Secret, encoding: InputEncoding) -> Result<()>;
 }
 
 fn get_handler(method: OutputMethod) -> Box<dyn OutputHandler> {
@@ -119,10 +119,6 @@ fn get_handler(method: OutputMethod) -> Box<dyn OutputHandler> {
     }
 }
 
-pub fn output_secret(
-    secret: &SecretSlice,
-    encoding: InputEncoding,
-    method: OutputMethod,
-) -> Result<()> {
+pub fn output_secret(secret: &Secret, encoding: InputEncoding, method: OutputMethod) -> Result<()> {
     get_handler(method).handle(secret, encoding)
 }

@@ -16,10 +16,12 @@ use crate::wifiqr::*;
 
 #[test]
 fn test_valid_encoded_output() {
-    let out = String::from_utf8(wifiqr_encode("foo", false, "bar".as_bytes()).unwrap()).unwrap();
+    let out = String::from_utf8(wifiqr_encode("foo", false, &"bar".as_bytes().to_vec()).unwrap())
+        .unwrap();
     assert_eq!("WIFI:S:foo;T:WPA;P:bar;H:false;;", out);
 
-    let out = String::from_utf8(wifiqr_encode("foobar", true, "baz".as_bytes()).unwrap()).unwrap();
+    let out = String::from_utf8(wifiqr_encode("foobar", true, &"baz".as_bytes().to_vec()).unwrap())
+        .unwrap();
     assert_eq!("WIFI:S:foobar;T:WPA;P:baz;H:true;;", out);
 }
 
@@ -28,7 +30,12 @@ fn test_valid_encoded_output() {
 #[test]
 fn test_handles_escaped_characters() {
     let out = String::from_utf8(
-        wifiqr_encode(r#"special ";,:\"#, false, r#"\:,;" characters"#.as_bytes()).unwrap(),
+        wifiqr_encode(
+            r#"special ";,:\"#,
+            false,
+            &r#"\:,;" characters"#.as_bytes().to_vec(),
+        )
+        .unwrap(),
     )
     .unwrap();
     assert_eq!(

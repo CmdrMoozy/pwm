@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::error::*;
-use crate::util::data::{Secret, SecretSlice};
+use crate::util::data::Secret;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::Cursor;
 use std::mem;
@@ -35,7 +35,7 @@ fn get_padded_size(original_size: usize) -> usize {
     blocks * PAD_BLOCK_SIZE_BYTES
 }
 
-fn read_original_size(data: &SecretSlice) -> Result<usize> {
+fn read_original_size(data: &Secret) -> Result<usize> {
     if data.len() % PAD_BLOCK_SIZE_BYTES != 0 {
         return Err(Error::InvalidArgument(
             "cannot unpad data which wasn't previously padded - bad length".to_string(),
@@ -48,7 +48,7 @@ fn read_original_size(data: &SecretSlice) -> Result<usize> {
         ));
     }
 
-    let original_size_encoded: &SecretSlice = &data[data.len() - METADATA_BYTES..];
+    let original_size_encoded = &data[data.len() - METADATA_BYTES..];
     let mut reader = Cursor::new(original_size_encoded);
     Ok(reader.read_u64::<BigEndian>().unwrap() as usize)
 }

@@ -15,7 +15,7 @@
 use crate::crypto::pwgen;
 use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
-use crate::util::data::{Secret, SecretSlice};
+use crate::util::data::Secret;
 use flaggy::*;
 use qrcode_generator::{self, QrCodeEcc};
 use std::fs;
@@ -105,7 +105,7 @@ fn wifiqr_escape(s: &str) -> String {
     escaped
 }
 
-pub(crate) fn wifiqr_encode(ssid: &str, is_hidden: bool, password: &SecretSlice) -> Result<Secret> {
+pub(crate) fn wifiqr_encode(ssid: &str, is_hidden: bool, password: &Secret) -> Result<Secret> {
     Ok(format!(
         "WIFI:S:{};T:WPA;P:{};H:{};;",
         wifiqr_escape(&ssid),

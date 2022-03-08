@@ -14,13 +14,13 @@
 
 use crate::error::*;
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
-use crate::util::data::SecretSlice;
+use crate::util::data::Secret;
 use std::io::{self, Write};
 
 pub(crate) struct StdoutOutputHandler;
 
 impl OutputHandler for StdoutOutputHandler {
-    fn handle(&self, secret: &SecretSlice, encoding: InputEncoding) -> Result<()> {
+    fn handle(&self, secret: &Secret, encoding: InputEncoding) -> Result<()> {
         use bdrck::cli::AbstractStream;
 
         let tty = bdrck::cli::Stream::Stdout.isatty();

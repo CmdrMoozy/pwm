@@ -14,7 +14,7 @@
 
 use crate::error::*;
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
-use crate::util::data::SecretSlice;
+use crate::util::data::Secret;
 use clipboard::{self, ClipboardProvider};
 use lazy_static::lazy_static;
 use log::info;
@@ -43,7 +43,7 @@ impl OutputHandler for ClipboardOutputHandler {
     /// `force_binary` is true, or if the given data is determined to not be a
     /// valid UTF-8-encoded string, then the clipboard will be populated with a
     /// base-64 encoded version of the data.
-    fn handle(&self, secret: &SecretSlice, encoding: InputEncoding) -> Result<()> {
+    fn handle(&self, secret: &Secret, encoding: InputEncoding) -> Result<()> {
         let mut cp: clipboard::x11_clipboard::X11ClipboardContext<
             clipboard::x11_clipboard::Clipboard,
         > = match clipboard::x11_clipboard::X11ClipboardContext::new() {

@@ -30,7 +30,7 @@ pub fn export(repository: &Repository) -> Result<Contents> {
     };
 
     for path in repository.list(None)? {
-        let plaintext: String = encode(repository.read_decrypt(&path)?.as_slice());
+        let plaintext: String = encode(&repository.read_decrypt(&path)?);
         contents
             .contents
             .insert(path.to_str()?.to_owned(), plaintext);

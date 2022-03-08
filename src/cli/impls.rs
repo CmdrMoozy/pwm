@@ -192,12 +192,11 @@ pub(crate) fn generate(
     let custom_exclude: Vec<char> = custom_exclude.map_or(vec![], |x| x.chars().collect());
 
     output_secret(
-        pwgen::generate_password(
+        &pwgen::generate_password(
             password_length,
             charsets.as_slice(),
             custom_exclude.as_slice(),
-        )?
-        .as_slice(),
+        )?,
         InputEncoding::Auto,
         OutputMethod::Stdout,
     )?;
