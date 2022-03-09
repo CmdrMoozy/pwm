@@ -54,10 +54,7 @@ fn test_export_import_round_trip_ascii() {
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
         let absolute_path = repository.path(path).unwrap();
-        assert_eq!(
-            plaintext_sd,
-            repository.read_decrypt(&absolute_path).unwrap()
-        );
+        assert!(plaintext_sd == repository.read_decrypt(&absolute_path).unwrap());
     }
 }
 
@@ -96,6 +93,6 @@ fn test_export_import_round_trip_binary() {
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
         let absolute_path = repository.path(path).unwrap();
-        assert_eq!(plaintext, repository.read_decrypt(&absolute_path).unwrap());
+        assert!(plaintext == repository.read_decrypt(&absolute_path).unwrap());
     }
 }

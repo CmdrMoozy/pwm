@@ -21,7 +21,7 @@ use std::path::Path;
 
 const MAX_KEY_FILE_SIZE_BYTES: u64 = 1024 * 1024 * 10; // 10 MiB
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Secret {
     inner: Vec<u8>,
 }

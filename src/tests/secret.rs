@@ -40,5 +40,5 @@ fn test_encode_decode_round_trip() {
     let encoded = original_data.encode();
     assert_ne!(original, encoded);
     let decoded = Secret::decode(&encoded).unwrap();
-    assert_eq!(original_data, decoded);
+    assert!(original_data == decoded);
 }

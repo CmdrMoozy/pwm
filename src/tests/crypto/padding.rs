@@ -23,7 +23,7 @@ fn test_padding_round_trip() {
     pad(&mut data);
     assert!(data.len() > original_data.len());
     unpad(&mut data).unwrap();
-    assert_eq!(original_data, data);
+    assert!(original_data == data);
 }
 
 #[test]
