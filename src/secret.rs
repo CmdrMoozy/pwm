@@ -44,11 +44,17 @@ impl Secret {
         Ok(Secret { inner: data })
     }
 
+    // TODO: Implement a better migration feature and remove this.
     pub fn decode(encoded: &str) -> Result<Self> {
         Ok(match BASE64.decode(encoded.as_bytes()) {
             Ok(data) => Secret { inner: data },
             Err(e) => return Err(Error::Base64(e)),
         })
+    }
+
+    // TODO: Implement a better migration feature and remove this.
+    pub fn encode(&self) -> String {
+        BASE64.encode(&self.inner)
     }
 
     pub fn len(&self) -> usize {
@@ -69,10 +75,6 @@ impl Secret {
 
     pub fn as_slice(&self) -> &[u8] {
         self.inner.as_slice()
-    }
-
-    pub fn encode(&self) -> String {
-        BASE64.encode(&self.inner)
     }
 }
 
