@@ -14,7 +14,6 @@
 
 use crate::error::*;
 use data_encoding::BASE64;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -96,19 +95,5 @@ impl Write for Secret {
 
     fn flush(&mut self) -> std::io::Result<()> {
         self.inner.flush()
-    }
-}
-
-impl Serialize for Secret {
-    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
-        self.inner.serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for Secret {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
-        Ok(Secret {
-            inner: Vec::deserialize(deserializer)?,
-        })
     }
 }
