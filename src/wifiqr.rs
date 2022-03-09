@@ -171,13 +171,13 @@ fn wifiqr(
     let encoded = wifiqr_encode(&ssid, is_hidden, &password)?;
     match format {
         ImageFormat::Png => qrcode_generator::to_png_to_file(
-            encoded,
+            encoded.as_slice(),
             error_correction.to_upstream(),
             QR_IMAGE_SIZE_PIXELS,
             output,
         )?,
-        ImageFormat::Svg => qrcode_generator::to_svg_to_file::<Secret, String, PathBuf>(
-            encoded,
+        ImageFormat::Svg => qrcode_generator::to_svg_to_file::<&[u8], String, PathBuf>(
+            encoded.as_slice(),
             error_correction.to_upstream(),
             QR_IMAGE_SIZE_PIXELS,
             None,

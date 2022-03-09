@@ -77,12 +77,6 @@ impl Secret {
     }
 }
 
-impl AsRef<[u8]> for Secret {
-    fn as_ref(&self) -> &[u8] {
-        self.inner.as_ref()
-    }
-}
-
 impl From<String> for Secret {
     fn from(s: String) -> Self {
         Secret { inner: s.into() }
