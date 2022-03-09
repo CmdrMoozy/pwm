@@ -15,7 +15,7 @@
 use crate::error::*;
 use data_encoding::BASE64;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::Path;
 
 const MAX_KEY_FILE_SIZE_BYTES: u64 = 1024 * 1024 * 10; // 10 MiB
@@ -87,15 +87,5 @@ impl From<String> for Secret {
 impl From<Vec<u8>> for Secret {
     fn from(v: Vec<u8>) -> Self {
         Secret { inner: v }
-    }
-}
-
-impl Write for Secret {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.inner.write(buf)
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.inner.flush()
     }
 }

@@ -68,7 +68,11 @@ pub fn pad(data: &mut Secret) {
         ));
     }
 
-    data.write_u64::<BigEndian>(original_size as u64).unwrap();
+    let mut metadata_buf: Vec<u8> = vec![];
+    metadata_buf
+        .write_u64::<BigEndian>(original_size as u64)
+        .unwrap();
+    data.append(&mut metadata_buf);
 }
 
 pub fn unpad(data: &mut Secret) -> Result<()> {
