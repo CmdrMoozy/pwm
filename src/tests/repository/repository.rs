@@ -22,7 +22,7 @@ use std::ops::{Deref, DerefMut};
 static TEST_REPO_DIR: &'static str = "pwm-test";
 
 fn to_password(s: &str) -> Secret {
-    s.as_bytes().to_vec()
+    s.to_owned().into()
 }
 
 struct TestRepository {
@@ -88,7 +88,7 @@ fn test_write_read_round_trip() {
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pw = to_password("foobar");
     let path = "test";
-    let plaintext = randombytes(1024);
+    let plaintext: Secret = randombytes(1024).into();
 
     {
         let mut repository =
@@ -102,7 +102,7 @@ fn test_write_read_round_trip() {
     let repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
     let absolute_path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&absolute_path).unwrap();
-    assert_eq!(&plaintext[..], &output_plaintext[..]);
+    assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn test_read_missing_file_fails_before_keystore_open() {
 #[test]
 fn test_repository_listing() {
     let mut t = TestRepository::new("foobar").unwrap();
-    let plaintext = randombytes(1024);
+    let plaintext: Secret = randombytes(1024).into();
 
     let absolute_path = t.path("foo/1").unwrap();
     t.write_encrypt(&absolute_path, plaintext.clone(), None)
@@ -166,7 +166,7 @@ fn test_repository_listing() {
 fn test_remove() {
     let mut t = TestRepository::new("foobar").unwrap();
     let absolute_path = t.path("test").unwrap();
-    t.write_encrypt(&absolute_path, randombytes(1024), None)
+    t.write_encrypt(&absolute_path, randombytes(1024).into(), None)
         .unwrap();
 
     let listing: Vec<String> = t
@@ -200,7 +200,7 @@ fn test_adding_key_succeeds() {
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";
-    let plaintext = randombytes(1024);
+    let plaintext: Secret = randombytes(1024).into();
 
     {
         let mut repository = Repository::new(repository_dir.path(), true, Some(pwa)).unwrap();
@@ -215,7 +215,7 @@ fn test_adding_key_succeeds() {
     let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
-    assert_eq!(&plaintext[..], &output_plaintext[..]);
+    assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
 }
 
 #[test]
@@ -236,7 +236,7 @@ fn test_removing_key_succeeds() {
     let pwa = to_password("foobar");
     let pwb = to_password("barbaz");
     let path = "test";
-    let plaintext = randombytes(1024);
+    let plaintext: Secret = randombytes(1024).into();
 
     {
         let mut repository =
@@ -261,5 +261,5 @@ fn test_removing_key_succeeds() {
     let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
-    assert_eq!(&plaintext[..], &output_plaintext[..]);
+    assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
 }

@@ -13,11 +13,12 @@
 // limitations under the License.
 
 use crate::crypto::padding::*;
+use crate::secret::Secret;
 use sodiumoxide::randombytes::randombytes;
 
 #[test]
 fn test_padding_round_trip() {
-    let mut data = randombytes(123);
+    let mut data: Secret = randombytes(123).into();
     let original_data = data.clone();
     pad(&mut data);
     assert!(data.len() > original_data.len());
@@ -27,6 +28,6 @@ fn test_padding_round_trip() {
 
 #[test]
 fn test_unpadding_invalid_size() {
-    let mut data: Vec<u8> = vec![];
+    let mut data = Secret::new();
     assert!(unpad(&mut data).is_err());
 }

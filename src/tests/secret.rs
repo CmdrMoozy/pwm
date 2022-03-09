@@ -28,17 +28,17 @@ fn test_from_file() {
         file.write_all(data.as_slice()).unwrap();
     }
 
-    let loaded_data = load_file(temp_file.path()).unwrap();
+    let loaded_data = Secret::load_file(temp_file.path()).unwrap();
     assert_eq!(data.len(), loaded_data.len());
-    assert_eq!(data.as_slice(), &loaded_data[..]);
+    assert_eq!(data.as_slice(), &loaded_data.as_slice()[..]);
 }
 
 #[test]
 fn test_encode_decode_round_trip() {
     let original = "Some arbitrary test string.";
-    let original_data = original.as_bytes().to_vec();
-    let encoded = encode(&original_data);
+    let original_data: Secret = original.to_owned().into();
+    let encoded = original_data.encode();
     assert_ne!(original, encoded);
-    let decoded = decode(&encoded).unwrap();
+    let decoded = Secret::decode(&encoded).unwrap();
     assert_eq!(original_data, decoded);
 }

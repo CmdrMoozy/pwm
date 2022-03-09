@@ -74,7 +74,7 @@ pub fn generate_password(
     let password: String = (0..length)
         .map(|_| chars[generator.gen_range(0..chars.len())])
         .collect();
-    Ok(password.into_bytes())
+    Ok(password.into())
 }
 
 pub fn generate_hex(byte_length: usize) -> String {

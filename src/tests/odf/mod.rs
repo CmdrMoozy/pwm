@@ -46,7 +46,7 @@ fn open_test_repo() -> (TempDir, Repository) {
     let repo = Repository::new(
         tmp.path().join(TEST_REPO_SUBDIR),
         /*create=*/ false,
-        Some(TEST_REPO_MASTER_PASSWORD.to_string().into_bytes()),
+        Some(TEST_REPO_MASTER_PASSWORD.to_string().into()),
     )
     .expect("opening repository failed");
 
@@ -77,7 +77,8 @@ fn test_read_repository() {
     let stored = repo
         .read_decrypt(&path)
         .expect("retrieving stored password failed");
-    let stored = String::from_utf8(stored).expect("stored password is not valid utf-8");
+    let stored =
+        String::from_utf8(stored.as_slice().to_vec()).expect("stored password is not valid utf-8");
     assert_eq!(TEST_REPO_PASSWORD, stored);
 }
 
@@ -97,7 +98,7 @@ fn test_write_repository() {
 
     repo.write_encrypt(
         &path,
-        TEST_REPO_PASSWORD.to_owned().into_bytes(),
+        TEST_REPO_PASSWORD.to_owned().into(),
         Some(Nonce::from_bytes(TEST_REPO_NONCE).expect("constructing nonce failed")),
     )
     .expect("storing new password failed");

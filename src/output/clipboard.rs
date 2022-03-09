@@ -57,10 +57,10 @@ impl OutputHandler for ClipboardOutputHandler {
 
         set_contents_string(
             &mut cp,
-            String::from_utf8(encode_for_display(
-                secret, encoding, /*supports_binary=*/ false,
-            ))
-            .unwrap(),
+            std::str::from_utf8(
+                encode_for_display(secret, encoding, /*supports_binary=*/ false).as_slice(),
+            )?
+            .to_owned(),
         )?;
         info!(
             "Copied stored password or key to clipboard. Will clear in {} seconds.",

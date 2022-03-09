@@ -19,15 +19,17 @@ fn generate_password_str(
     charsets: &[CharacterSet],
     exclude: &[char],
 ) -> String {
-    String::from_utf8(
+    std::str::from_utf8(
         generate_password(
             length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
             charsets,
             exclude,
         )
-        .unwrap(),
+        .unwrap()
+        .as_slice(),
     )
     .unwrap()
+    .to_owned()
 }
 
 #[test]

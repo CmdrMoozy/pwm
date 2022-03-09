@@ -14,6 +14,7 @@
 
 use crate::repository::serde::*;
 use crate::repository::Repository;
+use crate::secret::Secret;
 use bdrck::testing::temp;
 use sodiumoxide::randombytes::randombytes;
 
@@ -21,7 +22,7 @@ use sodiumoxide::randombytes::randombytes;
 fn test_export_import_round_trip_ascii() {
     let serialized: String;
     let plaintext = "arbitrary test password".to_owned();
-    let plaintext_sd = plaintext.as_bytes().to_vec();
+    let plaintext_sd: Secret = plaintext.clone().into();
 
     let paths: Vec<&'static str> = vec!["foo/1", "bar/2", "3", "foo/bar/4"];
 
@@ -30,7 +31,7 @@ fn test_export_import_round_trip_ascii() {
         let mut repository = Repository::new(
             repository_dir.path(),
             true,
-            Some("foobar".as_bytes().to_vec()),
+            Some("foobar".to_owned().into()),
         )
         .unwrap();
         for path in &paths {
@@ -46,7 +47,7 @@ fn test_export_import_round_trip_ascii() {
     let mut repository = Repository::new(
         repository_dir.path(),
         true,
-        Some("raboof".as_bytes().to_vec()),
+        Some("raboof".to_owned().into()),
     )
     .unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
@@ -63,7 +64,7 @@ fn test_export_import_round_trip_ascii() {
 #[test]
 fn test_export_import_round_trip_binary() {
     let serialized: String;
-    let plaintext = randombytes(1024);
+    let plaintext: Secret = randombytes(1024).into();
 
     let paths: Vec<&'static str> = vec!["foo/1", "bar/2", "3", "foo/bar/4"];
 
@@ -72,7 +73,7 @@ fn test_export_import_round_trip_binary() {
         let mut repository = Repository::new(
             repository_dir.path(),
             true,
-            Some("foobar".as_bytes().to_vec()),
+            Some("foobar".to_owned().into()),
         )
         .unwrap();
         for path in &paths {
@@ -88,7 +89,7 @@ fn test_export_import_round_trip_binary() {
     let mut repository = Repository::new(
         repository_dir.path(),
         true,
-        Some("raboof".as_bytes().to_vec()),
+        Some("raboof".to_owned().into()),
     )
     .unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());

@@ -48,7 +48,7 @@ fn read_original_size(data: &Secret) -> Result<usize> {
         ));
     }
 
-    let original_size_encoded = &data[data.len() - METADATA_BYTES..];
+    let original_size_encoded = &data.as_slice()[data.len() - METADATA_BYTES..];
     let mut reader = Cursor::new(original_size_encoded);
     Ok(reader.read_u64::<BigEndian>().unwrap() as usize)
 }
@@ -59,7 +59,7 @@ pub fn pad(data: &mut Secret) {
 
     if cfg!(debug_assertions) {
         // For debug builds, just pad with zeros so we generate deterministic output.
-        data.resize(padded_size - METADATA_BYTES, 0);
+        data.resize(padded_size - METADATA_BYTES);
     } else {
         // For release builds, pad with random bytes. This probably doesn't increase security? But
         // it seems like it might prevent some edge case leaks, so it can't hurt.

@@ -12,34 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::secret::Secret;
 use crate::wifiqr::*;
+
+fn test_encode(ssid: &str, is_hidden: bool, password: &str) -> String {
+    let password: Secret = password.to_owned().into();
+    let encoded = wifiqr_encode(ssid, is_hidden, &password).unwrap();
+    std::str::from_utf8(encoded.as_slice()).unwrap().to_owned()
+}
 
 #[test]
 fn test_valid_encoded_output() {
-    let out = String::from_utf8(wifiqr_encode("foo", false, &"bar".as_bytes().to_vec()).unwrap())
-        .unwrap();
-    assert_eq!("WIFI:S:foo;T:WPA;P:bar;H:false;;", out);
-
-    let out = String::from_utf8(wifiqr_encode("foobar", true, &"baz".as_bytes().to_vec()).unwrap())
-        .unwrap();
-    assert_eq!("WIFI:S:foobar;T:WPA;P:baz;H:true;;", out);
+    assert_eq!(
+        "WIFI:S:foo;T:WPA;P:bar;H:false;;",
+        test_encode("foo", false, "bar")
+    );
+    assert_eq!(
+        "WIFI:S:foobar;T:WPA;P:baz;H:true;;",
+        test_encode("foobar", true, "baz")
+    );
 }
-
-//pub(crate) fn wifiqr_encode(ssid: String, is_hidden: bool, password: &Secret) -> Result<Secret> {
 
 #[test]
 fn test_handles_escaped_characters() {
-    let out = String::from_utf8(
-        wifiqr_encode(
-            r#"special ";,:\"#,
-            false,
-            &r#"\:,;" characters"#.as_bytes().to_vec(),
-        )
-        .unwrap(),
-    )
-    .unwrap();
     assert_eq!(
         "WIFI:S:special \\\"\\;\\,\\:\\\\;T:WPA;P:\\\\\\:\\,\\;\\\" characters;H:false;;",
-        out
+        test_encode(r#"special ";,:\"#, false, r#"\:,;" characters"#)
     );
 }

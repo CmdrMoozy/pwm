@@ -21,7 +21,7 @@ static TEST_KEYSTORE_DIR: &'static str = "pwm-test";
 static TEST_KEYSTORE_FILE: &'static str = "keystore";
 
 fn to_password(s: &str) -> Secret {
-    s.as_bytes().to_vec()
+    s.to_owned().into()
 }
 
 #[test]

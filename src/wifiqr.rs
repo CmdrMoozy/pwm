@@ -109,13 +109,14 @@ pub(crate) fn wifiqr_encode(ssid: &str, is_hidden: bool, password: &Secret) -> R
     Ok(format!(
         "WIFI:S:{};T:WPA;P:{};H:{};;",
         wifiqr_escape(&ssid),
-        wifiqr_escape(std::str::from_utf8(password)?),
+        wifiqr_escape(std::str::from_utf8(password.as_slice())?),
         match is_hidden {
             false => "false",
             true => "true",
         }
     )
-    .into_bytes())
+    .into_bytes()
+    .into())
 }
 
 #[command_callback]

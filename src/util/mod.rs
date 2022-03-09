@@ -63,7 +63,7 @@ pub fn multiline_password_prompt(prompt: &str) -> Result<Secret> {
     writeln!(&mut io::stderr(), "{}", prompt)?;
 
     let stdin = io::stdin();
-    let mut secret: Secret = vec![];
+    let mut secret = Secret::new();
     loop {
         let mut buffer = String::new();
         stdin.read_line(&mut buffer)?;

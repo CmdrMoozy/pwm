@@ -67,8 +67,10 @@ fn write_encrypt(
     nonce: Option<Nonce>,
 ) -> Result<()> {
     padding::pad(&mut plaintext);
-    let encrypted_tuple: (Option<Nonce>, Secret) =
-        master_key.encrypt(plaintext.as_slice(), nonce)?;
+    let encrypted_tuple: (Option<Nonce>, Secret) = {
+        let (n, s) = master_key.encrypt(plaintext.as_slice(), nonce)?;
+        (n, s.into())
+    };
 
     if let Some(parent) = path.absolute_path().parent() {
         fs::create_dir_all(parent)?;
@@ -230,7 +232,8 @@ impl Repository {
         let encrypted_tuple: (Option<Nonce>, Secret) = rmp_serde::decode::from_read(&mut file)?;
         let mut decrypted: Secret = self
             .get_master_key()?
-            .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
+            .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?
+            .into();
         padding::unpad(&mut decrypted)?;
 
         Ok(decrypted)
