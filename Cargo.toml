@@ -32,6 +32,11 @@ default_features = false
 features = ["piv"]
 optional = true
 
+[dev-dependencies]
+flate2 = "1.0"
+tar = "0.4"
+tempdir = "0.3"
+
 [features]
 default = ["clipboard", "wifiqr"]
 piv = ["yubirs"]

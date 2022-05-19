@@ -16,6 +16,10 @@
 mod configuration;
 #[cfg(test)]
 mod crypto;
+// Tests which verify the on disk format hasn't changed (we can still interpret old repositories,
+// and repositories we create use the same format).
+#[cfg(test)]
+mod odf;
 #[cfg(test)]
 mod repository;
 #[cfg(test)]
