@@ -143,7 +143,7 @@ pub(crate) fn set(
 
     if let Some(key_file) = key_file {
         // The user wants to set the password using a key file.
-        repository.write_encrypt(&path, load_file(&key_file)?)?;
+        repository.write_encrypt(&path, load_file(&key_file)?, None)?;
     } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.
@@ -153,6 +153,7 @@ pub(crate) fn set(
                 false => password_prompt(NEW_PASSWORD_PROMPT, true)?,
                 true => multiline_password_prompt(MULTILINE_PASSWORD_PROMPT)?,
             },
+            None,
         )?;
     }
 

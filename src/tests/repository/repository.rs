@@ -73,7 +73,7 @@ fn test_wrong_master_password_fails() {
         let mut repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
         let path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&path, to_password("Hello, world!"))
+            .write_encrypt(&path, to_password("Hello, world!"), None)
             .unwrap();
     }
 
@@ -95,7 +95,7 @@ fn test_write_read_round_trip() {
             Repository::new(repository_dir.path(), true, Some(pw.clone())).unwrap();
         let absolute_path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&absolute_path, plaintext.clone())
+            .write_encrypt(&absolute_path, plaintext.clone(), None)
             .unwrap();
     }
 
@@ -132,13 +132,17 @@ fn test_repository_listing() {
     let plaintext = randombytes(1024);
 
     let absolute_path = t.path("foo/1").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+        .unwrap();
     let absolute_path = t.path("bar/2").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+        .unwrap();
     let absolute_path = t.path("3").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+        .unwrap();
     let absolute_path = t.path("foo/bar/4").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone()).unwrap();
+    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+        .unwrap();
 
     let listing: Vec<String> = t
         .list(None)
@@ -162,7 +166,8 @@ fn test_repository_listing() {
 fn test_remove() {
     let mut t = TestRepository::new("foobar").unwrap();
     let absolute_path = t.path("test").unwrap();
-    t.write_encrypt(&absolute_path, randombytes(1024)).unwrap();
+    t.write_encrypt(&absolute_path, randombytes(1024), None)
+        .unwrap();
 
     let listing: Vec<String> = t
         .list(None)
@@ -200,7 +205,9 @@ fn test_adding_key_succeeds() {
     {
         let mut repository = Repository::new(repository_dir.path(), true, Some(pwa)).unwrap();
         let path = repository.path(path).unwrap();
-        repository.write_encrypt(&path, plaintext.clone()).unwrap();
+        repository
+            .write_encrypt(&path, plaintext.clone(), None)
+            .unwrap();
 
         repository.add_password_key(Some(pwb.clone())).unwrap();
     }
@@ -235,7 +242,9 @@ fn test_removing_key_succeeds() {
         let mut repository =
             Repository::new(repository_dir.path(), true, Some(pwa.clone())).unwrap();
         let path = repository.path(path).unwrap();
-        repository.write_encrypt(&path, plaintext.clone()).unwrap();
+        repository
+            .write_encrypt(&path, plaintext.clone(), None)
+            .unwrap();
 
         repository.add_password_key(Some(pwb.clone())).unwrap();
         repository.remove_password_key(Some(pwa.clone())).unwrap();

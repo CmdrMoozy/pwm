@@ -46,7 +46,7 @@ pub fn export_serialize(repository: &Repository) -> Result<String> {
 pub fn import(repository: &mut Repository, contents: Contents) -> Result<()> {
     for (path, plaintext) in contents.contents {
         let path = repository.path(path)?;
-        repository.write_encrypt(&path, decode(&plaintext)?)?;
+        repository.write_encrypt(&path, decode(&plaintext)?, None)?;
     }
     Ok(())
 }

@@ -60,10 +60,15 @@ fn open_crypto_configuration(repository: &git2::Repository) -> Result<Configurat
     ConfigurationInstance::new(path.as_path())
 }
 
-fn write_encrypt(path: &RepositoryPath, mut plaintext: Secret, master_key: &Key) -> Result<()> {
+fn write_encrypt(
+    path: &RepositoryPath,
+    mut plaintext: Secret,
+    master_key: &Key,
+    nonce: Option<Nonce>,
+) -> Result<()> {
     padding::pad(&mut plaintext);
     let encrypted_tuple: (Option<Nonce>, Secret) =
-        master_key.encrypt(plaintext.as_slice(), None)?;
+        master_key.encrypt(plaintext.as_slice(), nonce)?;
 
     if let Some(parent) = path.absolute_path().parent() {
         fs::create_dir_all(parent)?;
@@ -202,8 +207,13 @@ impl Repository {
         )
     }
 
-    pub fn write_encrypt(&mut self, path: &RepositoryPath, plaintext: Secret) -> Result<()> {
-        write_encrypt(path, plaintext, self.get_master_key()?)?;
+    pub fn write_encrypt(
+        &mut self,
+        path: &RepositoryPath,
+        plaintext: Secret,
+        nonce: Option<Nonce>,
+    ) -> Result<()> {
+        write_encrypt(path, plaintext, self.get_master_key()?, nonce)?;
         self.commit_one(STORED_PASSWORD_UPDATE_MESSAGE, path.relative_path())?;
         Ok(())
     }
@@ -222,6 +232,7 @@ impl Repository {
             .get_master_key()?
             .decrypt(encrypted_tuple.0.as_ref(), encrypted_tuple.1.as_slice())?;
         padding::unpad(&mut decrypted)?;
+
         Ok(decrypted)
     }
 

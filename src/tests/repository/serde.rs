@@ -36,7 +36,7 @@ fn test_export_import_round_trip_ascii() {
         for path in &paths {
             let absolute_path = repository.path(path).unwrap();
             repository
-                .write_encrypt(&absolute_path, plaintext_sd.clone())
+                .write_encrypt(&absolute_path, plaintext_sd.clone(), None)
                 .unwrap();
         }
         serialized = export_serialize(&mut repository).unwrap();
@@ -78,7 +78,7 @@ fn test_export_import_round_trip_binary() {
         for path in &paths {
             let absolute_path = repository.path(path).unwrap();
             repository
-                .write_encrypt(&absolute_path, plaintext.clone())
+                .write_encrypt(&absolute_path, plaintext.clone(), None)
                 .unwrap();
         }
         serialized = export_serialize(&mut repository).unwrap();
