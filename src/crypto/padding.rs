@@ -15,7 +15,6 @@
 use crate::error::*;
 use crate::util::data::{Secret, SecretSlice};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use sodiumoxide::randombytes::randombytes;
 use std::io::Cursor;
 use std::mem;
 
@@ -57,9 +56,18 @@ fn read_original_size(data: &SecretSlice) -> Result<usize> {
 pub fn pad(data: &mut Secret) {
     let original_size: usize = data.len();
     let padded_size = get_padded_size(original_size);
-    let padding_bytes = padded_size - original_size - METADATA_BYTES;
 
-    data.append(&mut randombytes(padding_bytes));
+    if cfg!(debug_assertions) {
+        // For debug builds, just pad with zeros so we generate deterministic output.
+        data.resize(padded_size - METADATA_BYTES, 0);
+    } else {
+        // For release builds, pad with random bytes. This probably doesn't increase security? But
+        // it seems like it might prevent some edge case leaks, so it can't hurt.
+        data.append(&mut sodiumoxide::randombytes::randombytes(
+            padded_size - original_size - METADATA_BYTES,
+        ));
+    }
+
     data.write_u64::<BigEndian>(original_size as u64).unwrap();
 }
 
