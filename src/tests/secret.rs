@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::secret::*;
+use crate::tests::str_secret;
 use bdrck::testing::temp;
 use std::fs::File;
 
@@ -36,9 +37,9 @@ fn test_from_file() {
 #[test]
 fn test_encode_decode_round_trip() {
     let original = "Some arbitrary test string.";
-    let original_data: Secret = original.to_owned().into();
+    let original_data = str_secret(original);
     let encoded = original_data.encode();
     assert_ne!(original, encoded);
     let decoded = Secret::decode(&encoded).unwrap();
-    assert!(original_data == decoded);
+    assert_eq!(original_data.as_slice(), decoded.as_slice());
 }

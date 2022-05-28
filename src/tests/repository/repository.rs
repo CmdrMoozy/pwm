@@ -14,16 +14,11 @@
 
 use crate::error::*;
 use crate::repository::*;
-use crate::secret::Secret;
+use crate::tests::{random_secret, str_secret};
 use bdrck::testing::temp;
-use sodiumoxide::randombytes::randombytes;
 use std::ops::{Deref, DerefMut};
 
 static TEST_REPO_DIR: &'static str = "pwm-test";
-
-fn to_password(s: &str) -> Secret {
-    s.to_owned().into()
-}
 
 struct TestRepository {
     _directory: temp::Dir,
@@ -54,7 +49,7 @@ impl Drop for TestRepository {
 impl TestRepository {
     fn new(password: &str) -> Result<TestRepository> {
         let directory = temp::Dir::new(TEST_REPO_DIR)?;
-        let repository = Repository::new(directory.path(), true, Some(to_password(password)))?;
+        let repository = Repository::new(directory.path(), true, Some(str_secret(password)))?;
         Ok(TestRepository {
             _directory: directory,
             repository: Some(repository),
@@ -65,15 +60,15 @@ impl TestRepository {
 #[test]
 fn test_wrong_master_password_fails() {
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
-    let good = to_password("foobar");
-    let bad = to_password("barbaz");
+    let good = str_secret("foobar");
+    let bad = str_secret("barbaz");
     let path = "test";
 
     {
         let mut repository = Repository::new(repository_dir.path(), true, Some(good)).unwrap();
         let path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&path, to_password("Hello, world!"), None)
+            .write_encrypt(&path, str_secret("Hello, world!"), None)
             .unwrap();
     }
 
@@ -86,16 +81,16 @@ fn test_wrong_master_password_fails() {
 #[test]
 fn test_write_read_round_trip() {
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
-    let pw = to_password("foobar");
+    let pw = str_secret("foobar");
     let path = "test";
-    let plaintext: Secret = randombytes(1024).into();
+    let plaintext = random_secret(1024);
 
     {
         let mut repository =
-            Repository::new(repository_dir.path(), true, Some(pw.clone())).unwrap();
+            Repository::new(repository_dir.path(), true, Some(pw.try_clone().unwrap())).unwrap();
         let absolute_path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&absolute_path, plaintext.clone(), None)
+            .write_encrypt(&absolute_path, plaintext.try_clone().unwrap(), None)
             .unwrap();
     }
 
@@ -112,12 +107,12 @@ fn test_read_missing_file_fails_before_keystore_open() {
     {
         // Initialize the repository with a password.
         let _repository =
-            Repository::new(repository_dir.path(), true, Some(to_password("foo"))).unwrap();
+            Repository::new(repository_dir.path(), true, Some(str_secret("foo"))).unwrap();
     }
 
     // Construct a repository with an invalid password.
     let repository =
-        Repository::new(repository_dir.path(), false, Some(to_password("bar"))).unwrap();
+        Repository::new(repository_dir.path(), false, Some(str_secret("bar"))).unwrap();
     let ret = repository.read_decrypt(&repository.path("test").unwrap());
     // The error we get should be about the missing file, not the bad password.
     assert_eq!(
@@ -129,19 +124,19 @@ fn test_read_missing_file_fails_before_keystore_open() {
 #[test]
 fn test_repository_listing() {
     let mut t = TestRepository::new("foobar").unwrap();
-    let plaintext: Secret = randombytes(1024).into();
+    let plaintext = random_secret(1024);
 
     let absolute_path = t.path("foo/1").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+    t.write_encrypt(&absolute_path, plaintext.try_clone().unwrap(), None)
         .unwrap();
     let absolute_path = t.path("bar/2").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+    t.write_encrypt(&absolute_path, plaintext.try_clone().unwrap(), None)
         .unwrap();
     let absolute_path = t.path("3").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+    t.write_encrypt(&absolute_path, plaintext.try_clone().unwrap(), None)
         .unwrap();
     let absolute_path = t.path("foo/bar/4").unwrap();
-    t.write_encrypt(&absolute_path, plaintext.clone(), None)
+    t.write_encrypt(&absolute_path, plaintext.try_clone().unwrap(), None)
         .unwrap();
 
     let listing: Vec<String> = t
@@ -166,7 +161,7 @@ fn test_repository_listing() {
 fn test_remove() {
     let mut t = TestRepository::new("foobar").unwrap();
     let absolute_path = t.path("test").unwrap();
-    t.write_encrypt(&absolute_path, randombytes(1024).into(), None)
+    t.write_encrypt(&absolute_path, random_secret(1024), None)
         .unwrap();
 
     let listing: Vec<String> = t
@@ -191,25 +186,27 @@ fn test_remove() {
 #[test]
 fn test_adding_duplicate_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.add_password_key(Some(to_password("foobar"))).is_err());
+    assert!(t.add_password_key(Some(str_secret("foobar"))).is_err());
 }
 
 #[test]
 fn test_adding_key_succeeds() {
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
-    let pwa = to_password("foobar");
-    let pwb = to_password("barbaz");
+    let pwa = str_secret("foobar");
+    let pwb = str_secret("barbaz");
     let path = "test";
-    let plaintext: Secret = randombytes(1024).into();
+    let plaintext = random_secret(1024);
 
     {
         let mut repository = Repository::new(repository_dir.path(), true, Some(pwa)).unwrap();
         let path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&path, plaintext.clone(), None)
+            .write_encrypt(&path, plaintext.try_clone().unwrap(), None)
             .unwrap();
 
-        repository.add_password_key(Some(pwb.clone())).unwrap();
+        repository
+            .add_password_key(Some(pwb.try_clone().unwrap()))
+            .unwrap();
     }
 
     let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
@@ -221,38 +218,43 @@ fn test_adding_key_succeeds() {
 #[test]
 fn test_removing_only_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.remove_password_key(Some(to_password("foobar"))).is_err());
+    assert!(t.remove_password_key(Some(str_secret("foobar"))).is_err());
 }
 
 #[test]
 fn test_removing_unused_key() {
     let mut t = TestRepository::new("foobar").unwrap();
-    assert!(t.remove_password_key(Some(to_password("barbaz"))).is_err());
+    assert!(t.remove_password_key(Some(str_secret("barbaz"))).is_err());
 }
 
 #[test]
 fn test_removing_key_succeeds() {
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
-    let pwa = to_password("foobar");
-    let pwb = to_password("barbaz");
+    let pwa = str_secret("foobar");
+    let pwb = str_secret("barbaz");
     let path = "test";
-    let plaintext: Secret = randombytes(1024).into();
+    let plaintext = random_secret(1024);
 
     {
         let mut repository =
-            Repository::new(repository_dir.path(), true, Some(pwa.clone())).unwrap();
+            Repository::new(repository_dir.path(), true, Some(pwa.try_clone().unwrap())).unwrap();
         let path = repository.path(path).unwrap();
         repository
-            .write_encrypt(&path, plaintext.clone(), None)
+            .write_encrypt(&path, plaintext.try_clone().unwrap(), None)
             .unwrap();
 
-        repository.add_password_key(Some(pwb.clone())).unwrap();
-        repository.remove_password_key(Some(pwa.clone())).unwrap();
+        repository
+            .add_password_key(Some(pwb.try_clone().unwrap()))
+            .unwrap();
+        repository
+            .remove_password_key(Some(pwa.try_clone().unwrap()))
+            .unwrap();
     }
 
     {
         // Accessing the repository with the old key should fail.
-        let repository = Repository::new(repository_dir.path(), false, Some(pwa.clone())).unwrap();
+        let repository =
+            Repository::new(repository_dir.path(), false, Some(pwa.try_clone().unwrap())).unwrap();
         let path = repository.path(path).unwrap();
         assert!(repository.read_decrypt(&path).is_err());
     }

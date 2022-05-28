@@ -28,3 +28,19 @@ mod secret;
 mod util;
 #[cfg(all(test, feature = "wifiqr"))]
 mod wifiqr;
+
+#[cfg(test)]
+pub(crate) fn str_secret(s: &str) -> crate::secret::Secret {
+    let sb = s.as_bytes();
+    let mut ret = crate::secret::Secret::with_len(sb.len());
+    ret.as_mut_slice().copy_from_slice(sb);
+    ret
+}
+
+#[cfg(test)]
+pub(crate) fn random_secret(len: usize) -> crate::secret::Secret {
+    let mut s = crate::secret::Secret::with_len(len);
+    let bytes = sodiumoxide::randombytes::randombytes(len);
+    s.as_mut_slice().copy_from_slice(bytes.as_slice());
+    s
+}

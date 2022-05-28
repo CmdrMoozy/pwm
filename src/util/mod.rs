@@ -24,7 +24,7 @@ use std::io;
 /// read the result on stdin. If confirm is set, we'll prompt for the password
 /// twice, and make sure they copies match.
 pub fn password_prompt(prompt: &str, confirm: bool) -> Result<Secret> {
-    Ok(match confirm {
+    let sb = match confirm {
         false => bdrck::cli::prompt_for_string(
             bdrck::cli::Stream::Stdin,
             bdrck::cli::Stream::Stderr,
@@ -38,7 +38,11 @@ pub fn password_prompt(prompt: &str, confirm: bool) -> Result<Secret> {
             /*is_sensitive=*/ true,
         )?,
     }
-    .into())
+    .into_bytes();
+
+    let mut result = Secret::with_len(sb.len());
+    result.as_mut_slice().copy_from_slice(sb.as_slice());
+    Ok(result)
 }
 
 /// A wrapper around `password_prompt`, which will skip the prompt if a

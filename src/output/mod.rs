@@ -91,20 +91,24 @@ pub fn encode_for_display(
     secret: &Secret,
     encoding: InputEncoding,
     supports_binary: bool,
-) -> Secret {
+) -> Result<Secret> {
     let as_utf8 = ::std::str::from_utf8(secret.as_slice());
     let is_binary = match encoding {
         InputEncoding::Binary => true,
         InputEncoding::Auto => as_utf8.is_err(),
     };
 
-    if !is_binary {
-        secret.to_owned()
+    Ok(if !is_binary {
+        secret.try_clone()?
     } else if supports_binary {
-        secret.to_owned()
+        secret.try_clone()?
     } else {
-        secret.encode().into_bytes().into()
-    }
+        // TODO: Don't use encode() here, do something in-place or directly into a new Secret.
+        let encoded = secret.encode().into_bytes();
+        let mut s = Secret::with_len(encoded.len());
+        s.as_mut_slice().copy_from_slice(encoded.as_slice());
+        s
+    })
 }
 
 trait OutputHandler {

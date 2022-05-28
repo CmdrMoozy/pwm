@@ -53,11 +53,13 @@ fn open(
     }
 
     while !keystore.is_open() {
-        let key = crypto_config.get_password_key(
-            password.clone(),
-            MASTER_PASSWORD_PROMPT,
-            /*confirm=*/ false,
-        )?;
+        let pw = if let Some(pw) = password.as_ref() {
+            Some(pw.try_clone()?)
+        } else {
+            None
+        };
+        let key =
+            crypto_config.get_password_key(pw, MASTER_PASSWORD_PROMPT, /*confirm=*/ false)?;
 
         if password.is_some() {
             // Only try once, if a hard-coded password was provided.
@@ -90,7 +92,12 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
 
     // If this is a newly initialized key store, add an initial wrapping key.
     if !keystore.is_persistable() {
-        add_password_key(&crypto_config, &mut keystore, password.clone())?;
+        let pw = if let Some(pw) = password.as_ref() {
+            Some(pw.try_clone()?)
+        } else {
+            None
+        };
+        add_password_key(&crypto_config, &mut keystore, pw)?;
     }
 
     // If this key store needs to be opened, find an appropriate key and do so.

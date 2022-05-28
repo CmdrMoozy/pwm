@@ -24,7 +24,7 @@ impl OutputHandler for StdoutOutputHandler {
         use bdrck::cli::AbstractStream;
 
         let tty = bdrck::cli::Stream::Stdout.isatty();
-        let display = encode_for_display(secret, encoding, /*supports_binary=*/ !tty);
+        let display = encode_for_display(secret, encoding, /*supports_binary=*/ !tty)?;
         let mut stdout = io::stdout();
         stdout.write_all(display.as_slice())?;
         if tty {

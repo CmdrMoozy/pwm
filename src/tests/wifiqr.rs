@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::secret::Secret;
+use crate::tests::str_secret;
 use crate::wifiqr::*;
 
 fn test_encode(ssid: &str, is_hidden: bool, password: &str) -> String {
-    let password: Secret = password.to_owned().into();
+    let password = str_secret(password);
     let encoded = wifiqr_encode(ssid, is_hidden, &password).unwrap();
     std::str::from_utf8(encoded.as_slice()).unwrap().to_owned()
 }

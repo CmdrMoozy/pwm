@@ -58,7 +58,7 @@ impl OutputHandler for ClipboardOutputHandler {
         set_contents_string(
             &mut cp,
             std::str::from_utf8(
-                encode_for_display(secret, encoding, /*supports_binary=*/ false).as_slice(),
+                encode_for_display(secret, encoding, /*supports_binary=*/ false)?.as_slice(),
             )?
             .to_owned(),
         )?;

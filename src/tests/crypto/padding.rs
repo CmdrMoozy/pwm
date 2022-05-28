@@ -14,16 +14,16 @@
 
 use crate::crypto::padding::*;
 use crate::secret::Secret;
-use sodiumoxide::randombytes::randombytes;
+use crate::tests::random_secret;
 
 #[test]
 fn test_padding_round_trip() {
-    let mut data: Secret = randombytes(123).into();
-    let original_data = data.clone();
+    let mut data = random_secret(123);
+    let original_data = data.try_clone().unwrap();
     pad(&mut data);
     assert!(data.len() > original_data.len());
     unpad(&mut data).unwrap();
-    assert!(original_data == data);
+    assert!(original_data.as_slice() == data.as_slice());
 }
 
 #[test]

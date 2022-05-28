@@ -14,15 +14,11 @@
 
 use crate::crypto::configuration::Configuration;
 use crate::repository::keystore::*;
-use crate::secret::Secret;
+use crate::tests::str_secret;
 use bdrck::testing::temp;
 
 static TEST_KEYSTORE_DIR: &'static str = "pwm-test";
 static TEST_KEYSTORE_FILE: &'static str = "keystore";
-
-fn to_password(s: &str) -> Secret {
-    s.to_owned().into()
-}
 
 #[test]
 fn test_creation() {
@@ -31,7 +27,7 @@ fn test_creation() {
         directory.sub_path(TEST_KEYSTORE_FILE).unwrap(),
         /*allow_create=*/ true,
         &Configuration::default(),
-        Some(to_password("foo")),
+        Some(str_secret("foo")),
     )
     .unwrap();
     assert!(keystore.is_open());
@@ -48,7 +44,7 @@ fn test_opening_existing() {
             directory.sub_path(TEST_KEYSTORE_FILE).unwrap(),
             /*allow_create=*/ true,
             &config,
-            Some(to_password("foo")),
+            Some(str_secret("foo")),
         )
         .unwrap();
     }
@@ -57,7 +53,7 @@ fn test_opening_existing() {
         directory.sub_path(TEST_KEYSTORE_FILE).unwrap(),
         /*allow_create=*/ false,
         &config,
-        Some(to_password("foo")),
+        Some(str_secret("foo")),
     )
     .unwrap();
     assert!(keystore.is_open());
@@ -74,7 +70,7 @@ fn test_open_bad_key_fails() {
             directory.sub_path(TEST_KEYSTORE_FILE).unwrap(),
             /*allow_create=*/ true,
             &config,
-            Some(to_password("foo")),
+            Some(str_secret("foo")),
         )
         .unwrap();
     }
@@ -83,7 +79,7 @@ fn test_open_bad_key_fails() {
         directory.sub_path(TEST_KEYSTORE_FILE).unwrap(),
         /*allow_create=*/ false,
         &config,
-        Some(to_password("bar"))
+        Some(str_secret("bar"))
     )
     .is_err());
 }

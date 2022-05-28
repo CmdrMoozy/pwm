@@ -20,7 +20,6 @@ use std::path::Path;
 
 const MAX_KEY_FILE_SIZE_BYTES: u64 = 1024 * 1024 * 10; // 10 MiB
 
-#[derive(Clone, PartialEq)]
 pub struct Secret {
     inner: Vec<u8>,
 }
@@ -28,6 +27,12 @@ pub struct Secret {
 impl Secret {
     pub fn new() -> Self {
         Secret { inner: Vec::new() }
+    }
+
+    pub fn with_len(len: usize) -> Self {
+        let mut s = Self::new();
+        s.resize(len);
+        s
     }
 
     pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self> {
@@ -72,11 +77,11 @@ impl Secret {
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         self.inner.as_mut_slice()
     }
-}
 
-impl From<String> for Secret {
-    fn from(s: String) -> Self {
-        Secret { inner: s.into() }
+    pub fn try_clone(&self) -> Result<Self> {
+        Ok(Secret {
+            inner: self.inner.clone(),
+        })
     }
 }
 

@@ -27,19 +27,30 @@ pub enum CharacterSet {
 }
 
 lazy_static! {
-    static ref CHARACTER_SET: HashMap<CharacterSet, Vec<char>> = {
+    static ref CHARACTER_SET: HashMap<CharacterSet, Vec<u8>> = {
         let mut m = HashMap::new();
-        m.insert(
-            CharacterSet::Letters,
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                .chars()
-                .collect(),
-        );
-        m.insert(CharacterSet::Numbers, "0123456789".chars().collect());
-        m.insert(
-            CharacterSet::Symbols,
-            "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".chars().collect(),
-        );
+
+        for c in u8::MIN..u8::MAX {
+            if let Some(cc) = char::from_u32(c as u32) {
+                let key = if !cc.is_ascii() {
+                    continue;
+                } else if cc.is_ascii_alphabetic() {
+                    CharacterSet::Letters
+                } else if cc.is_ascii_digit() {
+                    CharacterSet::Numbers
+                } else if cc.is_ascii_graphic() {
+                    // is_ascii_graphic, in this else block, means printable non-whitespace ASCII,
+                    // except alphanumeric characters.
+                    CharacterSet::Symbols
+                } else {
+                    continue;
+                };
+
+                let set = m.entry(key).or_insert_with(Vec::new);
+                set.push(c);
+            }
+        }
+
         m
     };
 }
@@ -57,13 +68,27 @@ pub fn generate_password(
         ));
     }
 
-    let exclude: HashSet<char> = exclude.iter().cloned().collect();
-    let chars: Vec<char> = charsets
+    let exclude: HashSet<u8> = exclude
+        .iter()
+        .filter_map(|c| {
+            if c.is_ascii() {
+                let mut buf = [0; 1];
+                // Panics if c takes > 1 byte, but since we checked is_ascii() this should never happen.
+                c.encode_utf8(&mut buf);
+                Some(buf[0])
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let chars: Vec<u8> = charsets
         .iter()
         .flat_map(|cs| CHARACTER_SET.get(cs).unwrap().iter())
         .filter(|c| !exclude.contains(c))
         .cloned()
         .collect();
+
     if chars.is_empty() {
         return Err(Error::InvalidArgument(
             "cannot generate passwords from an empty character set".to_string(),
@@ -71,10 +96,13 @@ pub fn generate_password(
     }
 
     let mut generator = Generator;
-    let password: String = (0..length)
-        .map(|_| chars[generator.gen_range(0..chars.len())])
-        .collect();
-    Ok(password.into())
+    let mut result = Secret::with_len(length);
+
+    for i in 0..length {
+        result.as_mut_slice()[i] = chars[generator.gen_range(0..chars.len())];
+    }
+
+    Ok(result)
 }
 
 pub fn generate_hex(byte_length: usize) -> String {

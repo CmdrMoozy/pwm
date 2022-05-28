@@ -14,8 +14,11 @@
 
 use crate::repository::path::Path as RepositoryPath;
 use crate::repository::Repository;
+use crate::secret::Secret;
+use crate::tests::str_secret;
 use bdrck::crypto::key::Nonce;
 use flate2::read::GzDecoder;
+use lazy_static::lazy_static;
 use std::fs::File;
 use std::io::Cursor;
 use tar;
@@ -23,14 +26,18 @@ use tempdir::TempDir;
 
 const TEST_REPO: &'static [u8] = include_bytes!("test-repository.tar.gz");
 const TEST_REPO_SUBDIR: &'static str = "pwm-test";
-const TEST_REPO_MASTER_PASSWORD: &'static str = "qwerty";
+lazy_static! {
+    static ref TEST_REPO_MASTER_PASSWORD: Secret = str_secret("qwerty");
+}
 const TEST_REPO_NONCE: &'static [u8] = &[
     231, 97, 13, 54, 159, 192, 85, 254, 94, 94, 227, 45, 31, 160, 149, 134, 241, 181, 52, 242, 241,
     87, 235, 245,
 ];
 const TEST_REPO_PATH: &'static str = "foo/bar";
 const TEST_REPO_NEW_PATH: &'static str = "bar/baz";
-const TEST_REPO_PASSWORD: &'static str = "this is a test password";
+lazy_static! {
+    static ref TEST_REPO_PASSWORD: Secret = str_secret("this is a test password");
+}
 
 fn open_test_repo() -> (TempDir, Repository) {
     let tmp = TempDir::new(env!("CARGO_PKG_NAME")).expect("creating tempdir failed");
@@ -46,7 +53,7 @@ fn open_test_repo() -> (TempDir, Repository) {
     let repo = Repository::new(
         tmp.path().join(TEST_REPO_SUBDIR),
         /*create=*/ false,
-        Some(TEST_REPO_MASTER_PASSWORD.to_string().into()),
+        Some(TEST_REPO_MASTER_PASSWORD.try_clone().unwrap()),
     )
     .expect("opening repository failed");
 
@@ -79,7 +86,7 @@ fn test_read_repository() {
         .expect("retrieving stored password failed");
     let stored =
         String::from_utf8(stored.as_slice().to_vec()).expect("stored password is not valid utf-8");
-    assert_eq!(TEST_REPO_PASSWORD, stored);
+    assert_eq!(TEST_REPO_PASSWORD.as_slice(), stored.as_bytes());
 }
 
 // Verify when we encrypt, the ciphertext we emit matches what we expect. The idea is to detect
@@ -98,7 +105,7 @@ fn test_write_repository() {
 
     repo.write_encrypt(
         &path,
-        TEST_REPO_PASSWORD.to_owned().into(),
+        TEST_REPO_PASSWORD.try_clone().unwrap(),
         Some(Nonce::from_bytes(TEST_REPO_NONCE).expect("constructing nonce failed")),
     )
     .expect("storing new password failed");

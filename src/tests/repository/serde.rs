@@ -14,85 +14,73 @@
 
 use crate::repository::serde::*;
 use crate::repository::Repository;
-use crate::secret::Secret;
+use crate::tests::{random_secret, str_secret};
 use bdrck::testing::temp;
-use sodiumoxide::randombytes::randombytes;
 
 #[test]
 fn test_export_import_round_trip_ascii() {
     let serialized: String;
-    let plaintext = "arbitrary test password".to_owned();
-    let plaintext_sd: Secret = plaintext.clone().into();
+    let plaintext = str_secret("arbitrary test password");
 
     let paths: Vec<&'static str> = vec!["foo/1", "bar/2", "3", "foo/bar/4"];
 
     {
         let repository_dir = temp::Dir::new("pwm-test").unwrap();
-        let mut repository = Repository::new(
-            repository_dir.path(),
-            true,
-            Some("foobar".to_owned().into()),
-        )
-        .unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(), true, Some(str_secret("foobar"))).unwrap();
         for path in &paths {
             let absolute_path = repository.path(path).unwrap();
             repository
-                .write_encrypt(&absolute_path, plaintext_sd.clone(), None)
+                .write_encrypt(&absolute_path, plaintext.try_clone().unwrap(), None)
                 .unwrap();
         }
         serialized = export_serialize(&mut repository).unwrap();
     }
 
     let repository_dir = temp::Dir::new("pwm-test").unwrap();
-    let mut repository = Repository::new(
-        repository_dir.path(),
-        true,
-        Some("raboof".to_owned().into()),
-    )
-    .unwrap();
+    let mut repository =
+        Repository::new(repository_dir.path(), true, Some(str_secret("raboof"))).unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
         let absolute_path = repository.path(path).unwrap();
-        assert!(plaintext_sd == repository.read_decrypt(&absolute_path).unwrap());
+        assert_eq!(
+            plaintext.as_slice(),
+            repository.read_decrypt(&absolute_path).unwrap().as_slice()
+        );
     }
 }
 
 #[test]
 fn test_export_import_round_trip_binary() {
     let serialized: String;
-    let plaintext: Secret = randombytes(1024).into();
+    let plaintext = random_secret(1024);
 
     let paths: Vec<&'static str> = vec!["foo/1", "bar/2", "3", "foo/bar/4"];
 
     {
         let repository_dir = temp::Dir::new("pwm-test").unwrap();
-        let mut repository = Repository::new(
-            repository_dir.path(),
-            true,
-            Some("foobar".to_owned().into()),
-        )
-        .unwrap();
+        let mut repository =
+            Repository::new(repository_dir.path(), true, Some(str_secret("foobar"))).unwrap();
         for path in &paths {
             let absolute_path = repository.path(path).unwrap();
             repository
-                .write_encrypt(&absolute_path, plaintext.clone(), None)
+                .write_encrypt(&absolute_path, plaintext.try_clone().unwrap(), None)
                 .unwrap();
         }
         serialized = export_serialize(&mut repository).unwrap();
     }
 
     let repository_dir = temp::Dir::new("pwm-test").unwrap();
-    let mut repository = Repository::new(
-        repository_dir.path(),
-        true,
-        Some("raboof".to_owned().into()),
-    )
-    .unwrap();
+    let mut repository =
+        Repository::new(repository_dir.path(), true, Some(str_secret("raboof"))).unwrap();
     assert_eq!(0, repository.list(None).unwrap().len());
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
         let absolute_path = repository.path(path).unwrap();
-        assert!(plaintext == repository.read_decrypt(&absolute_path).unwrap());
+        assert_eq!(
+            plaintext.as_slice(),
+            repository.read_decrypt(&absolute_path).unwrap().as_slice()
+        );
     }
 }
