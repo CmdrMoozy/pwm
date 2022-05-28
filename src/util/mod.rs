@@ -58,6 +58,8 @@ pub fn unwrap_password_or_prompt(
 /// Prompt the user for multiple lines of password data using the given prompt
 /// on stderr. We'll keep reading lines of text from stdin until we read "EOF".
 pub fn multiline_password_prompt(prompt: &str) -> Result<Secret> {
+    // TODO: Completely rewrite all of our prompt functions to read directly into Secrets.
+
     use std::io::Write;
 
     writeln!(&mut io::stderr(), "{}", prompt)?;
@@ -70,10 +72,14 @@ pub fn multiline_password_prompt(prompt: &str) -> Result<Secret> {
         if buffer == "EOF\n" {
             break;
         }
-        secret.append(&mut buffer.into_bytes());
+
+        let old_len = secret.len();
+        let new_len = old_len + buffer.len();
+        secret.resize(new_len);
+        secret.as_mut_slice()[old_len..].copy_from_slice(buffer.into_bytes().as_slice());
     }
     let secret_len = secret.len();
-    secret.truncate(secret_len - 1);
+    secret.resize(secret_len - 1);
 
     Ok(secret)
 }

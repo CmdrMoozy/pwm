@@ -56,27 +56,29 @@ fn read_original_size(data: &Secret) -> Result<usize> {
 pub fn pad(data: &mut Secret) {
     let original_size: usize = data.len();
     let padded_size = get_padded_size(original_size);
+    data.resize(padded_size);
 
-    if cfg!(debug_assertions) {
-        // For debug builds, just pad with zeros so we generate deterministic output.
-        data.resize(padded_size - METADATA_BYTES);
-    } else {
+    // For debug builds, just leave zero padding so we generate deterministic output.
+    if !cfg!(debug_assertions) {
         // For release builds, pad with random bytes. This probably doesn't increase security? But
         // it seems like it might prevent some edge case leaks, so it can't hurt.
-        data.append(&mut sodiumoxide::randombytes::randombytes(
-            padded_size - original_size - METADATA_BYTES,
-        ));
+        let old_len = data.len();
+        let padding =
+            sodiumoxide::randombytes::randombytes(padded_size - original_size - METADATA_BYTES);
+        data.as_mut_slice()[old_len..old_len + padding.len()].copy_from_slice(padding.as_slice());
     }
 
     let mut metadata_buf: Vec<u8> = vec![];
     metadata_buf
         .write_u64::<BigEndian>(original_size as u64)
         .unwrap();
-    data.append(&mut metadata_buf);
+
+    let metadata_off = data.len() - METADATA_BYTES;
+    data.as_mut_slice()[metadata_off..].copy_from_slice(metadata_buf.as_slice());
 }
 
 pub fn unpad(data: &mut Secret) -> Result<()> {
     let original_size = read_original_size(&data)?;
-    data.truncate(original_size);
+    data.resize(original_size);
     Ok(())
 }

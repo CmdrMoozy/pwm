@@ -65,16 +65,12 @@ impl Secret {
         self.inner.resize(len, 0)
     }
 
-    pub fn append(&mut self, other: &mut Vec<u8>) {
-        self.inner.append(other)
-    }
-
-    pub fn truncate(&mut self, len: usize) {
-        self.inner.truncate(len)
-    }
-
     pub fn as_slice(&self) -> &[u8] {
         self.inner.as_slice()
+    }
+
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        self.inner.as_mut_slice()
     }
 }
 
