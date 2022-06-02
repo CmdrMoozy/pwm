@@ -72,12 +72,7 @@ impl FromStr for OutputMethod {
     fn from_str(s: &str) -> Result<Self> {
         let s = s.to_uppercase();
         Ok(match STRING_OUTPUT_METHODS.get(&s) {
-            None => {
-                return Err(Error::InvalidArgument(format!(
-                    "invalid output method '{}'",
-                    s
-                )))
-            }
+            None => bail!("invalid output method '{}'", s),
             Some(om) => *om,
         })
     }

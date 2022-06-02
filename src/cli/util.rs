@@ -20,7 +20,7 @@ use std::path::PathBuf;
 pub fn get_repository_path(repository: Option<PathBuf>) -> Result<PathBuf> {
     Ok(match repository {
         None => match configuration::get()?.default_repository.as_ref() {
-            None => return Err(Error::InvalidArgument(format!("no repository path specified: try the '{}' command option, or setting the 'default_repository' configuration key", cli::REPOSITORY_SPEC.get_name()))),
+            None => bail!("no repository path specified: try the '{}' command option, or setting the 'default_repository' configuration key", cli::REPOSITORY_SPEC.get_name()),
             Some(r) => r.into(),
         },
         Some(r) => r,

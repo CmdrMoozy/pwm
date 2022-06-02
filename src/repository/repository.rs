@@ -219,10 +219,10 @@ impl Repository {
 
     pub fn read_decrypt(&self, path: &RepositoryPath) -> Result<Secret> {
         if !path.absolute_path().exists() {
-            return Err(Error::NotFound(format!(
+            bail!(
                 "no stored password at path '{}'",
                 path.relative_path().display()
-            )));
+            );
         }
 
         let mut file = File::open(path.absolute_path())?;

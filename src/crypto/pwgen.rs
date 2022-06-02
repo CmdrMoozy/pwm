@@ -63,9 +63,7 @@ pub fn generate_password(
     exclude: &[char],
 ) -> Result<Secret> {
     if length == 0 {
-        return Err(Error::InvalidArgument(
-            "refusing to generate a password of length 0".to_string(),
-        ));
+        bail!("refusing to generate a password of length 0");
     }
 
     let exclude: HashSet<u8> = exclude
@@ -90,9 +88,7 @@ pub fn generate_password(
         .collect();
 
     if chars.is_empty() {
-        return Err(Error::InvalidArgument(
-            "cannot generate passwords from an empty character set".to_string(),
-        ));
+        bail!("cannot generate passwords from an empty character set");
     }
 
     let mut generator = Generator;

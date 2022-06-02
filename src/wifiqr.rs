@@ -62,12 +62,7 @@ impl std::str::FromStr for ErrorCorrection {
             "Medium" => ErrorCorrection::Medium,
             "Quartile" => ErrorCorrection::Quartile,
             "High" => ErrorCorrection::High,
-            _ => {
-                return Err(Error::InvalidArgument(format!(
-                    "invalid error correction '{}'",
-                    s
-                )))
-            }
+            _ => bail!("invalid error correction '{}'", s),
         })
     }
 }
@@ -84,12 +79,10 @@ impl std::str::FromStr for ImageFormat {
         Ok(match extension {
             "png" => ImageFormat::Png,
             "svg" => ImageFormat::Svg,
-            _ => {
-                return Err(Error::InvalidArgument(format!(
-                    "invalid file extension '{}'; only *.png and *.svg are supported",
-                    extension
-                )))
-            }
+            _ => bail!(
+                "invalid file extension '{}'; only *.png and *.svg are supported",
+                extension
+            ),
         })
     }
 }
@@ -136,31 +129,25 @@ fn wifiqr(
         if let Some(extension_str) = extension.to_str() {
             extension_str.parse()?
         } else {
-            return Err(Error::InvalidArgument(format!(
+            bail!(
                 "invalid output path '{}', file extension is not valid UTF-8",
                 output.display()
-            )));
+            );
         }
     } else {
-        return Err(Error::InvalidArgument(format!(
+        bail!(
             "invalid output path '{}', expected *.png or *.svg extension",
             output.display()
-        )));
+        );
     };
 
     // Check if the output already exists, and create its parent directory.
     if output.exists() {
         if !overwrite {
-            return Err(Error::InvalidArgument(format!(
-                "refusing to overwrite '{}'",
-                output.display()
-            )));
+            bail!("refusing to overwrite '{}'", output.display());
         }
         if !output.is_file() {
-            return Err(Error::InvalidArgument(format!(
-                "found directory, expected file at '{}'",
-                output.display()
-            )));
+            bail!("found directory, expected file at '{}'", output.display());
         }
     }
     if let Some(parent) = output.parent() {

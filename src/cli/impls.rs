@@ -33,9 +33,7 @@ pub(crate) fn config(key: Option<String>, set: Option<String>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     if key.is_none() {
         if set.is_some() {
-            return Err(Error::InvalidArgument(
-                "a 'key' must be provided when 'set'ting a configuration value".to_string(),
-            ));
+            bail!("a 'key' must be provided when 'set'ting a configuration value");
         }
 
         println!(
@@ -136,9 +134,7 @@ pub(crate) fn set(
     let path = repository.path(path)?;
 
     if key_file.is_some() && multiline {
-        return Err(Error::InvalidArgument(
-            "the 'key_file' and 'multiline' options are mutually exclusive".to_string(),
-        ));
+        bail!("the 'key_file' and 'multiline' options are mutually exclusive");
     }
 
     if let Some(key_file) = key_file {

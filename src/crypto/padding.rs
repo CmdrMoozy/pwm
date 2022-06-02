@@ -37,15 +37,11 @@ fn get_padded_size(original_size: usize) -> usize {
 
 fn read_original_size(data: &Secret) -> Result<usize> {
     if data.len() % PAD_BLOCK_SIZE_BYTES != 0 {
-        return Err(Error::InvalidArgument(
-            "cannot unpad data which wasn't previously padded - bad length".to_string(),
-        ));
+        bail!("cannot unpad data which wasn't previously padded - bad length");
     }
 
     if data.len() < METADATA_BYTES {
-        return Err(Error::InvalidArgument(
-            "cannot unpad data with invalid length".to_string(),
-        ));
+        bail!("cannot unpad data with invalid length");
     }
 
     let original_size_encoded = &data.as_slice()[data.len() - METADATA_BYTES..];

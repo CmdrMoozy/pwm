@@ -116,7 +116,7 @@ fn test_read_missing_file_fails_before_keystore_open() {
     let ret = repository.read_decrypt(&repository.path("test").unwrap());
     // The error we get should be about the missing file, not the bad password.
     assert_eq!(
-        "not found: no stored password at path 'test'",
+        "no stored password at path 'test'",
         ret.err().unwrap().to_string()
     );
 }

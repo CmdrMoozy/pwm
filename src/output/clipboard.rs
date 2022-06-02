@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::*;
+use crate::error::{bail, Result};
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
 use crate::secret::Secret;
 use clipboard::{self, ClipboardProvider};
@@ -28,11 +28,7 @@ lazy_static! {
 fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> Result<()> {
     match cp.set_contents(contents) {
         Ok(_) => Ok(()),
-        Err(_) => {
-            return Err(Error::Internal(
-                "failed to set clipboard contents".to_string(),
-            ))
-        }
+        Err(_) => bail!("failed to set clipboard contents"),
     }
 }
 
@@ -48,11 +44,7 @@ impl OutputHandler for ClipboardOutputHandler {
             clipboard::x11_clipboard::Clipboard,
         > = match clipboard::x11_clipboard::X11ClipboardContext::new() {
             Ok(cp) => cp,
-            Err(_) => {
-                return Err(Error::Internal(
-                    "failed to get clipboard context".to_string(),
-                ))
-            }
+            Err(_) => bail!("failed to get clipboard context"),
         };
 
         set_contents_string(

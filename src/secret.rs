@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::*;
+use crate::error::{bail, Result};
 use data_encoding::BASE64;
 use std::fs::File;
 use std::io::Read;
@@ -38,11 +38,11 @@ impl Secret {
     pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let mut file = File::open(path.as_ref())?;
         if file.metadata()?.len() > MAX_KEY_FILE_SIZE_BYTES {
-            return Err(Error::InvalidArgument(format!(
+            bail!(
                 "invalid secret file {}; exceeded maximum limit of {} bytes",
                 path.as_ref().display(),
                 MAX_KEY_FILE_SIZE_BYTES
-            )));
+            );
         }
         let mut data: Vec<u8> = vec![];
         file.read_to_end(&mut data)?;
@@ -53,7 +53,7 @@ impl Secret {
     pub fn decode(encoded: &str) -> Result<Self> {
         Ok(match BASE64.decode(encoded.as_bytes()) {
             Ok(data) => Secret { inner: data },
-            Err(e) => return Err(Error::Base64(e)),
+            Err(e) => return Err(e.into()),
         })
     }
 

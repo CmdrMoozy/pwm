@@ -14,25 +14,64 @@
 
 use crate::error::*;
 use bdrck::crypto::key::{AbstractKey, Digest, Nonce};
+use std::fmt;
 
-/// PwmKey is a stupid shim which lets us adapt any AbstractKey implementor with an error type we
-/// can convert from. This let us write functions that return or accept things which satisfy
-/// "AbstractKey<Error = Error>".
+#[derive(Debug)]
+pub struct KeyError(Error);
+
+impl From<Error> for KeyError {
+    fn from(e: Error) -> Self {
+        KeyError(e)
+    }
+}
+
+impl fmt::Display for KeyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for KeyError {}
+
+impl KeyError {
+    pub fn into_inner(self) -> Error {
+        self.0
+    }
+}
+
+pub type KeyResult<T> = std::result::Result<T, KeyError>;
+
+/// The basic problem we have is, we want to have a function which returns any of various kinds of
+/// keys (which may have different error types). So we want a single AbstractKey implementation,
+/// which can *wrap* any of those various key kinds, and provide a standard error type for all of
+/// them.
+///
+/// A further problem is, we can't just use the normal Error we use everywhere else for this,
+/// because anyhow's Error doesn't implement std::error::Error. So we additionally (above)
+/// introduce a new stupid KeyError wrapper which implements std::error::Error.
 pub struct PwmKey<E: Into<Error>, K: AbstractKey<Error = E>>(K);
 
 impl<E: Into<Error>, K: AbstractKey<Error = E>> AbstractKey for PwmKey<E, K> {
-    type Error = Error;
+    type Error = KeyError;
 
     fn get_digest(&self) -> Digest {
         self.0.get_digest()
     }
 
-    fn encrypt(&self, plaintext: &[u8], nonce: Option<Nonce>) -> Result<(Option<Nonce>, Vec<u8>)> {
-        self.0.encrypt(plaintext, nonce).map_err(|e| e.into())
+    fn encrypt(
+        &self,
+        plaintext: &[u8],
+        nonce: Option<Nonce>,
+    ) -> KeyResult<(Option<Nonce>, Vec<u8>)> {
+        self.0
+            .encrypt(plaintext, nonce)
+            .map_err(|e| KeyError::from(e.into()))
     }
 
-    fn decrypt(&self, nonce: Option<&Nonce>, ciphertext: &[u8]) -> Result<Vec<u8>> {
-        self.0.decrypt(nonce, ciphertext).map_err(|e| e.into())
+    fn decrypt(&self, nonce: Option<&Nonce>, ciphertext: &[u8]) -> KeyResult<Vec<u8>> {
+        self.0
+            .decrypt(nonce, ciphertext)
+            .map_err(|e| KeyError::from(e.into()))
     }
 }
 

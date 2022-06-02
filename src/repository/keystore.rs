@@ -84,10 +84,7 @@ pub(crate) fn get_keystore<P: AsRef<Path>>(
 
     // Check for the case where we really expected an existing key store.
     if !allow_create && !keystore.is_persistable() {
-        return Err(Error::NotFound(format!(
-            "no key store found at '{}'",
-            path.as_ref().display()
-        )));
+        bail!("no key store found at '{}'", path.as_ref().display());
     }
 
     // If this is a newly initialized key store, add an initial wrapping key.
@@ -113,9 +110,7 @@ pub(crate) fn add_key<E: Into<Error>, K: AbstractKey<Error = E>>(
 ) -> Result<()> {
     let was_added = keystore.add_key(key)?;
     if !was_added {
-        return Err(Error::InvalidArgument(
-            "the specified key is already in use, so it was not re-added".to_string(),
-        ));
+        bail!("the specified key is already in use, so it was not re-added");
     }
     Ok(())
 }
@@ -137,9 +132,7 @@ pub(crate) fn remove_key<E: Into<Error>, K: AbstractKey<Error = E>>(
 ) -> Result<()> {
     let was_removed = keystore.remove_key(key)?;
     if !was_removed {
-        return Err(Error::NotFound(
-            "the specified key is not registered with this repository".to_string(),
-        ));
+        bail!("the specified key is not registered with this repository");
     }
     Ok(())
 }

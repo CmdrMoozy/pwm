@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::{Error, Result};
+use crate::error::{bail, Error, Result};
 use git2::{
     self, Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree,
 };
@@ -36,7 +36,7 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
             {
                 Ok(Repository::init(path)?)
             } else {
-                Err(Error::from(error))
+                Err(error.into())
             }
         }
     }
@@ -48,11 +48,7 @@ pub fn open_repository<P: AsRef<Path>>(path: P, create: bool) -> Result<Reposito
 pub fn get_repository_workdir(repository: &Repository) -> Result<&Path> {
     match repository.workdir() {
         Some(path) => Ok(path),
-        None => {
-            return Err(Error::InvalidArgument(
-                "repository has no workdir".to_string(),
-            ));
-        }
+        None => bail!("repository has no workdir"),
     }
 }
 

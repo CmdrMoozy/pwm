@@ -6,6 +6,7 @@ license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]
+anyhow = { version = "1.0", features = ["backtrace"] }
 byteorder = "1.4"
 clipboard = { version = "0.5", optional = true }
 data-encoding = "2.3"
@@ -19,7 +20,6 @@ rmp-serde = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sodiumoxide = "0.2"
-thiserror = "1.0"
 
 [dependencies.bdrck]
 version = "0.18"

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::crypto::key::PwmKey;
+use crate::crypto::key::{KeyError, PwmKey};
 use crate::error::*;
 use crate::secret::Secret;
 use crate::util::unwrap_password_or_prompt;
@@ -97,7 +97,7 @@ impl Configuration {
         password: Option<Secret>,
         prompt: &str,
         confirm: bool,
-    ) -> Result<impl AbstractKey<Error = Error>> {
+    ) -> Result<impl AbstractKey<Error = KeyError>> {
         let password = unwrap_password_or_prompt(password, prompt, confirm)?;
         let key = Key::new_password(
             password.as_slice(),
