@@ -14,7 +14,7 @@
 
 use crate::crypto::rng::Generator;
 use crate::error::*;
-use crate::secret::Secret;
+use bdrck::crypto::secret::Secret;
 use lazy_static::lazy_static;
 use rand::{Rng, RngCore};
 use std::collections::{HashMap, HashSet};
@@ -92,10 +92,10 @@ pub fn generate_password(
     }
 
     let mut generator = Generator;
-    let mut result = Secret::with_len(length);
+    let mut result = Secret::with_len(length)?;
 
     for i in 0..length {
-        result.as_mut_slice()[i] = chars[generator.gen_range(0..chars.len())];
+        unsafe { result.as_mut_slice()[i] = chars[generator.gen_range(0..chars.len())] };
     }
 
     Ok(result)

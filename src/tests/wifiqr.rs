@@ -18,11 +18,15 @@ use crate::wifiqr::*;
 fn test_encode(ssid: &str, is_hidden: bool, password: &str) -> String {
     let password = str_secret(password);
     let encoded = wifiqr_encode(ssid, is_hidden, &password).unwrap();
-    std::str::from_utf8(encoded.as_slice()).unwrap().to_owned()
+    std::str::from_utf8(unsafe { encoded.as_slice() })
+        .unwrap()
+        .to_owned()
 }
 
 #[test]
 fn test_valid_encoded_output() {
+    crate::init().unwrap();
+
     assert_eq!(
         "WIFI:S:foo;T:WPA;P:bar;H:false;;",
         test_encode("foo", false, "bar")
@@ -35,6 +39,8 @@ fn test_valid_encoded_output() {
 
 #[test]
 fn test_handles_escaped_characters() {
+    crate::init().unwrap();
+
     assert_eq!(
         "WIFI:S:special \\\"\\;\\,\\:\\\\;T:WPA;P:\\\\\\:\\,\\;\\\" characters;H:false;;",
         test_encode(r#"special ";,:\"#, false, r#"\:,;" characters"#)

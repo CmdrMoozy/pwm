@@ -14,7 +14,7 @@
 
 use crate::error::Result;
 use crate::repository::Repository;
-use crate::secret::Secret;
+use crate::util;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;
@@ -30,7 +30,7 @@ pub fn export(repository: &Repository) -> Result<Contents> {
     };
 
     for path in repository.list(None)? {
-        let plaintext: String = repository.read_decrypt(&path)?.encode();
+        let plaintext = util::secret::encode(&repository.read_decrypt(&path)?);
         contents
             .contents
             .insert(path.to_str()?.to_owned(), plaintext);
@@ -46,7 +46,7 @@ pub fn export_serialize(repository: &Repository) -> Result<String> {
 pub fn import(repository: &mut Repository, contents: Contents) -> Result<()> {
     for (path, plaintext) in contents.contents {
         let path = repository.path(path)?;
-        repository.write_encrypt(&path, Secret::decode(&plaintext)?, None)?;
+        repository.write_encrypt(&path, util::secret::decode(&plaintext)?, None)?;
     }
     Ok(())
 }

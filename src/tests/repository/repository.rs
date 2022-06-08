@@ -59,6 +59,8 @@ impl TestRepository {
 
 #[test]
 fn test_wrong_master_password_fails() {
+    crate::init().unwrap();
+
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let good = str_secret("foobar");
     let bad = str_secret("barbaz");
@@ -80,6 +82,8 @@ fn test_wrong_master_password_fails() {
 
 #[test]
 fn test_write_read_round_trip() {
+    crate::init().unwrap();
+
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pw = str_secret("foobar");
     let path = "test";
@@ -97,11 +101,15 @@ fn test_write_read_round_trip() {
     let repository = Repository::new(repository_dir.path(), false, Some(pw)).unwrap();
     let absolute_path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&absolute_path).unwrap();
-    assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
+    unsafe {
+        assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
+    }
 }
 
 #[test]
 fn test_read_missing_file_fails_before_keystore_open() {
+    crate::init().unwrap();
+
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
 
     {
@@ -123,6 +131,8 @@ fn test_read_missing_file_fails_before_keystore_open() {
 
 #[test]
 fn test_repository_listing() {
+    crate::init().unwrap();
+
     let mut t = TestRepository::new("foobar").unwrap();
     let plaintext = random_secret(1024);
 
@@ -159,6 +169,8 @@ fn test_repository_listing() {
 
 #[test]
 fn test_remove() {
+    crate::init().unwrap();
+
     let mut t = TestRepository::new("foobar").unwrap();
     let absolute_path = t.path("test").unwrap();
     t.write_encrypt(&absolute_path, random_secret(1024), None)
@@ -185,12 +197,16 @@ fn test_remove() {
 
 #[test]
 fn test_adding_duplicate_key() {
+    crate::init().unwrap();
+
     let mut t = TestRepository::new("foobar").unwrap();
     assert!(t.add_password_key(Some(str_secret("foobar"))).is_err());
 }
 
 #[test]
 fn test_adding_key_succeeds() {
+    crate::init().unwrap();
+
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pwa = str_secret("foobar");
     let pwb = str_secret("barbaz");
@@ -212,23 +228,31 @@ fn test_adding_key_succeeds() {
     let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
-    assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
+    unsafe {
+        assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
+    }
 }
 
 #[test]
 fn test_removing_only_key() {
+    crate::init().unwrap();
+
     let mut t = TestRepository::new("foobar").unwrap();
     assert!(t.remove_password_key(Some(str_secret("foobar"))).is_err());
 }
 
 #[test]
 fn test_removing_unused_key() {
+    crate::init().unwrap();
+
     let mut t = TestRepository::new("foobar").unwrap();
     assert!(t.remove_password_key(Some(str_secret("barbaz"))).is_err());
 }
 
 #[test]
 fn test_removing_key_succeeds() {
+    crate::init().unwrap();
+
     let repository_dir = temp::Dir::new(TEST_REPO_DIR).unwrap();
     let pwa = str_secret("foobar");
     let pwb = str_secret("barbaz");
@@ -263,5 +287,7 @@ fn test_removing_key_succeeds() {
     let repository = Repository::new(repository_dir.path(), false, Some(pwb)).unwrap();
     let path = repository.path(path).unwrap();
     let output_plaintext = repository.read_decrypt(&path).unwrap();
-    assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
+    unsafe {
+        assert_eq!(plaintext.as_slice(), output_plaintext.as_slice());
+    }
 }

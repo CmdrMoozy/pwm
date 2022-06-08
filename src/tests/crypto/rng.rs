@@ -18,6 +18,8 @@ use std::collections::HashSet;
 
 #[test]
 fn test_rng_output() {
+    crate::init().unwrap();
+
     // Test that we get at least a few distinct values from the RNG if we generate
     // many values. This is kind of a silly test, but it should at least protect
     // against mis-implementing Generator so that it returns the same value every
@@ -29,6 +31,8 @@ fn test_rng_output() {
 
 #[test]
 fn test_rng_range() {
+    crate::init().unwrap();
+
     let mut generator = Generator;
     let min: u64 = 123;
     let max: u64 = 9876;

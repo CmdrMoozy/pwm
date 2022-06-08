@@ -27,6 +27,8 @@ lazy_static! {
 
 #[test]
 fn test_get_and_set() {
+    crate::init().unwrap();
+
     let _guard = match CONFIGURATION_TESTS_MUTEX.lock() {
         Ok(guard) => guard,
         Err(poisoned) => poisoned.into_inner(),
@@ -60,6 +62,8 @@ fn test_get_and_set() {
 
 #[test]
 fn test_get_value_as_str() {
+    crate::init().unwrap();
+
     let _guard = match CONFIGURATION_TESTS_MUTEX.lock() {
         Ok(guard) => guard,
         Err(poisoned) => poisoned.into_inner(),
@@ -92,6 +96,8 @@ fn test_get_value_as_str() {
 
 #[test]
 fn test_reset() {
+    crate::init().unwrap();
+
     let _guard = match CONFIGURATION_TESTS_MUTEX.lock() {
         Ok(guard) => guard,
         Err(poisoned) => poisoned.into_inner(),

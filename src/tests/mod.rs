@@ -23,24 +23,25 @@ mod odf;
 #[cfg(test)]
 mod repository;
 #[cfg(test)]
-mod secret;
-#[cfg(test)]
 mod util;
 #[cfg(all(test, feature = "wifiqr"))]
 mod wifiqr;
 
+use bdrck::crypto::secret::Secret;
+
 #[cfg(test)]
-pub(crate) fn str_secret(s: &str) -> crate::secret::Secret {
+pub(crate) fn str_secret(s: &str) -> Secret {
     let sb = s.as_bytes();
-    let mut ret = crate::secret::Secret::with_len(sb.len());
-    ret.as_mut_slice().copy_from_slice(sb);
+    let mut ret = Secret::with_len(sb.len()).unwrap();
+    unsafe {
+        ret.as_mut_slice().copy_from_slice(sb);
+    }
     ret
 }
 
 #[cfg(test)]
-pub(crate) fn random_secret(len: usize) -> crate::secret::Secret {
-    let mut s = crate::secret::Secret::with_len(len);
-    let bytes = sodiumoxide::randombytes::randombytes(len);
-    s.as_mut_slice().copy_from_slice(bytes.as_slice());
+pub(crate) fn random_secret(len: usize) -> Secret {
+    let mut s = Secret::with_len(len).unwrap();
+    bdrck::crypto::util::randombytes_into_secret(&mut s);
     s
 }

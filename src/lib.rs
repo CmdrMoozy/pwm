@@ -29,7 +29,6 @@ pub mod output;
 #[cfg(feature = "piv")]
 pub mod piv;
 pub mod repository;
-pub mod secret;
 pub mod util;
 #[cfg(feature = "wifiqr")]
 pub mod wifiqr;

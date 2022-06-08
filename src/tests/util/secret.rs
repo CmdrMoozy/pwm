@@ -12,28 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::crypto::padding::*;
-use crate::tests::random_secret;
+use crate::util::secret::*;
 use bdrck::crypto::secret::Secret;
 
 #[test]
-fn test_padding_round_trip() {
+fn test_encode_round_trip() {
     crate::init().unwrap();
 
-    let mut data = random_secret(123);
-    let original_data = data.try_clone().unwrap();
-    pad(&mut data).unwrap();
-    assert!(data.len() > original_data.len());
-    unpad(&mut data).unwrap();
+    let test_str = "this is a test";
+    let mut test_secret = Secret::with_len(test_str.as_bytes().len()).unwrap();
+    unsafe { test_secret.as_mut_slice() }.copy_from_slice(test_str.as_bytes());
+
+    let encoded = encode(&test_secret);
+    let decoded = decode(&encoded).unwrap();
+
+    assert_eq!(test_secret.len(), decoded.len());
     unsafe {
-        assert_eq!(original_data.as_slice(), data.as_slice());
+        assert_eq!(test_secret.as_slice(), decoded.as_slice());
     }
-}
-
-#[test]
-fn test_unpadding_invalid_size() {
-    crate::init().unwrap();
-
-    let mut data = Secret::new();
-    assert!(unpad(&mut data).is_err());
 }

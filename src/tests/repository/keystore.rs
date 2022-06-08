@@ -22,6 +22,8 @@ static TEST_KEYSTORE_FILE: &'static str = "keystore";
 
 #[test]
 fn test_creation() {
+    crate::init().unwrap();
+
     let directory = temp::Dir::new(TEST_KEYSTORE_DIR).unwrap();
     let keystore = get_keystore(
         directory.sub_path(TEST_KEYSTORE_FILE).unwrap(),
@@ -36,6 +38,8 @@ fn test_creation() {
 
 #[test]
 fn test_opening_existing() {
+    crate::init().unwrap();
+
     let directory = temp::Dir::new(TEST_KEYSTORE_DIR).unwrap();
     let config = Configuration::default();
 
@@ -62,6 +66,8 @@ fn test_opening_existing() {
 
 #[test]
 fn test_open_bad_key_fails() {
+    crate::init().unwrap();
+
     let directory = temp::Dir::new(TEST_KEYSTORE_DIR).unwrap();
     let config = Configuration::default();
 

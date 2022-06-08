@@ -19,37 +19,47 @@ fn generate_password_str(
     charsets: &[CharacterSet],
     exclude: &[char],
 ) -> String {
-    std::str::from_utf8(
-        generate_password(
-            length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
-            charsets,
-            exclude,
+    unsafe {
+        std::str::from_utf8(
+            generate_password(
+                length.unwrap_or(RECOMMENDED_MINIMUM_PASSWORD_LENGTH),
+                charsets,
+                exclude,
+            )
+            .unwrap()
+            .as_slice(),
         )
         .unwrap()
-        .as_slice(),
-    )
-    .unwrap()
-    .to_owned()
+        .to_owned()
+    }
 }
 
 #[test]
 fn test_generating_empty_password() {
+    crate::init().unwrap();
+
     assert!(generate_password(0, &[CharacterSet::Letters], &[]).is_err());
 }
 
 #[test]
 fn test_generating_with_no_character_set() {
+    crate::init().unwrap();
+
     assert!(generate_password(RECOMMENDED_MINIMUM_PASSWORD_LENGTH, &[], &[]).is_err());
 }
 
 #[test]
 fn test_excluding_characters() {
+    crate::init().unwrap();
+
     let password = generate_password_str(Some(1000), &[CharacterSet::Numbers], &['7']);
     assert!(!password.contains('7'));
 }
 
 #[test]
 fn test_excluding_all_characters() {
+    crate::init().unwrap();
+
     assert!(generate_password(
         RECOMMENDED_MINIMUM_PASSWORD_LENGTH,
         &[CharacterSet::Numbers],
@@ -60,6 +70,8 @@ fn test_excluding_all_characters() {
 
 #[test]
 fn test_pwgen_charset() {
+    crate::init().unwrap();
+
     for _ in 0..10 {
         let password = generate_password_str(None, &[CharacterSet::Letters], &[]);
         assert_eq!(RECOMMENDED_MINIMUM_PASSWORD_LENGTH, password.len());

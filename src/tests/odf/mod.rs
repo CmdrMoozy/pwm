@@ -14,9 +14,9 @@
 
 use crate::repository::path::Path as RepositoryPath;
 use crate::repository::Repository;
-use crate::secret::Secret;
 use crate::tests::str_secret;
 use bdrck::crypto::key::Nonce;
+use bdrck::crypto::secret::Secret;
 use flate2::read::GzDecoder;
 use lazy_static::lazy_static;
 use std::fs::File;
@@ -69,6 +69,8 @@ fn read_repo_file_raw(path: &RepositoryPath) -> (Option<Nonce>, Vec<u8>) {
 // changes which make us unable to interpret existing repositories.
 #[test]
 fn test_read_repository() {
+    crate::init().unwrap();
+
     let (_tmp, repo) = open_test_repo();
 
     let path = repo
@@ -84,9 +86,11 @@ fn test_read_repository() {
     let stored = repo
         .read_decrypt(&path)
         .expect("retrieving stored password failed");
-    let stored =
-        String::from_utf8(stored.as_slice().to_vec()).expect("stored password is not valid utf-8");
-    assert_eq!(TEST_REPO_PASSWORD.as_slice(), stored.as_bytes());
+    let stored = String::from_utf8(unsafe { stored.as_slice().to_vec() })
+        .expect("stored password is not valid utf-8");
+    unsafe {
+        assert_eq!(TEST_REPO_PASSWORD.as_slice(), stored.as_bytes());
+    }
 }
 
 // Verify when we encrypt, the ciphertext we emit matches what we expect. The idea is to detect
@@ -94,6 +98,8 @@ fn test_read_repository() {
 // repository.
 #[test]
 fn test_write_repository() {
+    crate::init().unwrap();
+
     let (_tmp, mut repo) = open_test_repo();
 
     let path = repo
@@ -106,7 +112,7 @@ fn test_write_repository() {
     repo.write_encrypt(
         &path,
         TEST_REPO_PASSWORD.try_clone().unwrap(),
-        Some(Nonce::from_bytes(TEST_REPO_NONCE).expect("constructing nonce failed")),
+        Some(Nonce::from_slice(TEST_REPO_NONCE).expect("constructing nonce failed")),
     )
     .expect("storing new password failed");
 

@@ -54,6 +54,8 @@ const CONFIG_WITHOUT_PIV_KEYS: &'static [u8] = include_bytes!("testdata/config_w
 
 #[test]
 fn test_deserialize_without_piv_keys() {
+    crate::init().unwrap();
+
     // We should always be able to deserialize a structure without a `piv_keys`
     // entry, regardless of what features are enabled.
 
@@ -71,6 +73,8 @@ fn test_deserialize_without_piv_keys() {
 #[cfg(feature = "piv")]
 #[test]
 fn test_deserialize_with_piv_keys_works() {
+    crate::init().unwrap();
+
     // If PIV support is enabled, deserializing a structure with a `piv_keys`
     // substructure should succeed.
 
@@ -88,6 +92,8 @@ fn test_deserialize_with_piv_keys_works() {
 #[test]
 #[should_panic(expected = "PIV feature is disabled; refusing to load PIV configuration")]
 fn test_deserialize_with_piv_keys_panics() {
+    crate::init().unwrap();
+
     // If we were built without PIV support, and we encounter a `piv_keys`
     // structure, we should panic. This is so we don't e.g. skip deserializing
     // it, and then omit the data when we serialize the structure back out.

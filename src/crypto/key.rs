@@ -13,7 +13,9 @@
 // limitations under the License.
 
 use crate::error::*;
-use bdrck::crypto::key::{AbstractKey, Digest, Nonce};
+use bdrck::crypto::digest::Digest;
+use bdrck::crypto::key::{AbstractKey, Nonce};
+use bdrck::crypto::secret::Secret;
 use std::fmt;
 
 #[derive(Debug)]
@@ -58,9 +60,19 @@ impl<E: Into<Error>, K: AbstractKey<Error = E>> AbstractKey for PwmKey<E, K> {
         self.0.get_digest()
     }
 
+    fn serialize(&self) -> KeyResult<Secret> {
+        self.0.serialize().map_err(|e| KeyError::from(e.into()))
+    }
+
+    fn deserialize(data: Secret) -> KeyResult<Self> {
+        K::deserialize(data)
+            .map(|k| Self::from(k))
+            .map_err(|e| KeyError::from(e.into()))
+    }
+
     fn encrypt(
         &self,
-        plaintext: &[u8],
+        plaintext: &Secret,
         nonce: Option<Nonce>,
     ) -> KeyResult<(Option<Nonce>, Vec<u8>)> {
         self.0
@@ -68,7 +80,7 @@ impl<E: Into<Error>, K: AbstractKey<Error = E>> AbstractKey for PwmKey<E, K> {
             .map_err(|e| KeyError::from(e.into()))
     }
 
-    fn decrypt(&self, nonce: Option<&Nonce>, ciphertext: &[u8]) -> KeyResult<Vec<u8>> {
+    fn decrypt(&self, nonce: Option<&Nonce>, ciphertext: &[u8]) -> KeyResult<Secret> {
         self.0
             .decrypt(nonce, ciphertext)
             .map_err(|e| KeyError::from(e.into()))

@@ -19,11 +19,11 @@ use crate::repository::keystore::{
     add_key, add_password_key, get_keystore, remove_key, remove_password_key,
 };
 use crate::repository::path::Path as RepositoryPath;
-use crate::secret::Secret;
 use crate::util::git;
 use crate::util::lazy::LazyResult;
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
+use bdrck::crypto::secret::Secret;
 use git2;
 use lazy_static::lazy_static;
 use std::fs;
@@ -66,8 +66,8 @@ fn write_encrypt(
     master_key: &Key,
     nonce: Option<Nonce>,
 ) -> Result<()> {
-    padding::pad(&mut plaintext);
-    let encrypted_tuple = master_key.encrypt(plaintext.as_slice(), nonce)?;
+    padding::pad(&mut plaintext)?;
+    let encrypted_tuple = master_key.encrypt(&plaintext, nonce)?;
 
     if let Some(parent) = path.absolute_path().parent() {
         fs::create_dir_all(parent)?;

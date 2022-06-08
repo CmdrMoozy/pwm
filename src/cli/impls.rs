@@ -19,8 +19,7 @@ use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
 use crate::repository::serde::{export_serialize, import_deserialize};
 use crate::repository::Repository;
-use crate::secret::Secret;
-use crate::util::{multiline_password_prompt, password_prompt};
+use crate::util::{self, multiline_password_prompt, password_prompt};
 use flaggy::*;
 use std::fs::File;
 use std::path::PathBuf;
@@ -139,7 +138,7 @@ pub(crate) fn set(
 
     if let Some(key_file) = key_file {
         // The user wants to set the password using a key file.
-        repository.write_encrypt(&path, Secret::load_file(&key_file)?, None)?;
+        repository.write_encrypt(&path, util::secret::load_file(&key_file)?, None)?;
     } else {
         // The user wants to set the password, but no key file was given, so prompt for
         // the password interactively.

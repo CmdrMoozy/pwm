@@ -14,10 +14,11 @@
 
 pub mod git;
 pub mod lazy;
+pub mod secret;
 
 use crate::error::Result;
-use crate::secret::Secret;
 use bdrck;
+use bdrck::crypto::secret::Secret;
 use std::io;
 
 /// Prompt the user for a password using the given prompt on stderr, and then
@@ -40,8 +41,10 @@ pub fn password_prompt(prompt: &str, confirm: bool) -> Result<Secret> {
     }
     .into_bytes();
 
-    let mut result = Secret::with_len(sb.len());
-    result.as_mut_slice().copy_from_slice(sb.as_slice());
+    let mut result = Secret::with_len(sb.len())?;
+    unsafe {
+        result.as_mut_slice().copy_from_slice(sb.as_slice());
+    }
     Ok(result)
 }
 
@@ -79,11 +82,13 @@ pub fn multiline_password_prompt(prompt: &str) -> Result<Secret> {
 
         let old_len = secret.len();
         let new_len = old_len + buffer.len();
-        secret.resize(new_len);
-        secret.as_mut_slice()[old_len..].copy_from_slice(buffer.into_bytes().as_slice());
+        secret.resize(new_len)?;
+        unsafe {
+            secret.as_mut_slice()[old_len..].copy_from_slice(buffer.into_bytes().as_slice());
+        }
     }
     let secret_len = secret.len();
-    secret.resize(secret_len - 1);
+    secret.resize(secret_len - 1)?;
 
     Ok(secret)
 }

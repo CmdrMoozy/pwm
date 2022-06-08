@@ -14,10 +14,11 @@
 
 use crate::crypto::key::{KeyError, PwmKey};
 use crate::error::*;
-use crate::secret::Secret;
 use crate::util::unwrap_password_or_prompt;
 use bdrck::configuration as bdrck_config;
+use bdrck::crypto::digest::*;
 use bdrck::crypto::key::*;
+use bdrck::crypto::secret::Secret;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -45,7 +46,7 @@ pub struct Configuration {
     // Don't write this field out when serializing this structure (it's just a
     // placeholder).
     #[serde(skip_serializing)]
-    // If we actually find a structure with this field, instead of dserializing
+    // If we actually find a structure with this field, instead of deserializing
     // it, just panic instead (it's not supported without the PIV feature).
     #[serde(deserialize_with = "deserialize_piv_keys_panic")]
     piv_keys: std::marker::PhantomData<()>,
@@ -99,12 +100,7 @@ impl Configuration {
         confirm: bool,
     ) -> Result<impl AbstractKey<Error = KeyError>> {
         let password = unwrap_password_or_prompt(password, prompt, confirm)?;
-        let key = Key::new_password(
-            password.as_slice(),
-            &self.salt,
-            self.ops_limit,
-            self.mem_limit,
-        )?;
+        let key = Key::new_password(&password, &self.salt, self.ops_limit, self.mem_limit)?;
         Ok(PwmKey::from(key))
     }
 }

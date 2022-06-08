@@ -14,7 +14,7 @@
 
 use crate::error::{bail, Result};
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
-use crate::secret::Secret;
+use bdrck::crypto::secret::Secret;
 use clipboard::{self, ClipboardProvider};
 use lazy_static::lazy_static;
 use log::info;
@@ -47,12 +47,10 @@ impl OutputHandler for ClipboardOutputHandler {
             Err(_) => bail!("failed to get clipboard context"),
         };
 
+        let display = encode_for_display(secret, encoding, /*supports_binary=*/ false)?;
         set_contents_string(
             &mut cp,
-            std::str::from_utf8(
-                encode_for_display(secret, encoding, /*supports_binary=*/ false)?.as_slice(),
-            )?
-            .to_owned(),
+            std::str::from_utf8(unsafe { display.as_slice() })?.to_owned(),
         )?;
         info!(
             "Copied stored password or key to clipboard. Will clear in {} seconds.",

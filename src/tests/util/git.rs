@@ -25,6 +25,8 @@ fn get_test_signature() -> Signature<'static> {
 
 #[test]
 fn test_open_repository() {
+    crate::init().unwrap();
+
     let tmp_dir = temp::Dir::new("pwm-tests").unwrap();
     assert!(tmp_dir.path().exists());
     assert!(open_repository(tmp_dir.path(), false).is_err());
@@ -56,6 +58,8 @@ fn write_and_commit(relative_path: &str, contents: &str, repository: &Repository
 
 #[test]
 fn test_commit_paths_and_listing() {
+    crate::init().unwrap();
+
     let tmp_dir = temp::Dir::new("pwm-tests").unwrap();
     assert!(tmp_dir.path().exists());
     let repository = open_repository(tmp_dir.path(), true).unwrap();

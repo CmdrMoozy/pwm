@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::error::*;
-use crate::secret::Secret;
+use bdrck::crypto::secret::Secret;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::Cursor;
 use std::mem;
@@ -44,24 +44,24 @@ fn read_original_size(data: &Secret) -> Result<usize> {
         bail!("cannot unpad data with invalid length");
     }
 
-    let original_size_encoded = &data.as_slice()[data.len() - METADATA_BYTES..];
+    let original_size_encoded = unsafe { &data.as_slice()[data.len() - METADATA_BYTES..] };
     let mut reader = Cursor::new(original_size_encoded);
     Ok(reader.read_u64::<BigEndian>().unwrap() as usize)
 }
 
-pub fn pad(data: &mut Secret) {
+pub fn pad(data: &mut Secret) -> Result<()> {
     let original_size: usize = data.len();
     let padded_size = get_padded_size(original_size);
-    data.resize(padded_size);
+    data.resize(padded_size)?;
 
     // For debug builds, just leave zero padding so we generate deterministic output.
     if !cfg!(debug_assertions) {
         // For release builds, pad with random bytes. This probably doesn't increase security? But
         // it seems like it might prevent some edge case leaks, so it can't hurt.
-        let old_len = data.len();
-        let padding =
-            sodiumoxide::randombytes::randombytes(padded_size - original_size - METADATA_BYTES);
-        data.as_mut_slice()[old_len..old_len + padding.len()].copy_from_slice(padding.as_slice());
+        let padding_bytes = padded_size - original_size - METADATA_BYTES;
+        bdrck::crypto::util::randombytes_into(unsafe {
+            &mut data.as_mut_slice()[original_size..original_size + padding_bytes]
+        });
     }
 
     let mut metadata_buf: Vec<u8> = vec![];
@@ -70,11 +70,15 @@ pub fn pad(data: &mut Secret) {
         .unwrap();
 
     let metadata_off = data.len() - METADATA_BYTES;
-    data.as_mut_slice()[metadata_off..].copy_from_slice(metadata_buf.as_slice());
+    unsafe {
+        data.as_mut_slice()[metadata_off..].copy_from_slice(metadata_buf.as_slice());
+    }
+
+    Ok(())
 }
 
 pub fn unpad(data: &mut Secret) -> Result<()> {
     let original_size = read_original_size(&data)?;
-    data.resize(original_size);
+    data.resize(original_size)?;
     Ok(())
 }

@@ -14,7 +14,7 @@
 
 use crate::error::*;
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
-use crate::secret::Secret;
+use bdrck::crypto::secret::Secret;
 use std::io::{self, Write};
 
 pub(crate) struct StdoutOutputHandler;
@@ -26,7 +26,7 @@ impl OutputHandler for StdoutOutputHandler {
         let tty = bdrck::cli::Stream::Stdout.isatty();
         let display = encode_for_display(secret, encoding, /*supports_binary=*/ !tty)?;
         let mut stdout = io::stdout();
-        stdout.write_all(display.as_slice())?;
+        stdout.write_all(unsafe { display.as_slice() })?;
         if tty {
             stdout.write_all(b"\n")?;
         }

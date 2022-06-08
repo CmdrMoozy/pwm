@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bdrck::crypto::util::randombytes_into;
 use byteorder::{LittleEndian, ReadBytesExt};
 use rand::{self, RngCore};
-use sodiumoxide::randombytes::{randombytes, randombytes_into};
 use std::io::Cursor;
 
 /// This structure implements the `Rng` trait from the `rand` crate using
-/// `sodiumoxide`'s `randombytes` function. This implies that this random
+/// `bdrck`'s `randombytes_into` function. This implies that this random
 /// number generator is both thread safe, and cryptographically secure (e.g.
 /// suitable for generating key material or passwords).
 pub struct Generator;
@@ -29,8 +29,9 @@ impl RngCore for Generator {
     }
 
     fn next_u64(&mut self) -> u64 {
-        let bytes = randombytes(::std::mem::size_of::<u64>());
-        let mut rdr = Cursor::new(bytes);
+        let mut buf = [0_u8; std::mem::size_of::<u64>()];
+        randombytes_into(&mut buf);
+        let mut rdr = Cursor::new(&buf);
         rdr.read_u64::<LittleEndian>().unwrap()
     }
 

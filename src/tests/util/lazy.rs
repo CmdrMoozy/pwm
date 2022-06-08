@@ -17,12 +17,16 @@ use std::sync::{Arc, Mutex};
 
 #[test]
 fn test_simple_evaluation() {
+    crate::init().unwrap();
+
     let v = Lazy::new(|| 42);
     assert_eq!(42, *v);
 }
 
 #[test]
 fn test_single_evaluation() {
+    crate::init().unwrap();
+
     let c = Arc::new(Mutex::new(0));
     let counter = c.clone();
 
@@ -38,6 +42,8 @@ fn test_single_evaluation() {
 
 #[test]
 fn test_no_evaluation() {
+    crate::init().unwrap();
+
     let c = Arc::new(Mutex::new(0));
     let counter = c.clone();
 
@@ -51,6 +57,8 @@ fn test_no_evaluation() {
 
 #[test]
 fn test_into_inner() {
+    crate::init().unwrap();
+
     let v = Lazy::new(|| 42);
     assert_eq!(42, v.into_inner());
 }

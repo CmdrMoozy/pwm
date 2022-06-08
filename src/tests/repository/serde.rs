@@ -19,6 +19,8 @@ use bdrck::testing::temp;
 
 #[test]
 fn test_export_import_round_trip_ascii() {
+    crate::init().unwrap();
+
     let serialized: String;
     let plaintext = str_secret("arbitrary test password");
 
@@ -44,15 +46,19 @@ fn test_export_import_round_trip_ascii() {
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
         let absolute_path = repository.path(path).unwrap();
-        assert_eq!(
-            plaintext.as_slice(),
-            repository.read_decrypt(&absolute_path).unwrap().as_slice()
-        );
+        unsafe {
+            assert_eq!(
+                plaintext.as_slice(),
+                repository.read_decrypt(&absolute_path).unwrap().as_slice()
+            );
+        }
     }
 }
 
 #[test]
 fn test_export_import_round_trip_binary() {
+    crate::init().unwrap();
+
     let serialized: String;
     let plaintext = random_secret(1024);
 
@@ -78,9 +84,11 @@ fn test_export_import_round_trip_binary() {
     import_deserialize(&mut repository, serialized.as_str()).unwrap();
     for path in &paths {
         let absolute_path = repository.path(path).unwrap();
-        assert_eq!(
-            plaintext.as_slice(),
-            repository.read_decrypt(&absolute_path).unwrap().as_slice()
-        );
+        unsafe {
+            assert_eq!(
+                plaintext.as_slice(),
+                repository.read_decrypt(&absolute_path).unwrap().as_slice()
+            );
+        }
     }
 }

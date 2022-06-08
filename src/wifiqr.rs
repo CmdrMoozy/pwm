@@ -15,7 +15,7 @@
 use crate::crypto::pwgen;
 use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
-use crate::secret::Secret;
+use bdrck::crypto::secret::Secret;
 use flaggy::*;
 use qrcode_generator::{self, QrCodeEcc};
 use std::fs;
@@ -99,17 +99,23 @@ fn wifiqr_escape(s: &str) -> String {
 }
 
 pub(crate) fn wifiqr_encode(ssid: &str, is_hidden: bool, password: &Secret) -> Result<Secret> {
-    Ok(format!(
+    // TODO: Do this in-place.
+    let data = format!(
         "WIFI:S:{};T:WPA;P:{};H:{};;",
         wifiqr_escape(&ssid),
-        wifiqr_escape(std::str::from_utf8(password.as_slice())?),
+        wifiqr_escape(std::str::from_utf8(unsafe { password.as_slice() })?),
         match is_hidden {
             false => "false",
             true => "true",
         }
     )
-    .into_bytes()
-    .into())
+    .into_bytes();
+
+    let mut s = Secret::with_len(data.len())?;
+    unsafe {
+        s.as_mut_slice().copy_from_slice(data.as_slice());
+    }
+    Ok(s)
 }
 
 #[command_callback]
@@ -158,13 +164,13 @@ fn wifiqr(
     let encoded = wifiqr_encode(&ssid, is_hidden, &password)?;
     match format {
         ImageFormat::Png => qrcode_generator::to_png_to_file(
-            encoded.as_slice(),
+            unsafe { encoded.as_slice() },
             error_correction.to_upstream(),
             QR_IMAGE_SIZE_PIXELS,
             output,
         )?,
         ImageFormat::Svg => qrcode_generator::to_svg_to_file::<&[u8], String, PathBuf>(
-            encoded.as_slice(),
+            unsafe { encoded.as_slice() },
             error_correction.to_upstream(),
             QR_IMAGE_SIZE_PIXELS,
             None,

@@ -17,7 +17,8 @@ mod clipboard;
 mod stdout;
 
 use crate::error::*;
-use crate::secret::Secret;
+use crate::util;
+use bdrck::crypto::secret::Secret;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fmt;
@@ -87,7 +88,7 @@ pub fn encode_for_display(
     encoding: InputEncoding,
     supports_binary: bool,
 ) -> Result<Secret> {
-    let as_utf8 = ::std::str::from_utf8(secret.as_slice());
+    let as_utf8 = ::std::str::from_utf8(unsafe { secret.as_slice() });
     let is_binary = match encoding {
         InputEncoding::Binary => true,
         InputEncoding::Auto => as_utf8.is_err(),
@@ -99,9 +100,11 @@ pub fn encode_for_display(
         secret.try_clone()?
     } else {
         // TODO: Don't use encode() here, do something in-place or directly into a new Secret.
-        let encoded = secret.encode().into_bytes();
-        let mut s = Secret::with_len(encoded.len());
-        s.as_mut_slice().copy_from_slice(encoded.as_slice());
+        let encoded = util::secret::encode(&secret).into_bytes();
+        let mut s = Secret::with_len(encoded.len())?;
+        unsafe {
+            s.as_mut_slice().copy_from_slice(encoded.as_slice());
+        }
         s
     })
 }
