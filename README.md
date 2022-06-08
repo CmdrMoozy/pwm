@@ -1,7 +1,5 @@
 # pwm
 
-[![Build Status](https://travis-ci.org/CmdrMoozy/pwm.svg?branch=master)](https://travis-ci.org/CmdrMoozy/pwm)
-
 A simple password manager for Linux.
 
 Inspired conceptually (although the implementation is completely independent) by [pass](https://www.passwordstore.org/) and [gopass](https://www.justwatch.com/blog/post/announcing-gopass/).
@@ -38,9 +36,3 @@ pwm ls
 # Retrieve a stored password:
 pwm get personal/email
 ```
-
-## Notes on Security
-
-### Zeroing Sensitive Memory
-
-pwm does not attempt to zero memory used to store sensitive data like encryption keys or decrypted data, because this kind of behavior cannot actually be guaranteed. If we are to assume that an attack has access to read all memory, swap, registers, and etc. on your system, [zeroing buffers is insufficient](http://www.daemonology.net/blog/2014-09-06-zeroing-buffers-is-insufficient.html). Because ensuring that sensitive information is not leaked whatsoever is virtually impossible (see the linked article for details), pwm's position is that doing so adds complexity to the codebase (which may include security bugs), with dubious value at best.
