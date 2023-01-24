@@ -17,9 +17,9 @@ use crate::error::*;
 use crate::piv;
 use bdrck::configuration as bdrck_config;
 use lazy_static::lazy_static;
-use log::error;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use tracing::error;
 
 static IDENTIFIER_APPLICATION: &'static str = "pwm";
 #[cfg(debug_assertions)]

@@ -22,7 +22,7 @@ use lazy_static::lazy_static;
 use std::fs::File;
 use std::io::Cursor;
 use tar;
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 const TEST_REPO: &'static [u8] = include_bytes!("test-repository.tar.gz");
 const TEST_REPO_SUBDIR: &'static str = "pwm-test";
@@ -40,7 +40,10 @@ lazy_static! {
 }
 
 fn open_test_repo() -> (TempDir, Repository) {
-    let tmp = TempDir::new(env!("CARGO_PKG_NAME")).expect("creating tempdir failed");
+    let tmp = tempfile::Builder::new()
+        .prefix(env!("CARGO_PKG_NAME"))
+        .tempdir()
+        .expect("creating tempdir failed");
 
     {
         let cur = Cursor::new(TEST_REPO);

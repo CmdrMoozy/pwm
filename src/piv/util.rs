@@ -16,9 +16,9 @@ use crate::crypto::configuration::Configuration;
 use crate::crypto::key::PwmKey;
 use crate::error::*;
 use bdrck::crypto::key::{AbstractKey, Digest};
-use log::warn;
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
+use tracing::warn;
 use yubirs::piv;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

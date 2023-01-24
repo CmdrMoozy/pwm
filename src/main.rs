@@ -22,20 +22,25 @@
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
 use flaggy::*;
+use tracing_subscriber::{filter::LevelFilter, prelude::*, EnvFilter};
 
 fn main() {
-    let debug: bool = cfg!(debug_assertions);
-    bdrck::logging::init(
-        bdrck::logging::OptionsBuilder::new()
-            .set_filters(match debug {
-                false => "warn".parse().unwrap(),
-                true => "debug".parse().unwrap(),
-            })
-            .set_panic_on_output_failure(debug)
-            .set_always_flush(true)
-            .build()
-            .unwrap(),
-    );
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(
+            EnvFilter::builder()
+                .with_default_directive(
+                    if cfg!(debug_assertions) {
+                        LevelFilter::DEBUG
+                    } else {
+                        LevelFilter::WARN
+                    }
+                    .into(),
+                )
+                .from_env()
+                .unwrap(),
+        )
+        .init();
 
     main_impl(vec![
         pwm_lib::cli::build_config_command(),

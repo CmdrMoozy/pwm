@@ -17,9 +17,9 @@ use crate::output::{encode_for_display, InputEncoding, OutputHandler};
 use bdrck::crypto::secret::Secret;
 use clipboard::{self, ClipboardProvider};
 use lazy_static::lazy_static;
-use log::info;
 use std::thread::sleep;
 use std::time::Duration;
+use tracing::info;
 
 lazy_static! {
     static ref CLIPBOARD_TIMEOUT: Duration = Duration::new(45, 0);
