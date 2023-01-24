@@ -16,7 +16,7 @@ use crate::error::*;
 #[cfg(feature = "piv")]
 use crate::piv;
 use bdrck::configuration as bdrck_config;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tracing::error;
@@ -27,12 +27,10 @@ static IDENTIFIER_NAME: &'static str = "pwm-debug";
 #[cfg(not(debug_assertions))]
 static IDENTIFIER_NAME: &'static str = "pwm";
 
-lazy_static! {
-    static ref IDENTIFIER: bdrck_config::Identifier = bdrck_config::Identifier {
-        application: IDENTIFIER_APPLICATION.to_owned(),
-        name: IDENTIFIER_NAME.to_owned(),
-    };
-}
+static IDENTIFIER: Lazy<bdrck_config::Identifier> = Lazy::new(|| bdrck_config::Identifier {
+    application: IDENTIFIER_APPLICATION.to_owned(),
+    name: IDENTIFIER_NAME.to_owned(),
+});
 
 pub static DEFAULT_REPOSITORY_KEY: &'static str = "default_repository";
 

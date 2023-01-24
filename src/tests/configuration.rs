@@ -14,16 +14,14 @@
 
 use crate::configuration::*;
 use bdrck::testing::temp;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-lazy_static! {
-    // The unit tests in this file MUST be run one-at-a-time, since they all access our
-    // global singleton configuration state.
-    static ref CONFIGURATION_TESTS_MUTEX: Mutex<()> = Mutex::new(());
-}
+// The unit tests in this file MUST be run one-at-a-time, since they all access our
+// global singleton configuration state.
+static CONFIGURATION_TESTS_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 #[test]
 fn test_get_and_set() {

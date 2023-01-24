@@ -19,7 +19,7 @@ mod stdout;
 use crate::error::*;
 use crate::util;
 use bdrck::crypto::secret::Secret;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
@@ -45,21 +45,20 @@ pub enum OutputMethod {
     Clipboard,
 }
 
-lazy_static! {
-    static ref OUTPUT_METHOD_STRINGS: HashMap<OutputMethod, &'static str> = {
-        let mut m = HashMap::new();
-        m.insert(OutputMethod::Stdout, "Stdout");
-        #[cfg(feature = "clipboard")]
-        m.insert(OutputMethod::Clipboard, "Clipboard");
-        m
-    };
-    static ref STRING_OUTPUT_METHODS: HashMap<String, OutputMethod> = {
-        OUTPUT_METHOD_STRINGS
-            .iter()
-            .map(|pair| (pair.1.to_uppercase(), *pair.0))
-            .collect()
-    };
-}
+static OUTPUT_METHOD_STRINGS: Lazy<HashMap<OutputMethod, &'static str>> = Lazy::new(|| {
+    let mut m = HashMap::new();
+    m.insert(OutputMethod::Stdout, "Stdout");
+    #[cfg(feature = "clipboard")]
+    m.insert(OutputMethod::Clipboard, "Clipboard");
+    m
+});
+
+static STRING_OUTPUT_METHODS: Lazy<HashMap<String, OutputMethod>> = Lazy::new(|| {
+    OUTPUT_METHOD_STRINGS
+        .iter()
+        .map(|pair| (pair.1.to_uppercase(), *pair.0))
+        .collect()
+});
 
 impl fmt::Display for OutputMethod {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -25,16 +25,15 @@ use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
 use bdrck::crypto::secret::Secret;
 use git2;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-lazy_static! {
-    static ref CRYPTO_CONFIGURATION_PATH: PathBuf = PathBuf::from("crypto_configuration.mp");
-    static ref KEYSTORE_PATH: PathBuf = PathBuf::from("keys.mp");
-}
+static CRYPTO_CONFIGURATION_PATH: Lazy<PathBuf> =
+    Lazy::new(|| PathBuf::from("crypto_configuration.mp"));
+static KEYSTORE_PATH: Lazy<PathBuf> = Lazy::new(|| PathBuf::from("keys.mp"));
 
 static CRYPTO_CONFIGURATION_UPDATE_MESSAGE: &'static str = "Update encryption header contents.";
 static KEYSTORE_UPDATE_MESSAGE: &'static str = "Update keys.";

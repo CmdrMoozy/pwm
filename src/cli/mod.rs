@@ -17,86 +17,108 @@ pub mod util;
 
 use crate::error::*;
 use flaggy::*;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 
-lazy_static! {
-    pub static ref REPOSITORY_SPEC: Spec = Spec::optional(
+pub static REPOSITORY_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::optional(
         "repository",
         "The path to the pwm repository to use",
-        Some('r')
-    );
-    pub static ref PATH_SPEC: Spec = Spec::positional(
+        Some('r'),
+    )
+});
+pub static PATH_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::positional(
         "path",
         "The saved password path, relative to the repository's root",
         None,
-        false
+        false,
     )
-    .unwrap();
-    pub static ref PATH_PREFIX_SPEC: Spec = Spec::positional(
+    .unwrap()
+});
+pub static PATH_PREFIX_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::positional(
         "path_prefix",
         "The saved password path prefix, relative to the repository's root",
         Some(&[""]),
-        false
+        false,
     )
-    .unwrap();
-    pub static ref CONFIG_KEY_SPEC: Spec =
-        Spec::optional("key", "The specific key to get or set", Some('k'));
-    pub static ref CONFIG_SET_SPEC: Spec =
-        Spec::optional("set", "The new value to set the key to", Some('s'));
-    pub static ref GET_BINARY_SPEC: Spec = Spec::boolean(
+    .unwrap()
+});
+pub static CONFIG_KEY_SPEC: Lazy<Spec> =
+    Lazy::new(|| Spec::optional("key", "The specific key to get or set", Some('k')));
+pub static CONFIG_SET_SPEC: Lazy<Spec> =
+    Lazy::new(|| Spec::optional("set", "The new value to set the key to", Some('s')));
+pub static GET_BINARY_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::boolean(
         "binary",
         "Treat the saved password or key as binary data",
-        Some('b')
-    );
-    pub static ref GET_OUTPUT_METHOD_SPEC: Spec = Spec::required(
+        Some('b'),
+    )
+});
+pub static GET_OUTPUT_METHOD_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::required(
         "output_method",
         "How to output the retrieved secret",
         Some('o'),
-        Some(&crate::output::OutputMethod::Stdout.to_string())
-    );
-    pub static ref SET_KEY_FILE_SPEC: Spec = Spec::optional(
+        Some(&crate::output::OutputMethod::Stdout.to_string()),
+    )
+});
+pub static SET_KEY_FILE_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::optional(
         "key_file",
         "Store a key file instead of a password",
-        Some('k')
-    );
-    pub static ref SET_MULTILINE_SPEC: Spec = Spec::boolean(
+        Some('k'),
+    )
+});
+pub static SET_MULTILINE_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::boolean(
         "multiline",
         "Read multiple lines of input data, until 'EOF'",
-        Some('m')
-    );
-    pub static ref GENERATE_PASSWORD_LENGTH_SPEC: Spec = Spec::required(
+        Some('m'),
+    )
+});
+pub static GENERATE_PASSWORD_LENGTH_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::required(
         "password_length",
         "The length of the password to generate",
         Some('l'),
         Some(
             crate::crypto::pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH
                 .to_string()
-                .as_str()
-        )
-    );
-    pub static ref GENERATE_EXCLUDE_LETTERS_SPEC: Spec = Spec::boolean(
+                .as_str(),
+        ),
+    )
+});
+pub static GENERATE_EXCLUDE_LETTERS_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::boolean(
         "exclude_letters",
         "Exclude letters from the password",
-        Some('A')
-    );
-    pub static ref GENERATE_EXCLUDE_NUMBERS_SPEC: Spec = Spec::boolean(
+        Some('A'),
+    )
+});
+pub static GENERATE_EXCLUDE_NUMBERS_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::boolean(
         "exclude_numbers",
         "Exclude numbers from the password",
-        Some('N')
-    );
-    pub static ref GENERATE_INCLUDE_SYMBOLS_SPEC: Spec = Spec::boolean(
+        Some('N'),
+    )
+});
+pub static GENERATE_INCLUDE_SYMBOLS_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::boolean(
         "include_symbols",
         "Include symbols in the password",
-        Some('s')
-    );
-    pub static ref GENERATE_CUSTOM_EXCLUDE_SPEC: Spec = Spec::optional(
+        Some('s'),
+    )
+});
+pub static GENERATE_CUSTOM_EXCLUDE_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::optional(
         "custom_exclude",
         "Exclute a custom set of characters",
-        Some('x')
-    );
-    pub static ref IMPORT_INPUT_SPEC: Spec =
-        Spec::required("input", "The input file to import from", Some('i'), None);
-}
+        Some('x'),
+    )
+});
+pub static IMPORT_INPUT_SPEC: Lazy<Spec> =
+    Lazy::new(|| Spec::required("input", "The input file to import from", Some('i'), None));
 
 pub fn build_config_command() -> Command<'static, Error> {
     Command::new(

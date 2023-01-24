@@ -15,7 +15,7 @@
 use crate::crypto::rng::Generator;
 use crate::error::*;
 use bdrck::crypto::secret::Secret;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use rand::{Rng, RngCore};
 use std::collections::{HashMap, HashSet};
 
@@ -26,34 +26,32 @@ pub enum CharacterSet {
     Symbols,
 }
 
-lazy_static! {
-    static ref CHARACTER_SET: HashMap<CharacterSet, Vec<u8>> = {
-        let mut m = HashMap::new();
+static CHARACTER_SET: Lazy<HashMap<CharacterSet, Vec<u8>>> = Lazy::new(|| {
+    let mut m = HashMap::new();
 
-        for c in u8::MIN..u8::MAX {
-            if let Some(cc) = char::from_u32(c as u32) {
-                let key = if !cc.is_ascii() {
-                    continue;
-                } else if cc.is_ascii_alphabetic() {
-                    CharacterSet::Letters
-                } else if cc.is_ascii_digit() {
-                    CharacterSet::Numbers
-                } else if cc.is_ascii_graphic() {
-                    // is_ascii_graphic, in this else block, means printable non-whitespace ASCII,
-                    // except alphanumeric characters.
-                    CharacterSet::Symbols
-                } else {
-                    continue;
-                };
+    for c in u8::MIN..u8::MAX {
+        if let Some(cc) = char::from_u32(c as u32) {
+            let key = if !cc.is_ascii() {
+                continue;
+            } else if cc.is_ascii_alphabetic() {
+                CharacterSet::Letters
+            } else if cc.is_ascii_digit() {
+                CharacterSet::Numbers
+            } else if cc.is_ascii_graphic() {
+                // is_ascii_graphic, in this else block, means printable non-whitespace ASCII,
+                // except alphanumeric characters.
+                CharacterSet::Symbols
+            } else {
+                continue;
+            };
 
-                let set = m.entry(key).or_insert_with(Vec::new);
-                set.push(c);
-            }
+            let set = m.entry(key).or_insert_with(Vec::new);
+            set.push(c);
         }
+    }
 
-        m
-    };
-}
+    m
+});
 
 pub const RECOMMENDED_MINIMUM_PASSWORD_LENGTH: usize = 16;
 

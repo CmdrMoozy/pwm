@@ -16,14 +16,12 @@ use crate::error::{bail, Result};
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
 use bdrck::crypto::secret::Secret;
 use clipboard::{self, ClipboardProvider};
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::thread::sleep;
 use std::time::Duration;
 use tracing::info;
 
-lazy_static! {
-    static ref CLIPBOARD_TIMEOUT: Duration = Duration::new(45, 0);
-}
+static CLIPBOARD_TIMEOUT: Lazy<Duration> = Lazy::new(|| Duration::new(45, 0));
 
 fn set_contents_string<CP: ClipboardProvider>(cp: &mut CP, contents: String) -> Result<()> {
     match cp.set_contents(contents) {

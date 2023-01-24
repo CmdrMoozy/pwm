@@ -18,7 +18,7 @@ use crate::tests::str_secret;
 use bdrck::crypto::key::Nonce;
 use bdrck::crypto::secret::Secret;
 use flate2::read::GzDecoder;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::fs::File;
 use std::io::Cursor;
 use tar;
@@ -26,18 +26,14 @@ use tempfile::TempDir;
 
 const TEST_REPO: &'static [u8] = include_bytes!("test-repository.tar.gz");
 const TEST_REPO_SUBDIR: &'static str = "pwm-test";
-lazy_static! {
-    static ref TEST_REPO_MASTER_PASSWORD: Secret = str_secret("qwerty");
-}
+static TEST_REPO_MASTER_PASSWORD: Lazy<Secret> = Lazy::new(|| str_secret("qwerty"));
 const TEST_REPO_NONCE: &'static [u8] = &[
     231, 97, 13, 54, 159, 192, 85, 254, 94, 94, 227, 45, 31, 160, 149, 134, 241, 181, 52, 242, 241,
     87, 235, 245,
 ];
 const TEST_REPO_PATH: &'static str = "foo/bar";
 const TEST_REPO_NEW_PATH: &'static str = "bar/baz";
-lazy_static! {
-    static ref TEST_REPO_PASSWORD: Secret = str_secret("this is a test password");
-}
+static TEST_REPO_PASSWORD: Lazy<Secret> = Lazy::new(|| str_secret("this is a test password"));
 
 fn open_test_repo() -> (TempDir, Repository) {
     let tmp = tempfile::Builder::new()

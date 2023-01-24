@@ -18,7 +18,7 @@ pub(crate) mod util;
 use crate::cli;
 use crate::error::*;
 use flaggy::*;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use yubirs::piv::id;
@@ -43,53 +43,67 @@ pub struct Configuration {
     pub keys: Vec<KeyConfiguration>,
 }
 
-lazy_static! {
-    pub static ref SLOT_SPEC: Spec = Spec::required(
+pub static SLOT_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::required(
         "slot",
         "The slot containing the certificate to use",
         Some('s'),
-        Some(&::yubirs::piv::id::Key::KeyManagement.to_string())
-    );
-    pub static ref ALGORITHM_SPEC: Spec = Spec::required(
+        Some(&::yubirs::piv::id::Key::KeyManagement.to_string()),
+    )
+});
+pub static ALGORITHM_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::required(
         "algorithm",
         "The key algorithm to use",
         Some('a'),
-        Some(&::yubirs::piv::id::Algorithm::Rsa2048.to_string())
-    );
-    pub static ref PIN_POLICY_SPEC: Spec = Spec::required(
+        Some(&::yubirs::piv::id::Algorithm::Rsa2048.to_string()),
+    )
+});
+pub static PIN_POLICY_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::required(
         "pin_policy",
         "The PIN verification policy to use for this key",
         None,
-        Some(&::yubirs::piv::id::PinPolicy::Default.to_string())
-    );
-    pub static ref TOUCH_POLICY_SPEC: Spec = Spec::required(
+        Some(&::yubirs::piv::id::PinPolicy::Default.to_string()),
+    )
+});
+pub static TOUCH_POLICY_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::required(
         "touch_policy",
         "The touch policy to use for this key",
         None,
-        Some(&::yubirs::piv::id::TouchPolicy::Default.to_string())
-    );
-    pub static ref OPTIONAL_PUBLIC_KEY_SPEC: Spec = Spec::optional(
-        "public_key",
-        "The path to write the public key to; only necessary if you want to re-use this key for other applications",
-        Some('p'),
-    );
-    pub static ref REQUIRED_PUBLIC_KEY_SPEC: Spec = Spec::required(
+        Some(&::yubirs::piv::id::TouchPolicy::Default.to_string()),
+    )
+});
+pub static OPTIONAL_PUBLIC_KEY_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::optional(
+    "public_key",
+    "The path to write the public key to; only necessary if you want to re-use this key for other applications",
+    Some('p'),
+)
+});
+pub static REQUIRED_PUBLIC_KEY_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::required(
         "public_key",
         "The path to this PIV device's public key (in PEM format)",
         Some('p'),
-        None
-    );
-    pub static ref READER_SPEC: Spec = Spec::optional(
+        None,
+    )
+});
+pub static READER_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::optional(
         "reader",
         "The reader name of the PIV device to remove",
         None,
-    );
-    pub static ref SERIAL_SPEC: Spec = Spec::optional(
+    )
+});
+pub static SERIAL_SPEC: Lazy<Spec> = Lazy::new(|| {
+    Spec::optional(
         "serial",
         "The serial number of the PIV device to remove",
         None,
-    );
-}
+    )
+});
 
 pub fn build_setuppiv_command() -> Command<'static, Error> {
     Command::new(
