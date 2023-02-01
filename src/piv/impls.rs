@@ -14,9 +14,9 @@
 
 use crate::cli::util::get_repository_path;
 use crate::crypto::pwgen;
-use crate::error::*;
 use crate::piv::util::{prompt_for_device, prompt_for_device_from, PivKeyAssociation};
 use crate::repository::Repository;
+use anyhow::Result;
 use bdrck::crypto::key::AbstractKey;
 use flaggy::*;
 use std::fs::File;

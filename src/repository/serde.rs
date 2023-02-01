@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::Result;
 use crate::repository::Repository;
 use crate::util;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::collections::HashMap;

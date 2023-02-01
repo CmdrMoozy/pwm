@@ -24,7 +24,6 @@
 pub mod cli;
 pub mod configuration;
 pub mod crypto;
-pub mod error;
 pub mod output;
 #[cfg(feature = "piv")]
 pub mod piv;
@@ -36,14 +35,16 @@ pub mod wifiqr;
 #[cfg(test)]
 mod tests;
 
-pub fn init() -> crate::error::Result<()> {
+use anyhow::Result;
+
+pub fn init() -> Result<()> {
     bdrck::init()?;
     #[cfg(feature = "piv")]
     yubirs::init()?;
     Ok(())
 }
 
-pub fn init_with_configuration() -> crate::error::Result<crate::configuration::SingletonHandle> {
+pub fn init_with_configuration() -> Result<configuration::SingletonHandle> {
     init()?;
-    Ok(crate::configuration::SingletonHandle::new(None)?)
+    Ok(configuration::SingletonHandle::new(None)?)
 }

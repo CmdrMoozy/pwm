@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::{bail, Error, Result};
+use anyhow::{bail, Error, Result};
 use git2::{
     self, Commit, ErrorClass, ErrorCode, Index, ObjectType, Oid, Repository, Signature, Tree,
 };

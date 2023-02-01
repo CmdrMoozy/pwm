@@ -15,11 +15,11 @@
 use crate::cli::util::get_repository_path;
 use crate::configuration;
 use crate::crypto::pwgen;
-use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
 use crate::repository::serde::{export_serialize, import_deserialize};
 use crate::repository::Repository;
 use crate::util::{self, multiline_password_prompt, password_prompt};
+use anyhow::{bail, Result};
 use flaggy::*;
 use std::fs::File;
 use std::path::PathBuf;

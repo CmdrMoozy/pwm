@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use crate::crypto::key::{KeyError, PwmKey};
-use crate::error::*;
 use crate::util::unwrap_password_or_prompt;
+use anyhow::Result;
 use bdrck::configuration as bdrck_config;
 use bdrck::crypto::digest::*;
 use bdrck::crypto::key::*;

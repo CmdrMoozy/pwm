@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::*;
+use anyhow::Error;
 use bdrck::crypto::digest::Digest;
 use bdrck::crypto::key::{AbstractKey, Nonce};
 use bdrck::crypto::secret::Secret;
 use std::fmt;
+use std::result::Result as StdResult;
 
 #[derive(Debug)]
 pub struct KeyError(Error);
@@ -41,7 +42,7 @@ impl KeyError {
     }
 }
 
-pub type KeyResult<T> = std::result::Result<T, KeyError>;
+pub type KeyResult<T> = StdResult<T, KeyError>;
 
 /// The basic problem we have is, we want to have a function which returns any of various kinds of
 /// keys (which may have different error types). So we want a single AbstractKey implementation,

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::*;
 use crate::repository::*;
 use crate::tests::{random_secret, str_secret};
+use anyhow::Result;
 use bdrck::testing::temp;
 use std::ops::{Deref, DerefMut};
 

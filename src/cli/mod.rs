@@ -15,7 +15,7 @@
 mod impls;
 pub mod util;
 
-use crate::error::*;
+use anyhow::Error;
 use flaggy::*;
 use once_cell::sync::Lazy;
 

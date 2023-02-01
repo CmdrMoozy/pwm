@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use crate::crypto::pwgen;
-use crate::error::*;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
+use anyhow::{bail, Error, Result};
 use bdrck::crypto::secret::Secret;
 use flaggy::*;
 use qrcode_generator::{self, QrCodeEcc};

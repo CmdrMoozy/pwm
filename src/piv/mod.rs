@@ -16,7 +16,7 @@ mod impls;
 pub(crate) mod util;
 
 use crate::cli;
-use crate::error::*;
+use anyhow::Result;
 use flaggy::*;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::*;
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
+use anyhow::Result;
 use bdrck::crypto::secret::Secret;
 use std::io::{self, Write};
 

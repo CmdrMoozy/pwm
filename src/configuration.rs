@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::*;
 #[cfg(feature = "piv")]
 use crate::piv;
+use anyhow::{anyhow, bail, Error, Result};
 use bdrck::configuration as bdrck_config;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};

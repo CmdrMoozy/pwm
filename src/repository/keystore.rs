@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::crypto::configuration::Configuration;
-use crate::error::*;
+use anyhow::{bail, Error, Result};
 use bdrck::crypto::key::AbstractKey;
 use bdrck::crypto::keystore::DiskKeyStore;
 use bdrck::crypto::secret::Secret;

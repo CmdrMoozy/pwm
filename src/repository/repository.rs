@@ -14,13 +14,13 @@
 
 use crate::crypto::configuration::{Configuration, ConfigurationInstance};
 use crate::crypto::padding;
-use crate::error::*;
 use crate::repository::keystore::{
     add_key, add_password_key, get_keystore, remove_key, remove_password_key,
 };
 use crate::repository::path::Path as RepositoryPath;
 use crate::util::git;
 use crate::util::lazy::{new_lazy_result, LazyResult};
+use anyhow::{bail, Error, Result};
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
 use bdrck::crypto::secret::Secret;

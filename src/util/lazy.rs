@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::{Error, Result};
+use anyhow::{Error, Result};
 use once_cell::sync::Lazy;
 use std::cell::Cell;
 use std::result::Result as StdResult;

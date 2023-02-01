@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::crypto::rng::Generator;
-use crate::error::*;
+use anyhow::{bail, Result};
 use bdrck::crypto::secret::Secret;
 use once_cell::sync::Lazy;
 use rand::{Rng, RngCore};

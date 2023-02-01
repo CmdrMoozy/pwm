@@ -14,7 +14,7 @@
 
 use crate::crypto::configuration::Configuration;
 use crate::crypto::key::PwmKey;
-use crate::error::*;
+use anyhow::Result;
 use bdrck::crypto::key::{AbstractKey, Digest};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};

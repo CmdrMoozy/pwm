@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::{bail, Result};
+use anyhow::{bail, Result};
 use bdrck::crypto::secret::Secret;
 use data_encoding::BASE64;
 use std::fs::File;

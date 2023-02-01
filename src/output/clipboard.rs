@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::{bail, Result};
 use crate::output::{encode_for_display, InputEncoding, OutputHandler};
+use anyhow::{bail, Result};
 use bdrck::crypto::secret::Secret;
 use clipboard::{self, ClipboardProvider};
 use once_cell::sync::Lazy;

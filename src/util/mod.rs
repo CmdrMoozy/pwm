@@ -16,7 +16,7 @@ pub mod git;
 pub mod lazy;
 pub mod secret;
 
-use crate::error::Result;
+use anyhow::Result;
 use bdrck;
 use bdrck::crypto::secret::Secret;
 use std::io;

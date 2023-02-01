@@ -14,7 +14,7 @@
 
 use crate::cli;
 use crate::configuration;
-use crate::error::*;
+use anyhow::{bail, Result};
 use std::path::PathBuf;
 
 pub fn get_repository_path(repository: Option<PathBuf>) -> Result<PathBuf> {

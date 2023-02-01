@@ -16,8 +16,8 @@
 mod clipboard;
 mod stdout;
 
-use crate::error::*;
 use crate::util;
+use anyhow::{bail, Error, Result};
 use bdrck::crypto::secret::Secret;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
