@@ -15,6 +15,4 @@
 #[cfg(test)]
 mod git;
 #[cfg(test)]
-mod lazy;
-#[cfg(test)]
 mod secret;

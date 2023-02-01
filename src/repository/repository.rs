@@ -20,7 +20,7 @@ use crate::repository::keystore::{
 };
 use crate::repository::path::Path as RepositoryPath;
 use crate::util::git;
-use crate::util::lazy::LazyResult;
+use crate::util::lazy::{new_lazy_result, LazyResult};
 use bdrck::crypto::key::{AbstractKey, Key, Nonce};
 use bdrck::crypto::keystore::DiskKeyStore;
 use bdrck::crypto::secret::Secret;
@@ -83,7 +83,7 @@ pub struct Repository {
     // NOTE: crypto_configuration is guaranteed to be Some() everywhere except within drop().
     crypto_configuration: Option<ConfigurationInstance>,
     // NOTE: keystore is guaranteed to be Some() everywhere except within drop().
-    keystore: Option<LazyResult<'static, DiskKeyStore, Error>>,
+    keystore: Option<LazyResult<DiskKeyStore, Error>>,
 }
 
 impl Repository {
@@ -102,12 +102,14 @@ impl Repository {
         let path = path.as_ref().to_path_buf();
         let keystore_path = get_keystore_path(path)?;
         let keystore_is_new = !keystore_path.exists();
-        let keystore = LazyResult::new(move || get_keystore(&keystore_path, create, &c, password));
+        let keystore = new_lazy_result(move || get_keystore(&keystore_path, create, &c, password));
 
         // If we're initializing a brand new key store, `force` it so we add an
         // initial master key.
         if keystore_is_new {
-            keystore.force()?;
+            use std::ops::Deref;
+
+            keystore.deref().get()?;
         }
 
         Ok(Repository {
@@ -134,16 +136,14 @@ impl Repository {
 
     fn get_key_store(&self) -> Result<&DiskKeyStore> {
         use std::ops::Deref;
-        let lazy: &LazyResult<'static, DiskKeyStore, Error> = self.keystore.as_ref().unwrap();
-        lazy.force()?;
-        Ok(lazy.deref())
+
+        self.keystore.as_ref().unwrap().deref().get()
     }
 
     fn get_key_store_mut(&mut self) -> Result<&mut DiskKeyStore> {
         use std::ops::DerefMut;
-        let lazy: &mut LazyResult<'static, DiskKeyStore, Error> = self.keystore.as_mut().unwrap();
-        lazy.force()?;
-        Ok(lazy.deref_mut())
+
+        self.keystore.as_mut().unwrap().deref_mut().get_mut()
     }
 
     fn get_master_key(&self) -> Result<&Key> {
