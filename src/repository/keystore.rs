@@ -26,7 +26,7 @@ static REMOVE_KEY_PROMPT: &'static str = "Master password to remove: ";
 #[cfg(feature = "piv")]
 fn find_piv_master_key(
     crypto_config: &Configuration,
-) -> Result<Option<impl AbstractKey<Error = Error>>> {
+) -> Result<Option<impl AbstractKey<Error = crate::crypto::key::KeyError>>> {
     crate::piv::util::find_master_key(crypto_config)
 }
 

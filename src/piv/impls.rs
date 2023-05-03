@@ -15,10 +15,10 @@
 use crate::cli::util::get_repository_path;
 use crate::crypto::pwgen;
 use crate::piv::util::{prompt_for_device, prompt_for_device_from, PivKeyAssociation};
+use crate::piv::{AddPivArgs, RmPivArgs, SetupPivArgs};
 use crate::repository::Repository;
 use anyhow::Result;
 use bdrck::crypto::key::AbstractKey;
-use flaggy::*;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -53,8 +53,7 @@ fn addpiv_impl<RP: AsRef<Path>>(
     Ok(())
 }
 
-#[command_callback]
-pub(crate) fn setuppiv(
+fn setuppiv_impl(
     repository: Option<PathBuf>,
     slot: Key,
     algorithm: Algorithm,
@@ -133,17 +132,26 @@ pub(crate) fn setuppiv(
     )
 }
 
-#[command_callback]
-pub(crate) fn addpiv(repository: Option<PathBuf>, slot: Key, public_key: PathBuf) -> Result<()> {
-    let _handle = crate::init_with_configuration().unwrap();
-    let repository = get_repository_path(repository)?;
-    let (reader, serial) = prompt_for_device(None, None)?;
-    let public_key = piv::pkey::PublicKey::from_pem_file(&public_key)?;
-    addpiv_impl(&repository, &reader, serial, slot, public_key)
+pub(crate) fn setuppiv(args: SetupPivArgs) -> Result<()> {
+    setuppiv_impl(
+        args.repository.repository,
+        args.slot.slot,
+        args.algorithm,
+        args.policy.pin_policy,
+        args.policy.touch_policy,
+        args.public_key,
+    )
 }
 
-#[command_callback]
-pub(crate) fn rmpiv(
+pub(crate) fn addpiv(args: AddPivArgs) -> Result<()> {
+    let _handle = crate::init_with_configuration().unwrap();
+    let repository = get_repository_path(args.repository.repository)?;
+    let (reader, serial) = prompt_for_device(None, None)?;
+    let public_key = piv::pkey::PublicKey::from_pem_file(&args.public_key)?;
+    addpiv_impl(&repository, &reader, serial, args.slot.slot, public_key)
+}
+
+fn rmpiv_impl(
     repository: Option<PathBuf>,
     reader: Option<String>,
     serial: Option<u32>,
@@ -180,4 +188,8 @@ pub(crate) fn rmpiv(
     repository.set_crypto_configuration(config);
 
     Ok(())
+}
+
+pub(crate) fn rmpiv(args: RmPivArgs) -> Result<()> {
+    rmpiv_impl(args.repository.repository, args.reader, args.serial)
 }

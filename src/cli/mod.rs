@@ -13,7 +13,7 @@
 // limitations under the License.
 
 mod impls;
-mod util;
+pub(crate) mod util;
 
 use crate::crypto::pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH;
 use crate::output::OutputMethod;
@@ -21,11 +21,11 @@ use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
-#[derive(Args)]
-struct RepositoryArgs {
+#[derive(Args, Clone)]
+pub(crate) struct RepositoryArgs {
     #[arg(short = 'r', long)]
     /// The path to the pwm repository to use.
-    repository: Option<PathBuf>,
+    pub(crate) repository: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -64,14 +64,18 @@ enum Commands {
         repository: RepositoryArgs,
     },
 
-    /* TODO:
     #[cfg(feature = "piv")]
-    pwm_lib::piv::build_setuppiv_command(),
+    /// Set up a PIV device and add it to an existing repository.
+    SetupPiv(crate::piv::SetupPivArgs),
+
     #[cfg(feature = "piv")]
-    pwm_lib::piv::build_addpiv_command(),
+    /// Add an already set up PIV device to an existing repository.
+    AddPiv(crate::piv::AddPivArgs),
+
     #[cfg(feature = "piv")]
-    pwm_lib::piv::build_rmpiv_command(),
-    */
+    /// Remove a PIV device key from an existing repository.
+    RmPiv(crate::piv::RmPivArgs),
+
     /// List passwords stored in a pwm repository.
     Ls {
         #[command(flatten)]
@@ -185,7 +189,12 @@ impl Cli {
             Commands::Init { repository } => impls::init(repository.repository),
             Commands::AddKey { repository } => impls::addkey(repository.repository),
             Commands::RmKey { repository } => impls::rmkey(repository.repository),
-            /* TODO: piv commands */
+            #[cfg(feature = "piv")]
+            Commands::SetupPiv(args) => crate::piv::impls::setuppiv(args),
+            #[cfg(feature = "piv")]
+            Commands::AddPiv(args) => crate::piv::impls::addpiv(args),
+            #[cfg(feature = "piv")]
+            Commands::RmPiv(args) => crate::piv::impls::rmpiv(args),
             Commands::Ls {
                 repository,
                 path_prefix,

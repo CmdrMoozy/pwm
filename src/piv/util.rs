@@ -13,9 +13,10 @@
 // limitations under the License.
 
 use crate::crypto::configuration::Configuration;
-use crate::crypto::key::PwmKey;
-use anyhow::Result;
-use bdrck::crypto::key::{AbstractKey, Digest};
+use crate::crypto::key::{KeyError, PwmKey};
+use anyhow::{bail, Result};
+use bdrck::crypto::digest::Digest;
+use bdrck::crypto::key::AbstractKey;
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
 use tracing::warn;
@@ -99,9 +100,7 @@ pub(crate) fn prompt_for_device_from(
         .collect();
 
     if devices.is_empty() {
-        return Err(Error::InvalidArgument(
-            "no matching PIV devices found on this system".to_string(),
-        ));
+        bail!("no matching PIV devices found on this system");
     }
 
     if devices.len() == 1 {
@@ -159,7 +158,7 @@ pub(crate) fn prompt_for_device(
 /// we don't manage to find any key and nothing catastrophic goes wrong.
 pub(crate) fn find_master_key(
     crypto_config: &Configuration,
-) -> Result<Option<impl AbstractKey<Error = Error>>> {
+) -> Result<Option<impl AbstractKey<Error = KeyError>>> {
     let devices = list_piv_devices()?;
 
     for assoc in crypto_config.get_piv_keys() {
