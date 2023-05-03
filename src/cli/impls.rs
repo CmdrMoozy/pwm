@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::cli::util::get_repository_path;
+use crate::cli::GenerateArgs;
 use crate::configuration;
 use crate::crypto::pwgen;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
@@ -156,25 +157,10 @@ pub(crate) fn rm(repository: Option<PathBuf>, path: String) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn generate(
-    password_length: usize,
-    exclude_letters: bool,
-    exclude_numbers: bool,
-    include_symbols: bool,
-    custom_exclude: Option<String>,
-) -> Result<()> {
+pub(crate) fn generate(password_length: usize, args: GenerateArgs) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
-    let mut charsets: Vec<pwgen::CharacterSet> = Vec::new();
-    if !exclude_letters {
-        charsets.push(pwgen::CharacterSet::Letters);
-    }
-    if !exclude_numbers {
-        charsets.push(pwgen::CharacterSet::Numbers);
-    }
-    if include_symbols {
-        charsets.push(pwgen::CharacterSet::Symbols);
-    }
-    let custom_exclude: Vec<char> = custom_exclude.map_or(vec![], |x| x.chars().collect());
+    let charsets = args.to_charsets();
+    let custom_exclude: Vec<char> = args.custom_exclude.map_or(vec![], |x| x.chars().collect());
 
     output_secret(
         &pwgen::generate_password(

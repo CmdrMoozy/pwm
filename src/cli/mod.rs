@@ -15,7 +15,7 @@
 mod impls;
 pub(crate) mod util;
 
-use crate::crypto::pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH;
+use crate::crypto::pwgen::{CharacterSet, RECOMMENDED_MINIMUM_PASSWORD_LENGTH};
 use crate::output::OutputMethod;
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
@@ -32,6 +32,41 @@ pub(crate) struct RepositoryArgs {
 struct PathArgs {
     /// The saved password path, relative to the repository's root.
     path: String,
+}
+
+#[derive(Args)]
+pub(crate) struct GenerateArgs {
+    #[arg(short = 'A', long)]
+    /// Exclude letters from the password.
+    pub(crate) exclude_letters: bool,
+
+    #[arg(short = 'N', long)]
+    /// Exclude numbers from the password.
+    pub(crate) exclude_numbers: bool,
+
+    #[arg(short = 'S', long)]
+    /// Include symbols in the password.
+    pub(crate) exclude_symbols: bool,
+
+    #[arg(short = 'X', long)]
+    /// Exclude a custom set of characters.
+    pub(crate) custom_exclude: Option<String>,
+}
+
+impl GenerateArgs {
+    pub(crate) fn to_charsets(&self) -> Vec<CharacterSet> {
+        let mut charsets = Vec::new();
+        if !self.exclude_letters {
+            charsets.push(CharacterSet::Letters);
+        }
+        if !self.exclude_numbers {
+            charsets.push(CharacterSet::Numbers);
+        }
+        if !self.exclude_symbols {
+            charsets.push(CharacterSet::Symbols);
+        }
+        charsets
+    }
 }
 
 #[derive(Subcommand)]
@@ -135,29 +170,13 @@ enum Commands {
         /// The length of the password to generate.
         password_length: usize,
 
-        #[arg(short = 'A', long)]
-        /// Exclude letters from the password.
-        exclude_letters: bool,
-
-        #[arg(short = 'N', long)]
-        /// Exclude numbers from the password.
-        exclude_numbers: bool,
-
-        #[arg(short = 's', long)]
-        /// Include symbols in the password.
-        include_symbols: bool,
-
-        #[arg(short = 'x', long)]
-        /// Exclude a custom set of characters.
-        custom_exclude: Option<String>,
+        #[command(flatten)]
+        args: GenerateArgs,
     },
 
     #[cfg(feature = "wifiqr")]
     /// Generate a WiFi password, and render it as a QR code for sharing.
-    Wifiqr {
-        #[command(flatten)]
-        args: crate::wifiqr::WifiqrArgs,
-    },
+    Wifiqr(crate::wifiqr::WifiqrArgs),
 
     /// Export all stored passwords as plaintext JSON for backup purposes.
     Export {
@@ -214,19 +233,10 @@ impl Cli {
             Commands::Rm { repository, path } => impls::rm(repository.repository, path.path),
             Commands::Generate {
                 password_length,
-                exclude_letters,
-                exclude_numbers,
-                include_symbols,
-                custom_exclude,
-            } => impls::generate(
-                password_length,
-                exclude_letters,
-                exclude_numbers,
-                include_symbols,
-                custom_exclude,
-            ),
+                args,
+            } => impls::generate(password_length, args),
             #[cfg(feature = "wifiqr")]
-            Commands::Wifiqr { args } => crate::wifiqr::wifiqr_command(args),
+            Commands::Wifiqr(args) => crate::wifiqr::wifiqr_command(args),
             Commands::Export { repository } => impls::export(repository.repository),
             Commands::Import { repository, input } => impls::import(repository.repository, input),
         }

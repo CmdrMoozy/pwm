@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::cli::GenerateArgs;
 use crate::crypto::pwgen;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
 use anyhow::{bail, Result};
@@ -22,11 +23,6 @@ use std::fs;
 use std::path::PathBuf;
 
 const WPA_MAX_PASSWORD_LENGTH: usize = 63;
-const WPA_PASSWORD_CHARSETS: &'static [pwgen::CharacterSet] = &[
-    pwgen::CharacterSet::Letters,
-    pwgen::CharacterSet::Numbers,
-    pwgen::CharacterSet::Symbols,
-];
 
 const QR_IMAGE_SIZE_PIXELS: usize = 300;
 
@@ -99,12 +95,19 @@ pub(crate) fn wifiqr_encode(ssid: &str, is_hidden: bool, password: &Secret) -> R
 #[derive(Args)]
 pub(crate) struct WifiqrArgs {
     #[arg(short = 's', long)]
-    /// The wireless network SSID.
+    /// The wireless network SSID (name).
     ssid: String,
 
     #[arg(short = 'h', long)]
     /// Set this if the network SSID is hidden / not broadcasted.
     is_hidden: bool,
+
+    #[arg(short = 'l', long, default_value_t = WPA_MAX_PASSWORD_LENGTH)]
+    /// The length of the password to generate.
+    password_length: usize,
+
+    #[command(flatten)]
+    generate: GenerateArgs,
 
     #[arg(short = 'e', long)]
     /// The amount of error correction to include in the QR code.
@@ -121,7 +124,12 @@ pub(crate) struct WifiqrArgs {
 
 pub(crate) fn wifiqr_command(args: WifiqrArgs) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
-    let password = pwgen::generate_password(WPA_MAX_PASSWORD_LENGTH, WPA_PASSWORD_CHARSETS, &[])?;
+    let charsets = args.generate.to_charsets();
+    let custom_exclude: Vec<char> = args
+        .generate
+        .custom_exclude
+        .map_or(vec![], |x| x.chars().collect());
+    let password = pwgen::generate_password(args.password_length, &charsets, &custom_exclude)?;
 
     // Determine the image format first; if the extension is invalid, we want
     // to return an error before writing anything to disk.
