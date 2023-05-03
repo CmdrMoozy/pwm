@@ -21,10 +21,11 @@
 )]
 #![warn(bare_trait_objects, unreachable_pub, unused_qualifications)]
 
-use flaggy::*;
+use anyhow::Result;
+use clap::Parser;
 use tracing_subscriber::{filter::LevelFilter, prelude::*, EnvFilter};
 
-fn main() {
+fn main() -> Result<()> {
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .with(
@@ -42,25 +43,5 @@ fn main() {
         )
         .init();
 
-    main_impl(vec![
-        pwm_lib::cli::build_config_command(),
-        pwm_lib::cli::build_init_command(),
-        pwm_lib::cli::build_addkey_command(),
-        pwm_lib::cli::build_rmkey_command(),
-        #[cfg(feature = "piv")]
-        pwm_lib::piv::build_setuppiv_command(),
-        #[cfg(feature = "piv")]
-        pwm_lib::piv::build_addpiv_command(),
-        #[cfg(feature = "piv")]
-        pwm_lib::piv::build_rmpiv_command(),
-        pwm_lib::cli::build_ls_command(),
-        pwm_lib::cli::build_get_command(),
-        pwm_lib::cli::build_set_command(),
-        pwm_lib::cli::build_rm_command(),
-        pwm_lib::cli::build_generate_command(),
-        #[cfg(feature = "wifiqr")]
-        pwm_lib::wifiqr::build_wifiqr_command(),
-        pwm_lib::cli::build_export_command(),
-        pwm_lib::cli::build_import_command(),
-    ]);
+    pwm_lib::cli::Cli::parse().execute_command()
 }

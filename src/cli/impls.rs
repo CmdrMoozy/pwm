@@ -20,14 +20,12 @@ use crate::repository::serde::{export_serialize, import_deserialize};
 use crate::repository::Repository;
 use crate::util::{self, multiline_password_prompt, password_prompt};
 use anyhow::{bail, Result};
-use flaggy::*;
 use std::fs::File;
 use std::path::PathBuf;
 
 static NEW_PASSWORD_PROMPT: &'static str = "New password: ";
 static MULTILINE_PASSWORD_PROMPT: &'static str = "Enter password data, until 'EOF' is read:";
 
-#[command_callback]
 pub(crate) fn config(key: Option<String>, set: Option<String>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     if key.is_none() {
@@ -52,7 +50,6 @@ pub(crate) fn config(key: Option<String>, set: Option<String>) -> Result<()> {
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn init(repository: Option<PathBuf>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
@@ -65,7 +62,6 @@ pub(crate) fn init(repository: Option<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn addkey(repository: Option<PathBuf>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
@@ -75,7 +71,6 @@ pub(crate) fn addkey(repository: Option<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn rmkey(repository: Option<PathBuf>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
@@ -85,7 +80,6 @@ pub(crate) fn rmkey(repository: Option<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn ls(repository: Option<PathBuf>, path_prefix: String) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
@@ -98,7 +92,6 @@ pub(crate) fn ls(repository: Option<PathBuf>, path_prefix: String) -> Result<()>
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn get(
     repository: Option<PathBuf>,
     binary: bool,
@@ -120,7 +113,6 @@ pub(crate) fn get(
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn set(
     repository: Option<PathBuf>,
     key_file: Option<PathBuf>,
@@ -155,7 +147,6 @@ pub(crate) fn set(
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn rm(repository: Option<PathBuf>, path: String) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
@@ -165,7 +156,6 @@ pub(crate) fn rm(repository: Option<PathBuf>, path: String) -> Result<()> {
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn generate(
     password_length: usize,
     exclude_letters: bool,
@@ -199,7 +189,6 @@ pub(crate) fn generate(
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn export(repository: Option<PathBuf>) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let repository = get_repository_path(repository)?;
@@ -208,7 +197,6 @@ pub(crate) fn export(repository: Option<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-#[command_callback]
 pub(crate) fn import(repository: Option<PathBuf>, input: PathBuf) -> Result<()> {
     use std::io::Read;
 

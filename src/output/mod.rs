@@ -19,6 +19,7 @@ mod stdout;
 use crate::util;
 use anyhow::{bail, Error, Result};
 use bdrck::crypto::secret::Secret;
+use clap::ValueEnum;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::fmt;
@@ -35,7 +36,7 @@ pub enum InputEncoding {
     Auto,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum OutputMethod {
     /// Write the output to stdout.
     Stdout,
@@ -43,6 +44,12 @@ pub enum OutputMethod {
     /// Store the output in the system's clipboard.
     #[cfg(feature = "clipboard")]
     Clipboard,
+}
+
+impl Default for OutputMethod {
+    fn default() -> Self {
+        OutputMethod::Stdout
+    }
 }
 
 static OUTPUT_METHOD_STRINGS: Lazy<HashMap<OutputMethod, &'static str>> = Lazy::new(|| {

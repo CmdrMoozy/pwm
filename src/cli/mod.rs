@@ -13,227 +13,213 @@
 // limitations under the License.
 
 mod impls;
-pub mod util;
+mod util;
 
-use anyhow::Error;
-use flaggy::*;
-use once_cell::sync::Lazy;
+use crate::crypto::pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH;
+use crate::output::OutputMethod;
+use anyhow::Result;
+use clap::{Args, Parser, Subcommand};
+use std::path::PathBuf;
 
-pub static REPOSITORY_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::optional(
-        "repository",
-        "The path to the pwm repository to use",
-        Some('r'),
-    )
-});
-pub static PATH_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::positional(
-        "path",
-        "The saved password path, relative to the repository's root",
-        None,
-        false,
-    )
-    .unwrap()
-});
-pub static PATH_PREFIX_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::positional(
-        "path_prefix",
-        "The saved password path prefix, relative to the repository's root",
-        Some(&[""]),
-        false,
-    )
-    .unwrap()
-});
-pub static CONFIG_KEY_SPEC: Lazy<Spec> =
-    Lazy::new(|| Spec::optional("key", "The specific key to get or set", Some('k')));
-pub static CONFIG_SET_SPEC: Lazy<Spec> =
-    Lazy::new(|| Spec::optional("set", "The new value to set the key to", Some('s')));
-pub static GET_BINARY_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::boolean(
-        "binary",
-        "Treat the saved password or key as binary data",
-        Some('b'),
-    )
-});
-pub static GET_OUTPUT_METHOD_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::required(
-        "output_method",
-        "How to output the retrieved secret",
-        Some('o'),
-        Some(&crate::output::OutputMethod::Stdout.to_string()),
-    )
-});
-pub static SET_KEY_FILE_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::optional(
-        "key_file",
-        "Store a key file instead of a password",
-        Some('k'),
-    )
-});
-pub static SET_MULTILINE_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::boolean(
-        "multiline",
-        "Read multiple lines of input data, until 'EOF'",
-        Some('m'),
-    )
-});
-pub static GENERATE_PASSWORD_LENGTH_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::required(
-        "password_length",
-        "The length of the password to generate",
-        Some('l'),
-        Some(
-            crate::crypto::pwgen::RECOMMENDED_MINIMUM_PASSWORD_LENGTH
-                .to_string()
-                .as_str(),
-        ),
-    )
-});
-pub static GENERATE_EXCLUDE_LETTERS_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::boolean(
-        "exclude_letters",
-        "Exclude letters from the password",
-        Some('A'),
-    )
-});
-pub static GENERATE_EXCLUDE_NUMBERS_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::boolean(
-        "exclude_numbers",
-        "Exclude numbers from the password",
-        Some('N'),
-    )
-});
-pub static GENERATE_INCLUDE_SYMBOLS_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::boolean(
-        "include_symbols",
-        "Include symbols in the password",
-        Some('s'),
-    )
-});
-pub static GENERATE_CUSTOM_EXCLUDE_SPEC: Lazy<Spec> = Lazy::new(|| {
-    Spec::optional(
-        "custom_exclude",
-        "Exclute a custom set of characters",
-        Some('x'),
-    )
-});
-pub static IMPORT_INPUT_SPEC: Lazy<Spec> =
-    Lazy::new(|| Spec::required("input", "The input file to import from", Some('i'), None));
-
-pub fn build_config_command() -> Command<'static, Error> {
-    Command::new(
-        "config",
-        "Get or set a configuration value",
-        Specs::new(vec![CONFIG_KEY_SPEC.clone(), CONFIG_SET_SPEC.clone()]).unwrap(),
-        Box::new(impls::config),
-    )
+#[derive(Args)]
+struct RepositoryArgs {
+    #[arg(short = 'r', long)]
+    /// The path to the pwm repository to use.
+    repository: Option<PathBuf>,
 }
 
-pub fn build_init_command() -> Command<'static, Error> {
-    Command::new(
-        "init",
-        "Initialize a new pwm repository",
-        Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        Box::new(impls::init),
-    )
+#[derive(Args)]
+struct PathArgs {
+    /// The saved password path, relative to the repository's root.
+    path: String,
 }
 
-pub fn build_addkey_command() -> Command<'static, Error> {
-    Command::new(
-        "addkey",
-        "Add a new master key to an existing repository",
-        Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        Box::new(impls::addkey),
-    )
+#[derive(Subcommand)]
+enum Commands {
+    /// Get or set a configuration value.
+    Config {
+        #[arg(short = 'k', long)]
+        /// The specific key to get or set.
+        key: Option<String>,
+        #[arg(short = 's', long)]
+        /// The new value to set the key to.
+        set: Option<String>,
+    },
+
+    /// Initialize a new pwm repository.
+    Init {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+    },
+
+    /// Add a new master key to an existing repository.
+    AddKey {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+    },
+
+    /// Remove an existing master key from an existing repository.
+    RmKey {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+    },
+
+    /* TODO:
+    #[cfg(feature = "piv")]
+    pwm_lib::piv::build_setuppiv_command(),
+    #[cfg(feature = "piv")]
+    pwm_lib::piv::build_addpiv_command(),
+    #[cfg(feature = "piv")]
+    pwm_lib::piv::build_rmpiv_command(),
+    */
+    /// List passwords stored in a pwm repository.
+    Ls {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+
+        #[arg(default_value = "")]
+        /// The saved password path prefix, relative to the repository's root.
+        path_prefix: String,
+    },
+
+    /// Retrieve a password or key from a pwm repository.
+    Get {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+
+        #[arg(short = 'b', long)]
+        /// Treat the saved password or key as binary data.
+        binary: bool,
+
+        #[arg(value_enum, short = 'o', long)]
+        /// How to output the retrieved secret.
+        output_method: OutputMethod,
+
+        #[command(flatten)]
+        path: PathArgs,
+    },
+
+    /// Store a password or key in a pwm repository.
+    Set {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+
+        #[arg(short = 'k', long)]
+        /// Store a key file instead of a password.
+        key_file: Option<PathBuf>,
+
+        #[arg(short = 'm', long)]
+        /// Read multiple lines of input data, until 'EOF'.
+        multiline: bool,
+
+        #[command(flatten)]
+        path: PathArgs,
+    },
+
+    /// Remove a password or key from a pwm repository.
+    Rm {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+
+        #[command(flatten)]
+        path: PathArgs,
+    },
+
+    /// Generate a random password.
+    Generate {
+        #[arg(short = 'l', long, default_value_t = RECOMMENDED_MINIMUM_PASSWORD_LENGTH)]
+        /// The length of the password to generate.
+        password_length: usize,
+
+        #[arg(short = 'A', long)]
+        /// Exclude letters from the password.
+        exclude_letters: bool,
+
+        #[arg(short = 'N', long)]
+        /// Exclude numbers from the password.
+        exclude_numbers: bool,
+
+        #[arg(short = 's', long)]
+        /// Include symbols in the password.
+        include_symbols: bool,
+
+        #[arg(short = 'x', long)]
+        /// Exclude a custom set of characters.
+        custom_exclude: Option<String>,
+    },
+
+    #[cfg(feature = "wifiqr")]
+    /// Generate a WiFi password, and render it as a QR code for sharing.
+    Wifiqr {
+        #[command(flatten)]
+        args: crate::wifiqr::WifiqrArgs,
+    },
+
+    /// Export all stored passwords as plaintext JSON for backup purposes.
+    Export {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+    },
+
+    /// Import stored passwords previously 'export'ed.
+    Import {
+        #[command(flatten)]
+        repository: RepositoryArgs,
+
+        #[arg(short = 'i', long)]
+        /// The input file to import from.
+        input: PathBuf,
+    },
 }
 
-pub fn build_rmkey_command() -> Command<'static, Error> {
-    Command::new(
-        "rmkey",
-        "Remove an existing master key from an existing repository",
-        Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        Box::new(impls::rmkey),
-    )
+#[derive(Parser)]
+pub struct Cli {
+    #[command(subcommand)]
+    command: Commands,
 }
 
-pub fn build_ls_command() -> Command<'static, Error> {
-    Command::new(
-        "ls",
-        "List passwords stored in a pwm repository",
-        Specs::new(vec![REPOSITORY_SPEC.clone(), PATH_PREFIX_SPEC.clone()]).unwrap(),
-        Box::new(impls::ls),
-    )
-}
-
-pub fn build_get_command() -> Command<'static, Error> {
-    Command::new(
-        "get",
-        "Retrieve a password or key from a pwm repository",
-        Specs::new(vec![
-            REPOSITORY_SPEC.clone(),
-            GET_BINARY_SPEC.clone(),
-            GET_OUTPUT_METHOD_SPEC.clone(),
-            PATH_SPEC.clone(),
-        ])
-        .unwrap(),
-        Box::new(impls::get),
-    )
-}
-
-pub fn build_set_command() -> Command<'static, Error> {
-    Command::new(
-        "set",
-        "Store a password or key in a pwm repository",
-        Specs::new(vec![
-            REPOSITORY_SPEC.clone(),
-            SET_KEY_FILE_SPEC.clone(),
-            SET_MULTILINE_SPEC.clone(),
-            PATH_SPEC.clone(),
-        ])
-        .unwrap(),
-        Box::new(impls::set),
-    )
-}
-
-pub fn build_rm_command() -> Command<'static, Error> {
-    Command::new(
-        "rm",
-        "Remove a password or key from a pwm repository",
-        Specs::new(vec![REPOSITORY_SPEC.clone(), PATH_SPEC.clone()]).unwrap(),
-        Box::new(impls::rm),
-    )
-}
-
-pub fn build_generate_command() -> Command<'static, Error> {
-    Command::new(
-        "generate",
-        "Generate a random password",
-        Specs::new(vec![
-            GENERATE_PASSWORD_LENGTH_SPEC.clone(),
-            GENERATE_EXCLUDE_LETTERS_SPEC.clone(),
-            GENERATE_EXCLUDE_NUMBERS_SPEC.clone(),
-            GENERATE_INCLUDE_SYMBOLS_SPEC.clone(),
-            GENERATE_CUSTOM_EXCLUDE_SPEC.clone(),
-        ])
-        .unwrap(),
-        Box::new(impls::generate),
-    )
-}
-
-pub fn build_export_command() -> Command<'static, Error> {
-    Command::new(
-        "export",
-        "Export all stored passwords as plaintext JSON for backup purposes",
-        Specs::new(vec![REPOSITORY_SPEC.clone()]).unwrap(),
-        Box::new(impls::export),
-    )
-}
-
-pub fn build_import_command() -> Command<'static, Error> {
-    Command::new(
-        "import",
-        "Import stored passwords previously 'export'ed",
-        Specs::new(vec![REPOSITORY_SPEC.clone(), IMPORT_INPUT_SPEC.clone()]).unwrap(),
-        Box::new(impls::import),
-    )
+impl Cli {
+    pub fn execute_command(self) -> Result<()> {
+        match self.command {
+            Commands::Config { key, set } => impls::config(key, set),
+            Commands::Init { repository } => impls::init(repository.repository),
+            Commands::AddKey { repository } => impls::addkey(repository.repository),
+            Commands::RmKey { repository } => impls::rmkey(repository.repository),
+            /* TODO: piv commands */
+            Commands::Ls {
+                repository,
+                path_prefix,
+            } => impls::ls(repository.repository, path_prefix),
+            Commands::Get {
+                repository,
+                binary,
+                output_method,
+                path,
+            } => impls::get(repository.repository, binary, output_method, path.path),
+            Commands::Set {
+                repository,
+                key_file,
+                multiline,
+                path,
+            } => impls::set(repository.repository, key_file, multiline, path.path),
+            Commands::Rm { repository, path } => impls::rm(repository.repository, path.path),
+            Commands::Generate {
+                password_length,
+                exclude_letters,
+                exclude_numbers,
+                include_symbols,
+                custom_exclude,
+            } => impls::generate(
+                password_length,
+                exclude_letters,
+                exclude_numbers,
+                include_symbols,
+                custom_exclude,
+            ),
+            #[cfg(feature = "wifiqr")]
+            Commands::Wifiqr { args } => crate::wifiqr::wifiqr_command(args),
+            Commands::Export { repository } => impls::export(repository.repository),
+            Commands::Import { repository, input } => impls::import(repository.repository, input),
+        }
+    }
 }

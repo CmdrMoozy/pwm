@@ -14,9 +14,9 @@
 
 use crate::crypto::pwgen;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
-use anyhow::{bail, Error, Result};
+use anyhow::{bail, Result};
 use bdrck::crypto::secret::Secret;
-use flaggy::*;
+use clap::{Args, ValueEnum};
 use qrcode_generator::{self, QrCodeEcc};
 use std::fs;
 use std::path::PathBuf;
@@ -33,13 +33,19 @@ const QR_IMAGE_SIZE_PIXELS: usize = 300;
 /// The level of QR code error correction. See `qrcode_generator::QrCodeEcc`
 /// for details on what these mean.
 ///
-/// We define our own enum so we can make it `FromStr`, so we can parse command
-/// line arguments.
+/// We define our own enum so we can implement some traits for command line argument parsing.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
 enum ErrorCorrection {
     Low,
     Medium,
     Quartile,
     High,
+}
+
+impl Default for ErrorCorrection {
+    fn default() -> Self {
+        Self::Medium
+    }
 }
 
 impl ErrorCorrection {
@@ -53,38 +59,10 @@ impl ErrorCorrection {
     }
 }
 
-impl std::str::FromStr for ErrorCorrection {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        Ok(match s {
-            "Low" => ErrorCorrection::Low,
-            "Medium" => ErrorCorrection::Medium,
-            "Quartile" => ErrorCorrection::Quartile,
-            "High" => ErrorCorrection::High,
-            _ => bail!("invalid error correction '{}'", s),
-        })
-    }
-}
-
+#[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
 enum ImageFormat {
     Png,
     Svg,
-}
-
-impl std::str::FromStr for ImageFormat {
-    type Err = Error;
-
-    fn from_str(extension: &str) -> Result<Self> {
-        Ok(match extension {
-            "png" => ImageFormat::Png,
-            "svg" => ImageFormat::Svg,
-            _ => bail!(
-                "invalid file extension '{}'; only *.png and *.svg are supported",
-                extension
-            ),
-        })
-    }
 }
 
 fn wifiqr_escape(s: &str) -> String {
@@ -118,63 +96,80 @@ pub(crate) fn wifiqr_encode(ssid: &str, is_hidden: bool, password: &Secret) -> R
     Ok(s)
 }
 
-#[command_callback]
-fn wifiqr(
+#[derive(Args)]
+pub(crate) struct WifiqrArgs {
+    #[arg(short = 's', long)]
+    /// The wireless network SSID.
     ssid: String,
+
+    #[arg(short = 'h', long)]
+    /// Set this if the network SSID is hidden / not broadcasted.
     is_hidden: bool,
+
+    #[arg(short = 'e', long)]
+    /// The amount of error correction to include in the QR code.
     error_correction: ErrorCorrection,
+
+    #[arg(short = 'o', long)]
+    /// The path to write the output to. Format autodetected from file extension.
     output: PathBuf,
+
+    #[arg(long)]
+    /// Set this if you explicitly want to overwrite an existing output file.
     overwrite: bool,
-) -> Result<()> {
+}
+
+pub(crate) fn wifiqr_command(args: WifiqrArgs) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
     let password = pwgen::generate_password(WPA_MAX_PASSWORD_LENGTH, WPA_PASSWORD_CHARSETS, &[])?;
 
     // Determine the image format first; if the extension is invalid, we want
     // to return an error before writing anything to disk.
-    let format: ImageFormat = if let Some(extension) = output.extension() {
-        if let Some(extension_str) = extension.to_str() {
-            extension_str.parse()?
-        } else {
-            bail!(
-                "invalid output path '{}', file extension is not valid UTF-8",
-                output.display()
-            );
-        }
-    } else {
-        bail!(
-            "invalid output path '{}', expected *.png or *.svg extension",
-            output.display()
-        );
+    let format: ImageFormat = match args.output.extension().map(|ext| ext.to_str()).flatten() {
+        Some("png") => ImageFormat::Png,
+        Some("svg") => ImageFormat::Svg,
+        None => bail!(
+            "invalid output path '{}', file extension is not valid UTF-8",
+            args.output.display()
+        ),
+        _ => bail!(
+            "invalid output path '{}', expected PNG or SVG extension",
+            args.output.display()
+        ),
     };
 
+    // TODO: Don't do this check, use File::open or File::create instead.
     // Check if the output already exists, and create its parent directory.
-    if output.exists() {
-        if !overwrite {
-            bail!("refusing to overwrite '{}'", output.display());
+    if args.output.exists() {
+        if !args.overwrite {
+            bail!("refusing to overwrite '{}'", args.output.display());
         }
-        if !output.is_file() {
-            bail!("found directory, expected file at '{}'", output.display());
+        if !args.output.is_file() {
+            bail!(
+                "found directory, expected file at '{}'",
+                args.output.display()
+            );
         }
     }
-    if let Some(parent) = output.parent() {
+    if let Some(parent) = args.output.parent() {
         fs::create_dir_all(parent)?;
     }
 
     // Write the QR code to the output path.
-    let encoded = wifiqr_encode(&ssid, is_hidden, &password)?;
+    let encoded = wifiqr_encode(&args.ssid, args.is_hidden, &password)?;
     match format {
         ImageFormat::Png => qrcode_generator::to_png_to_file(
             unsafe { encoded.as_slice() },
-            error_correction.to_upstream(),
+            args.error_correction.to_upstream(),
             QR_IMAGE_SIZE_PIXELS,
-            output,
+            args.output,
         )?,
         ImageFormat::Svg => qrcode_generator::to_svg_to_file::<&[u8], String, PathBuf>(
             unsafe { encoded.as_slice() },
-            error_correction.to_upstream(),
+            args.error_correction.to_upstream(),
             QR_IMAGE_SIZE_PIXELS,
             None,
-            output,
+            args.output,
         )?,
     };
 
@@ -182,38 +177,4 @@ fn wifiqr(
     output_secret(&password, InputEncoding::Auto, OutputMethod::Stdout)?;
 
     Ok(())
-}
-
-pub fn build_wifiqr_command() -> Command<'static, Error> {
-    Command::new(
-        "wifiqr",
-        "Generate a WiFi password, and render it as a QR code for sharing.",
-        Specs::new(vec![
-            Spec::required("ssid", "The wireless network SSID.", Some('s'), None),
-            Spec::boolean(
-                "is_hidden",
-                "Set this if the network SSID is hidden / not broadcasted.",
-                Some('h'),
-            ),
-            Spec::required(
-                "error_correction",
-                "The amount of error correction to include in the QR code.",
-                Some('e'),
-                Some("Medium"),
-            ),
-            Spec::required(
-                "output",
-                "The path to write the output to. Format autodetected from file extension.",
-                Some('o'),
-                None,
-            ),
-            Spec::boolean(
-                "overwrite",
-                "Set this if you explicitly want to overwrite an existing output file.",
-                None,
-            ),
-        ])
-        .unwrap(),
-        Box::new(wifiqr),
-    )
 }
