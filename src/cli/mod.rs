@@ -130,7 +130,7 @@ enum Commands {
         /// Treat the saved password or key as binary data.
         binary: bool,
 
-        #[arg(value_enum, short = 'o', long)]
+        #[arg(value_enum, short = 'o', long, default_value_t = OutputMethod::default())]
         /// How to output the retrieved secret.
         output_method: OutputMethod,
 
