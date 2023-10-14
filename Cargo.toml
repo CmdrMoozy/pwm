@@ -4,6 +4,9 @@ version = "2.0.2"
 authors = ["Axel Rasmussen <axel.rasmussen1@gmail.com>"]
 license = "Apache-2.0"
 edition = "2021"
+description = "A simple password manager for Linux"
+homepage = "https://git.moozy.me/pwm.git"
+repository = "https://git.moozy.me/pwm.git"
 
 [dependencies]
 anyhow = { version = "1.0", features = ["backtrace"] }
