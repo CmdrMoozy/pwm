@@ -15,6 +15,7 @@
 use crate::cli::GenerateArgs;
 use crate::crypto::pwgen;
 use crate::output::{output_secret, InputEncoding, OutputMethod};
+use crate::util::password_prompt;
 use anyhow::{bail, Result};
 use bdrck::crypto::secret::Secret;
 use clap::{Args, ValueEnum};
@@ -102,6 +103,10 @@ pub(crate) struct WifiqrArgs {
     /// Set this if the network SSID is hidden / not broadcasted.
     is_hidden: bool,
 
+    #[arg(long)]
+    /// Instead of generating a new password, prompt for an existing password.
+    prompt: bool,
+
     #[arg(short = 'l', long, default_value_t = WPA_MAX_PASSWORD_LENGTH)]
     /// The length of the password to generate.
     password_length: usize,
@@ -124,12 +129,17 @@ pub(crate) struct WifiqrArgs {
 
 pub(crate) fn wifiqr_command(args: WifiqrArgs) -> Result<()> {
     let _handle = crate::init_with_configuration().unwrap();
-    let charsets = args.generate.to_charsets();
-    let custom_exclude: Vec<char> = args
-        .generate
-        .custom_exclude
-        .map_or(vec![], |x| x.chars().collect());
-    let password = pwgen::generate_password(args.password_length, &charsets, &custom_exclude)?;
+
+    let password = if args.prompt {
+        password_prompt("Password:", /*confirm=*/ true)?
+    } else {
+        let charsets = args.generate.to_charsets();
+        let custom_exclude: Vec<char> = args
+            .generate
+            .custom_exclude
+            .map_or(vec![], |x| x.chars().collect());
+        pwgen::generate_password(args.password_length, &charsets, &custom_exclude)?
+    };
 
     // Determine the image format first; if the extension is invalid, we want
     // to return an error before writing anything to disk.
