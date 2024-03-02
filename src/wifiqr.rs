@@ -20,6 +20,7 @@ use anyhow::{bail, Result};
 use bdrck::crypto::secret::Secret;
 use clap::{Args, ValueEnum};
 use qrcode_generator::{self, QrCodeEcc};
+use std::fmt;
 use std::fs;
 use std::path::PathBuf;
 
@@ -33,9 +34,13 @@ const QR_IMAGE_SIZE_PIXELS: usize = 300;
 /// We define our own enum so we can implement some traits for command line argument parsing.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
 enum ErrorCorrection {
+    /// 7% of data bytes can be restored.
     Low,
+    /// 15% of data bytes can be restored.
     Medium,
+    /// 25% of data bytes can be restored.
     Quartile,
+    /// 30% of data bytes can be restored.
     High,
 }
 
@@ -53,6 +58,21 @@ impl ErrorCorrection {
             ErrorCorrection::Quartile => QrCodeEcc::Quartile,
             ErrorCorrection::High => QrCodeEcc::High,
         }
+    }
+}
+
+impl fmt::Display for ErrorCorrection {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                ErrorCorrection::Low => "low",
+                ErrorCorrection::Medium => "medium",
+                ErrorCorrection::Quartile => "quartile",
+                ErrorCorrection::High => "high",
+            }
+        )
     }
 }
 
@@ -114,7 +134,7 @@ pub(crate) struct WifiqrArgs {
     #[command(flatten)]
     generate: GenerateArgs,
 
-    #[arg(short = 'e', long)]
+    #[arg(short = 'e', long, default_value_t = ErrorCorrection::Medium)]
     /// The amount of error correction to include in the QR code.
     error_correction: ErrorCorrection,
 
