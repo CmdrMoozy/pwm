@@ -99,9 +99,9 @@ pub(crate) struct WifiqrArgs {
     /// The wireless network SSID (name).
     ssid: String,
 
-    #[arg(short = 'h', long)]
+    #[arg(long)]
     /// Set this if the network SSID is hidden / not broadcasted.
-    is_hidden: bool,
+    hidden: bool,
 
     #[arg(long)]
     /// Instead of generating a new password, prompt for an existing password.
@@ -174,7 +174,7 @@ pub(crate) fn wifiqr_command(args: WifiqrArgs) -> Result<()> {
     }
 
     // Write the QR code to the output path.
-    let encoded = wifiqr_encode(&args.ssid, args.is_hidden, &password)?;
+    let encoded = wifiqr_encode(&args.ssid, args.hidden, &password)?;
     match format {
         ImageFormat::Png => qrcode_generator::to_png_to_file(
             unsafe { encoded.as_slice() },
