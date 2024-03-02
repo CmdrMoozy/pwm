@@ -211,8 +211,10 @@ pub(crate) fn wifiqr_command(args: WifiqrArgs) -> Result<()> {
         )?,
     };
 
-    // Also print out the secret as plain text.
-    output_secret(&password, InputEncoding::Auto, OutputMethod::Stdout)?;
+    if !args.prompt {
+        // Also print out the secret as plain text.
+        output_secret(&password, InputEncoding::Auto, OutputMethod::Stdout)?;
+    }
 
     Ok(())
 }
